@@ -154,59 +154,30 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ),
                 ),
 
-                // 2. Hero Section (Staggered Delay: 200ms)
+
+
+                // 2. Mascota Header (Staggered Delay: 200ms)
                 SliverToBoxAdapter(
                   child: StaggeredEntry(
                     controller: _entryController,
                     index: 1,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 15),
-                          
-                          AnimatedContainer(
-                            duration: const Duration(milliseconds: 500),
-                            height: 220,
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(30),
-                              color: isSelectedModule 
-                                ? healthModules[selectedModuleIndex!].color.withValues(alpha: 0.1)
-                                : (isDark ? const Color(0xFF1E293B) : Colors.white), 
-                              boxShadow: [
-                                BoxShadow(
-                                  color: isSelectedModule
-                                    ? healthModules[selectedModuleIndex!].color.withValues(alpha: 0.2)
-                                    : (isDark ? Colors.black.withValues(alpha: 0.3) : const Color(0xFF6366F1).withValues(alpha: 0.1)),
-                                  blurRadius: 30,
-                                  offset: const Offset(0, 15),
-                                ),
-                              ],
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(30),
-                              child: AnimatedSwitcher(
-                                duration: const Duration(milliseconds: 500),
-                                child: DotLottieView(
-                                  key: ValueKey(isSelectedModule ? healthModules[selectedModuleIndex!].lottieUrl : "default"),
-                                  source: isSelectedModule 
-                                    ? healthModules[selectedModuleIndex!].lottieUrl 
-                                    : "https://lottie.host/8553788b-5a8c-4498-9ce9-45cd893858f4/mr2ro2xqSV.lottie",
-                                  sourceType: 'url',
-                                  autoplay: true,
-                                  loop: true,
-                                  speed: isSelectedModule ? healthModules[selectedModuleIndex!].lottieSpeed : 1.0,
-                                ),
-                              ),
-                            ),
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        child: SizedBox(
+                          height: 150,
+                          width: 150,
+                          child: DotLottieView(
+                            source: "assets/lottie/mascot.lottie",
+                            sourceType: 'asset',
+                            autoplay: true,
+                            loop: true,
                           ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-
 
                 // 3. Módulos Header
                 SliverToBoxAdapter(
@@ -214,7 +185,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     controller: _entryController,
                     index: 2,
                     child: const Padding(
-                      padding: EdgeInsets.only(left: 24, right: 24, top: 10, bottom: 12),
+                      padding: EdgeInsets.only(left: 24, right: 24, bottom: 12),
                       child: Text(
                         "MÓDULOS RECOMENDADOS",
                         style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF64748B), letterSpacing: 0.5),
@@ -288,6 +259,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: () => setState(() => selectedModuleIndex = index),
+      behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 400),
         curve: Curves.fastOutSlowIn,
@@ -313,8 +285,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   width: double.infinity,
                   decoration: BoxDecoration(color: module.color.withValues(alpha: 0.1)),
                   child: Center(child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Icon(module.icon, size: isSelected ? 50 : 40, color: module.color),
+                    padding: const EdgeInsets.all(4.0),
+                    child: IgnorePointer(
+                      child: DotLottieView(
+                        source: module.lottieUrl,
+                        sourceType: 'url',
+                        autoplay: true,
+                        loop: true,
+                        speed: module.lottieSpeed,
+                      ),
+                    ),
                   )),
                 ),
               ),

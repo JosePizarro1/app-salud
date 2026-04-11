@@ -30,6 +30,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   rive: ^0.13.3   # si ya instalaste, déjalo
   dotlottie_flutter: ^0.0.2
+  supabase_flutter: ^2.12.2
 
 
 
@@ -53,6 +54,7 @@ flutter:
     - assets/rive/
     - assets/images/
     - assets/lottie/start_button_hovering.lottie
+    - assets/lottie/mascot.lottie
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
