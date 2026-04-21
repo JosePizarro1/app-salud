@@ -4,9 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:dotlottie_flutter/dotlottie_flutter.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/widgets/theme_switcher.dart';
-
+import '../../../app/widgets/vitali_dialog.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -15,9 +16,9 @@ class RegisterPage extends StatefulWidget {
   State<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _RegisterPageState extends State<RegisterPage> {
+class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMixin {
   final nameCtrl = TextEditingController();
-  final emailCtrl = TextEditingController();
+  final emailCtrl = _DomainTextEditingController(domain: "@unjbg.edu.pe");
   final codeCtrl = TextEditingController();
   bool isLoading = false;
   bool _obscureCode = true;
@@ -35,15 +36,10 @@ class _RegisterPageState extends State<RegisterPage> {
     FocusScope.of(context).unfocus();
 
     if (nameCtrl.text.isEmpty || emailCtrl.text.isEmpty || codeCtrl.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, completa todos los campos')),
-      );
-      return;
-    }
-
-    if (codeCtrl.text.length < 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('El código debe tener al menos 6 caracteres')),
+      VitaliDialog.show(
+        context,
+        title: "Campos incompletos",
+        message: "Por favor, completa todos los campos para crear tu cuenta.",
       );
       return;
     }
@@ -51,8 +47,12 @@ class _RegisterPageState extends State<RegisterPage> {
     setState(() => isLoading = true);
 
     try {
+      final fullEmail = emailCtrl.text.trim().contains('@') 
+          ? emailCtrl.text.trim() 
+          : "${emailCtrl.text.trim()}@unjbg.edu.pe";
+
       final authResponse = await Supabase.instance.client.auth.signUp(
-        email: emailCtrl.text.trim(),
+        email: fullEmail,
         password: codeCtrl.text.trim(),
         data: {
           'full_name': nameCtrl.text.trim(),
@@ -73,160 +73,194 @@ class _RegisterPageState extends State<RegisterPage> {
       }
     } on AuthException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.message}')),
+        VitaliDialog.show(
+          context,
+          title: "Aviso de Registro",
+          message: "No pudimos completar el registro. Por favor, verifica tus datos e intenta de nuevo.",
         );
       }
     } finally {
-      if (mounted) {
-        setState(() => isLoading = false);
-      }
+      if (mounted) setState(() => isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.bgDark : AppColors.bgLight;
-    final primaryTextColor = isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final cardColor = isDark ? AppColors.surfaceDark : Colors.white;
-
+    
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: isDark ? AppColors.bgDark : Colors.white,
       body: Stack(
         children: [
-          // 🎨 Header con gradiente
+          // 🌊 Wavy Header (Consistent with Login)
           Positioned(
             top: 0,
             left: 0,
             right: 0,
-            height: MediaQuery.of(context).size.height * 0.35,
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: AppColors.primaryGradient,
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(40),
-                  bottomRight: Radius.circular(40),
-                ),
-              ),
-              child: Opacity(
-                opacity: 0.1,
-                child: CustomPaint(painter: _PatternPainter()),
-              ),
-            ),
+            child: _WavyHeader(),
           ),
 
           SafeArea(
             child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 30),
               child: Column(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        FadeInLeft(
-                          child: IconButton(
-                            icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
-                            onPressed: () => context.pop(),
+                  const SizedBox(height: 15), // Extra space for back button and switcher
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      FadeInLeft(
+                        child: GestureDetector(
+                          onTap: () => context.pop(),
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white60,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.arrow_back_ios_new_rounded,
+                              size: 20,
+                              color: isDark ? Colors.white : const Color(0xFF2D3142),
+                            ),
                           ),
                         ),
-                        const ThemeSwitcher(),
+                      ),
+                      FadeInRight(child: const ThemeSwitcher()),
+                    ],
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // 🧘 Mascot (Register specific)
+                  FadeInDown(
+                    child: Center(
+                      child: Container(
+                        height: 160,
+                        width: 160,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.transparent,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const _SafeLottie(
+                          source: "https://lottie.host/ebd46162-4aa8-43d9-9524-733a1e263d95/f9C4eU7x6p.json", // Meditating person
+                          fallbackIcon: Icons.how_to_reg_rounded,
+                          fallbackColor: AppColors.mint,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // 🏷️ Title
+                  FadeInUp(
+                    child: Column(
+                      children: [
+                        Text(
+                          "Únete a Vitali",
+                          style: GoogleFonts.outfit(
+                            fontSize: 36,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : const Color(0xFF2D3142),
+                          ),
+                        ),
+                        Text(
+                          "Crea tu cuenta de bienestar",
+                          style: GoogleFonts.outfit(
+                            fontSize: 16,
+                            color: isDark ? Colors.white70 : Colors.black54,
+                          ),
+                        ),
                       ],
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 30),
 
-                  FadeInDown(
-                    child: Text(
-                      "Únete a Vitali",
-                      style: GoogleFonts.outfit(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                  // 👤 Name Input (Peach)
+                  FadeInUp(
+                    delay: const Duration(milliseconds: 100),
+                    child: _VitaliInput(
+                      controller: nameCtrl,
+                      hint: "Nombre completo",
+                      icon: Icons.person_outline_rounded,
+                      color: AppColors.peachLight,
+                      borderColor: AppColors.peach,
+                      isDark: isDark,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  FadeInDown(
+
+                  const SizedBox(height: 16),
+
+                  // 📧 Email Input (Mint)
+                  FadeInUp(
                     delay: const Duration(milliseconds: 200),
-                    child: const Text(
-                      "Comienza tu viaje hacia el bienestar",
-                      style: TextStyle(color: Colors.white70, fontSize: 16),
+                    child: _VitaliInput(
+                      controller: emailCtrl,
+                      hint: "Usuario",
+                      icon: Icons.alternate_email_rounded,
+                      color: AppColors.mintLight,
+                      borderColor: AppColors.mint,
+                      isDark: isDark,
                     ),
                   ),
 
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 16),
 
-                  // 💎 Form Card
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: FadeInUp(
-                      child: Container(
-                        padding: const EdgeInsets.all(32),
-                        decoration: BoxDecoration(
-                          color: cardColor,
-                          borderRadius: BorderRadius.circular(30),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.08),
-                              blurRadius: 30,
-                              offset: const Offset(0, 15),
-                            ),
-                          ],
+                  // 🔒 Pass Input (Lavender)
+                  FadeInUp(
+                    delay: const Duration(milliseconds: 300),
+                    child: _VitaliInput(
+                      controller: codeCtrl,
+                      hint: "Contraseña (Mín. 6 caracteres)",
+                      icon: Icons.lock_outline_rounded,
+                      isObscure: _obscureCode,
+                      color: AppColors.lavenderLight,
+                      borderColor: AppColors.lavender,
+                      isDark: isDark,
+                      suffix: IconButton(
+                        icon: Icon(
+                          _obscureCode ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                          size: 20,
+                          color: isDark ? Colors.white54 : Colors.black45,
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _inputField(
-                              label: "Nombre completo",
-                              controller: nameCtrl,
-                              icon: Icons.person_rounded,
-                              isDark: isDark,
-                            ),
-                            const SizedBox(height: 20),
-                            _inputField(
-                              label: "Correo institucional",
-                              controller: emailCtrl,
-                              icon: Icons.alternate_email_rounded,
-                              isDark: isDark,
-                            ),
-                            const SizedBox(height: 20),
-                            _buildPasswordField(
-                              label: "Código (Contraseña)",
-                              controller: codeCtrl,
-                              icon: Icons.lock_outline_rounded,
-                              isDark: isDark,
-                            ),
-                            const SizedBox(height: 40),
-                            isLoading
-                                ? const Center(child: CircularProgressIndicator())
-                                : _buildRegisterButton(),
-                            const SizedBox(height: 24),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text("¿Ya tienes cuenta? ",
-                                    style: TextStyle(color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight)),
-                                GestureDetector(
-                                  onTap: () => context.pop(),
-                                  child: const Text(
-                                    "Entra aquí",
-                                    style: TextStyle(
-                                      color: AppColors.primary,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                        onPressed: () => setState(() => _obscureCode = !_obscureCode),
                       ),
                     ),
                   ),
+
+                  const SizedBox(height: 32),
+
+                  // 🚀 Register Button
+                  FadeInUp(
+                    delay: const Duration(milliseconds: 400),
+                    child: isLoading 
+                      ? const CircularProgressIndicator()
+                      : _VitaliButton(
+                          text: "Crear Cuenta",
+                          onPressed: _register,
+                          color: AppColors.mint,
+                        ),
+                  ),
+
                   const SizedBox(height: 40),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text("¿Ya tienes una cuenta? ", style: TextStyle(color: Colors.black45)),
+                      GestureDetector(
+                        onTap: () => context.pop(),
+                        child: const Text(
+                          "Inicia Sesión",
+                          style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 30),
                 ],
               ),
             ),
@@ -235,106 +269,252 @@ class _RegisterPageState extends State<RegisterPage> {
       ),
     );
   }
+}
 
-  Widget _buildRegisterButton() {
+// 🌊 Reusing the Wavy Header logic for consistency
+class _WavyHeader extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 150,
+      child: Stack(
+        children: [
+          ClipPath(
+            clipper: _TopWaveClipper(),
+            child: Container(color: AppColors.lavender.withValues(alpha: 0.3)),
+          ),
+          ClipPath(
+            clipper: _BottomWaveClipper(),
+            child: Container(color: AppColors.mint.withValues(alpha: 0.2)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TopWaveClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    var path = Path();
+    path.lineTo(0, size.height * 0.7);
+    var firstControlPoint = Offset(size.width * 0.25, size.height);
+    var firstEndPoint = Offset(size.width * 0.5, size.height * 0.8);
+    path.quadraticBezierTo(firstControlPoint.dx, firstControlPoint.dy, firstEndPoint.dx, firstEndPoint.dy);
+    var secondControlPoint = Offset(size.width * 0.75, size.height * 0.6);
+    var secondEndPoint = Offset(size.width, size.height * 0.8);
+    path.quadraticBezierTo(secondControlPoint.dx, secondControlPoint.dy, secondEndPoint.dx, secondEndPoint.dy);
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+}
+
+class _BottomWaveClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    var path = Path();
+    path.lineTo(0, size.height * 0.5);
+    var firstControlPoint = Offset(size.width * 0.25, size.height * 0.3);
+    var firstEndPoint = Offset(size.width * 0.5, size.height * 0.5);
+    path.quadraticBezierTo(firstControlPoint.dx, firstControlPoint.dy, firstEndPoint.dx, firstEndPoint.dy);
+    var secondControlPoint = Offset(size.width * 0.75, size.height * 0.7);
+    var secondEndPoint = Offset(size.width, size.height * 0.5);
+    path.quadraticBezierTo(secondControlPoint.dx, secondControlPoint.dy, secondEndPoint.dx, secondEndPoint.dy);
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+}
+
+// 📦 Reusing consistent Input fields
+class _VitaliInput extends StatelessWidget {
+  final TextEditingController controller;
+  final String hint;
+  final IconData icon;
+  final Color color;
+  final Color borderColor;
+  final bool isObscure;
+  final Widget? suffix;
+  final bool isDark;
+
+  const _VitaliInput({
+    required this.controller,
+    required this.hint,
+    required this.icon,
+    required this.color,
+    required this.borderColor,
+    this.isObscure = false,
+    this.suffix,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : color,
+        borderRadius: BorderRadius.circular(25),
+        border: Border.all(color: isDark ? Colors.white10 : borderColor, width: 1.5),
+      ),
+      child: TextField(
+        controller: controller,
+        obscureText: isObscure,
+        style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(color: isDark ? Colors.white38 : Colors.black38, fontSize: 14),
+          prefixIcon: Icon(icon, color: isDark ? Colors.white54 : Colors.black45, size: 22),
+          suffixIcon: suffix,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+        ),
+      ),
+    );
+  }
+}
+
+class _VitaliButton extends StatelessWidget {
+  final String text;
+  final VoidCallback onPressed;
+  final Color color;
+
+  const _VitaliButton({required this.text, required this.onPressed, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: _register,
+      onTap: onPressed,
       child: Container(
-        height: 56,
+        height: 60,
+        width: double.infinity,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: AppColors.primaryGradient,
+          color: color,
+          borderRadius: BorderRadius.circular(25),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.3),
+              color: color.withValues(alpha: 0.3),
               blurRadius: 15,
               offset: const Offset(0, 8),
-            )
+            ),
           ],
         ),
         alignment: Alignment.center,
-        child: const Text(
-          "CREAR CUENTA",
-          style: TextStyle(
-            fontSize: 16,
+        child: Text(
+          text,
+          style: GoogleFonts.outfit(
+            fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
-            letterSpacing: 1.1,
+            color: const Color(0xFF2D3142),
           ),
         ),
       ),
     );
   }
+}
 
-  Widget _inputField({required String label, required TextEditingController controller, required IconData icon, bool obscure = false, required bool isDark}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: isDark ? Colors.white70 : Colors.black87)),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          obscureText: obscure,
-          style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-          decoration: InputDecoration(
-            prefixIcon: Icon(icon, color: isDark ? Colors.white38 : Colors.black38),
-            filled: true,
-            fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
-            contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-            hintText: label,
-            hintStyle: TextStyle(color: isDark ? Colors.white24 : Colors.black26),
-          ),
-        ),
-      ],
-    );
-  }
+class _SafeLottie extends StatelessWidget {
+  final String source;
+  final IconData fallbackIcon;
+  final Color fallbackColor;
+  const _SafeLottie({required this.source, required this.fallbackIcon, required this.fallbackColor});
 
-  Widget _buildPasswordField({required String label, required TextEditingController controller, required IconData icon, required bool isDark}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: isDark ? Colors.white70 : Colors.black87)),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          obscureText: _obscureCode,
-          style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-          decoration: InputDecoration(
-            prefixIcon: Icon(icon, color: isDark ? Colors.white38 : Colors.black38),
-            suffixIcon: IconButton(
-              icon: Icon(
-                _obscureCode ? Icons.visibility_off : Icons.visibility,
-                color: isDark ? Colors.white38 : Colors.black38,
-              ),
-              onPressed: () => setState(() => _obscureCode = !_obscureCode),
-            ),
-            filled: true,
-            fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
-            contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-            hintText: label,
-            hintStyle: TextStyle(color: isDark ? Colors.white24 : Colors.black26),
-          ),
-        ),
-      ],
+  @override
+  Widget build(BuildContext context) {
+    return _LottieErrorBoundary(
+      fallback: Icon(fallbackIcon, size: 80, color: fallbackColor),
+      child: DotLottieView(
+        source: source,
+        sourceType: 'url',
+        autoplay: true,
+        loop: true,
+      ),
     );
   }
 }
 
-class _PatternPainter extends CustomPainter {
+class _LottieErrorBoundary extends StatefulWidget {
+  final Widget child;
+  final Widget fallback;
+  const _LottieErrorBoundary({required this.child, required this.fallback});
   @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.1)
-      ..strokeWidth = 1.0
-      ..style = PaintingStyle.stroke;
-    const spacing = 40.0;
-    for (double i = 0; i < size.width + size.height; i += spacing) {
-      canvas.drawLine(Offset(i, 0), Offset(i - size.height, size.height), paint);
+  State<_LottieErrorBoundary> createState() => _LottieErrorBoundaryState();
+}
+
+class _LottieErrorBoundaryState extends State<_LottieErrorBoundary> {
+  bool _hasError = false;
+  @override
+  Widget build(BuildContext context) {
+    if (_hasError) return widget.fallback;
+    final oldBuilder = ErrorWidget.builder;
+    ErrorWidget.builder = (details) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_hasError) setState(() => _hasError = true);
+      });
+      return widget.fallback;
+    };
+    final result = Builder(builder: (context) => widget.child);
+    ErrorWidget.builder = oldBuilder;
+    return result;
+  }
+}
+
+class _DomainTextEditingController extends TextEditingController {
+  final String domain;
+  _DomainTextEditingController({required this.domain}) {
+    if (text.isEmpty) {
+      text = domain;
+      selection = const TextSelection.collapsed(offset: 0);
     }
   }
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
 
+  @override
+  TextSpan buildTextSpan({required BuildContext context, TextStyle? style, required bool withComposing}) {
+    final String fullText = text;
+    if (!fullText.endsWith(domain)) {
+      return TextSpan(text: fullText, style: style);
+    }
+
+    final String userText = fullText.substring(0, fullText.length - domain.length);
+    return TextSpan(
+      style: style,
+      children: [
+        TextSpan(text: userText),
+        TextSpan(
+          text: domain,
+          style: style?.copyWith(color: style.color?.withValues(alpha: 0.3) ?? Colors.grey),
+        ),
+      ],
+    );
+  }
+
+  @override
+  set value(TextEditingValue newValue) {
+    String newText = newValue.text;
+    TextSelection newSelection = newValue.selection;
+
+    if (!newText.endsWith(domain)) {
+      // Intentó borrar parte del dominio o escribir después
+      if (newText.length < domain.length || !newText.contains(domain)) {
+         newText = domain;
+         newSelection = const TextSelection.collapsed(offset: 0);
+      } else {
+        // Probablemente borró algo entre medio, forzamos re-formato
+        final parts = newText.split(domain);
+        newText = "${parts[0]}$domain";
+        newSelection = TextSelection.collapsed(offset: parts[0].length);
+      }
+    }
+
+    // Evitar que el cursor entre al dominio
+    if (newSelection.start > newText.length - domain.length) {
+      newSelection = TextSelection.collapsed(offset: newText.length - domain.length);
+    }
+
+    super.value = newValue.copyWith(text: newText, selection: newSelection);
+  }
+}

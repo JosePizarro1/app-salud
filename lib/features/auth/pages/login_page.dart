@@ -7,6 +7,7 @@ import 'package:animate_do/animate_do.dart';
 import 'package:flutter/services.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/widgets/theme_switcher.dart';
+import '../../../app/widgets/vitali_dialog.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -16,7 +17,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
-  final emailCtrl = TextEditingController();
+  final emailCtrl = _DomainTextEditingController(domain: "@unjbg.edu.pe");
   final passCtrl = TextEditingController();
   bool isLoading = false;
   bool _obscurePass = true;
@@ -26,8 +27,10 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     FocusScope.of(context).unfocus();
     
     if (emailCtrl.text.isEmpty || passCtrl.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor ingresa tus credenciales.')),
+      VitaliDialog.show(
+        context,
+        title: "Campos vacíos",
+        message: "Por favor ingresa tu correo y contraseña para continuar.",
       );
       return;
     }
@@ -35,23 +38,31 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     setState(() => isLoading = true);
     
     try {
+      final fullEmail = emailCtrl.text.trim().contains('@') 
+          ? emailCtrl.text.trim() 
+          : "${emailCtrl.text.trim()}@unjbg.edu.pe";
+          
       await Supabase.instance.client.auth.signInWithPassword(
-        email: emailCtrl.text.trim(),
+        email: fullEmail,
         password: passCtrl.text.trim(),
       );
       if (mounted) context.go('/home');
     } on AuthException catch (e) {
       if (mounted) {
         setState(() => isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message), backgroundColor: AppColors.error),
+        VitaliDialog.show(
+          context,
+          title: "Acceso denegado",
+          message: "Credenciales incorrectas. Por favor, revisa tu correo o contraseña.",
         );
       }
     } catch (e) {
       if (mounted) {
         setState(() => isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error inesperado.'), backgroundColor: AppColors.error),
+        VitaliDialog.show(
+          context,
+          title: "Algo salió mal",
+          message: "Ocurrió un error inesperado. Por favor intenta de nuevo.",
         );
       }
     }
@@ -79,7 +90,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
               padding: const EdgeInsets.symmetric(horizontal: 30),
               child: Column(
                 children: [
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 20),
                   const Align(
                     alignment: Alignment.topRight,
                     child: ThemeSwitcher(),
@@ -139,8 +150,8 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                     delay: const Duration(milliseconds: 200),
                     child: _VitaliInput(
                       controller: emailCtrl,
-                      hint: "Correo electrónico o usuario",
-                      icon: Icons.mail_outline_rounded,
+                      hint: "Usuario institucional",
+                      icon: Icons.alternate_email_rounded,
                       color: AppColors.mintLight,
                       borderColor: AppColors.mint,
                       isDark: isDark,
@@ -402,6 +413,59 @@ class _LottieErrorBoundaryState extends State<_LottieErrorBoundary> {
     final result = Builder(builder: (context) => widget.child);
     ErrorWidget.builder = oldBuilder;
     return result;
+  }
+}
+
+class _DomainTextEditingController extends TextEditingController {
+  final String domain;
+  _DomainTextEditingController({required this.domain}) {
+    if (text.isEmpty) {
+      text = domain;
+      selection = const TextSelection.collapsed(offset: 0);
+    }
+  }
+
+  @override
+  TextSpan buildTextSpan({required BuildContext context, TextStyle? style, required bool withComposing}) {
+    final String fullText = text;
+    if (!fullText.endsWith(domain)) {
+      return TextSpan(text: fullText, style: style);
+    }
+
+    final String userText = fullText.substring(0, fullText.length - domain.length);
+    return TextSpan(
+      style: style,
+      children: [
+        TextSpan(text: userText),
+        TextSpan(
+          text: domain,
+          style: style?.copyWith(color: style.color?.withValues(alpha: 0.3) ?? Colors.grey),
+        ),
+      ],
+    );
+  }
+
+  @override
+  set value(TextEditingValue newValue) {
+    String newText = newValue.text;
+    TextSelection newSelection = newValue.selection;
+
+    if (!newText.endsWith(domain)) {
+      if (newText.length < domain.length || !newText.contains(domain)) {
+         newText = domain;
+         newSelection = const TextSelection.collapsed(offset: 0);
+      } else {
+        final parts = newText.split(domain);
+        newText = "${parts[0]}$domain";
+        newSelection = TextSelection.collapsed(offset: parts[0].length);
+      }
+    }
+
+    if (newSelection.start > newText.length - domain.length) {
+      newSelection = TextSelection.collapsed(offset: newText.length - domain.length);
+    }
+
+    super.value = newValue.copyWith(text: newText, selection: newSelection);
   }
 }
 
