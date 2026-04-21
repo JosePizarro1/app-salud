@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dotlottie_flutter/dotlottie_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:animate_do/animate_do.dart';
 import '../models/module_model.dart';
-
 import '../../../app/widgets/theme_switcher.dart';
-import '../../../app/widgets/staggered_entry.dart';
+import '../../../app/theme/app_colors.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -15,84 +17,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   int? selectedModuleIndex;
-
-  // Animaciones
-  late AnimationController _entryController;
-  late AnimationController _pulseController;
   
-  @override
-  void initState() {
-    super.initState();
-    _entryController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    );
-    _entryController.forward();
-
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _entryController.dispose();
-    _pulseController.dispose();
-    super.dispose();
-  }
-
-  void _startRoutine() {
-    if (selectedModuleIndex == null) {
-      _showAlert();
-    } else {
-      if (selectedModuleIndex! >= 0 && selectedModuleIndex! < healthModules.length) {
-        final module = healthModules[selectedModuleIndex!];
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.auto_awesome, color: Colors.white, size: 20),
-                const SizedBox(width: 12),
-                Expanded(child: Text("Redireccionando a la sesión de ${module.title}...")),
-              ],
-            ),
-            backgroundColor: const Color(0xFF6366F1),
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 2),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-          ),
-        );
-      }
-    }
-  }
-
-  void _showAlert() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-        title: const Row(
-          children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent),
-            SizedBox(width: 10),
-            Text("Paso faltante", style: TextStyle(fontWeight: FontWeight.bold)),
-          ],
-        ),
-        content: const Text(
-          "Para continuar, por favor selecciona un módulo de salud.",
-          style: TextStyle(fontSize: 16),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Entendido", style: TextStyle(color: Color(0xFF6366F1), fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     if (healthModules.isEmpty) {
@@ -100,101 +25,97 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bool isSelectedModule = selectedModuleIndex != null;
+    final backgroundColor = isDark ? AppColors.bgDark : AppColors.bgLight;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8F9FE),
+      backgroundColor: backgroundColor,
       body: Stack(
         children: [
-          // Fondo decorativo
+          // 🎨 Header Decorativo (Estilo Aslam)
           Positioned(
-            top: -50,
-            left: -50,
-            child: _AnimatedBackgroundBubble(color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.5) : const Color(0xFFE0E7FF).withValues(alpha: 0.5), size: 200),
-          ),
-          Positioned(
-            bottom: 200,
-            right: -100,
-            child: _AnimatedBackgroundBubble(color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.2) : const Color(0xFFF5F3FF).withValues(alpha: 0.8), size: 250),
+            top: 0,
+            left: 0,
+            right: 0,
+            height: MediaQuery.of(context).size.height * 0.25,
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: AppColors.primaryGradient,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(40),
+                  bottomRight: Radius.circular(40),
+                ),
+              ),
+              child: Opacity(
+                opacity: 0.1,
+                child: CustomPaint(painter: _PatternPainter()),
+              ),
+            ),
           ),
 
           SafeArea(
             child: CustomScrollView(
               physics: const BouncingScrollPhysics(),
               slivers: [
-                // 1. Header (Staggered Delay: 0ms)
                 SliverToBoxAdapter(
-                  child: StaggeredEntry(
-                    controller: _entryController,
-                    index: 0,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "Vitali App",
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: isDark ? Colors.white70 : Colors.black54),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        FadeInLeft(
+                          child: Text(
+                            "Vitali",
+                            style: GoogleFonts.outfit(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
-                          Row(
+                        ),
+                        FadeInRight(
+                          child: Row(
                             children: [
                               IconButton(
-                                icon: Icon(Icons.settings_outlined, color: isDark ? Colors.white70 : Colors.black54),
-                                onPressed: () {
-                                  context.push('/settings');
-                                },
+                                icon: const Icon(Icons.settings_rounded, color: Colors.white),
+                                onPressed: () => context.push('/settings'),
                               ),
-                              const SizedBox(width: 8),
                               const ThemeSwitcher(),
                             ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
 
-
-
-                // 2. Mascota Header (Staggered Delay: 200ms)
                 SliverToBoxAdapter(
-                  child: StaggeredEntry(
-                    controller: _entryController,
-                    index: 1,
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 20),
-                        child: SizedBox(
-                          height: 150,
-                          width: 150,
-                          child: DotLottieView(
-                            source: "assets/lottie/mascot.lottie",
-                            sourceType: 'asset',
-                            autoplay: true,
-                            loop: true,
-                          ),
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 20, bottom: 40),
+                    child: FadeInDown(
+                      duration: const Duration(seconds: 1),
+                      child: const Center(child: _AnimatedMascot()),
+                    ),
+                  ),
+                ),
+
+                SliverToBoxAdapter(
+                  child: FadeIn(
+                    delay: const Duration(milliseconds: 400),
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      child: Text(
+                        "MÓDULOS DE SALUD",
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textSecondaryLight,
+                          letterSpacing: 1.2,
                         ),
                       ),
                     ),
                   ),
                 ),
 
-                // 3. Módulos Header
-                SliverToBoxAdapter(
-                  child: StaggeredEntry(
-                    controller: _entryController,
-                    index: 2,
-                    child: const Padding(
-                      padding: EdgeInsets.only(left: 24, right: 24, bottom: 12),
-                      child: Text(
-                        "MÓDULOS RECOMENDADOS",
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF64748B), letterSpacing: 0.5),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // 4. Módulos Grid
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   sliver: SliverGrid(
@@ -206,8 +127,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     ),
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
-                        final module = healthModules[index];
-                        return _buildModuleCard(module, index);
+                        return FadeInUp(
+                          delay: Duration(milliseconds: 100 * index),
+                          child: _buildModuleCard(healthModules[index], index),
+                        );
                       },
                       childCount: healthModules.length,
                     ),
@@ -219,141 +142,224 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
           ),
 
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 500),
-            curve: Curves.easeOutBack,
-            bottom: selectedModuleIndex != null ? 30 : -100,
-            left: 24,
-            right: 24,
-            child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 500),
-              opacity: selectedModuleIndex != null ? 1.0 : 0.0,
-              child: ScaleTransition(
-                scale: Tween<double>(begin: 1.0, end: 1.05).animate(
-                  CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-                ),
-                child: GestureDetector(
-                  onTap: _startRoutine,
-                  child: SizedBox(
-                    height: 120,
-                    width: double.infinity,
-                    child: DotLottieView(
-                      source: "assets/lottie/start_button_hovering.lottie",
-                      sourceType: 'asset',
-                      autoplay: true,
-                      loop: true,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
+          // 🔵 Floating Action Button (Start Button)
+          _buildStartButton(),
         ],
       ),
     );
   }
 
-
-  Widget _buildModuleCard(ModuleModel module, int index) {
-    bool isSelected = selectedModuleIndex == index;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return GestureDetector(
-      onTap: () => setState(() => selectedModuleIndex = index),
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.fastOutSlowIn,
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
-          borderRadius: BorderRadius.circular(25),
-          border: isSelected ? Border.all(color: module.color.withValues(alpha: 0.5), width: 2) : Border.all(color: Colors.transparent),
-          boxShadow: [
-            BoxShadow(
-              color: isSelected ? module.color.withValues(alpha: 0.2) : (isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.03)),
-              blurRadius: isSelected ? 20 : 15,
-              offset: isSelected ? const Offset(0, 8) : const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(25),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(color: module.color.withValues(alpha: 0.1)),
-                  child: Center(child: Padding(
-                    padding: const EdgeInsets.all(4.0),
-                    child: IgnorePointer(
-                      child: DotLottieView(
-                        source: module.lottieUrl,
-                        sourceType: 'url',
-                        autoplay: true,
-                        loop: true,
-                        speed: module.lottieSpeed,
-                      ),
-                    ),
-                  )),
-                ),
+  Widget _buildStartButton() {
+    final bool isSelected = selectedModuleIndex != null;
+    return AnimatedPositioned(
+      duration: const Duration(milliseconds: 600),
+      curve: Curves.easeOutBack,
+      bottom: isSelected ? 30 : -100,
+      left: 24,
+      right: 24,
+      child: ZoomIn(
+        animate: isSelected,
+        child: GestureDetector(
+          onTap: () {
+            HapticFeedback.heavyImpact();
+            final module = healthModules[selectedModuleIndex!];
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("Iniciando ${module.title}..."),
+                backgroundColor: AppColors.primary,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0),
-                child: Text(
-                  module.title, 
-                  maxLines: 2, 
-                  overflow: TextOverflow.ellipsis, 
-                  textAlign: TextAlign.center,
+            );
+          },
+          child: Container(
+            height: 64,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: AppColors.primaryGradient,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.4),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            alignment: Alignment.center,
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.play_arrow_rounded, color: Colors.white, size: 32),
+                SizedBox(width: 8),
+                Text(
+                  "COMENZAR RUTINA",
                   style: TextStyle(
+                    fontSize: 16, 
                     fontWeight: FontWeight.bold, 
-                    fontSize: 13, 
-                    color: isDark ? Colors.white : Colors.black87
+                    color: Colors.white, 
+                    letterSpacing: 1.2
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
-}
 
+  Widget _buildModuleCard(ModuleModel module, int index) {
+    bool isSelected = selectedModuleIndex == index;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? AppColors.surfaceDark : Colors.white;
 
-// Otros sub-widgets (Burbujas y Botón)
-class _AnimatedBackgroundBubble extends StatefulWidget {
-  final Color color;
-  final double size;
-  const _AnimatedBackgroundBubble({required this.color, required this.size});
-
-  @override
-  State<_AnimatedBackgroundBubble> createState() => _AnimatedBackgroundBubbleState();
-}
-
-class _AnimatedBackgroundBubbleState extends State<_AnimatedBackgroundBubble> with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(vsync: this, duration: const Duration(seconds: 4))..repeat(reverse: true);
-  }
-  @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _ctrl,
-      builder: (context, child) => Transform.translate(
-        offset: Offset(0, 15 * _ctrl.value),
-        child: Container(
-          width: widget.size,
-          height: widget.size * (1 + 0.1 * _ctrl.value),
-          decoration: BoxDecoration(shape: BoxShape.circle, color: widget.color),
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() => selectedModuleIndex = index);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(25),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : Colors.transparent,
+            width: 2.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isSelected 
+                ? AppColors.primary.withValues(alpha: 0.2) 
+                : Colors.black.withValues(alpha: 0.03),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Expanded(
+              child: Container(
+                width: double.infinity,
+                margin: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: module.color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Center(
+                  child: _SafeLottie(
+                    source: module.lottieUrl,
+                    fallbackIcon: module.icon,
+                    fallbackColor: module.color,
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16, left: 12, right: 12),
+              child: Text(
+                module.title,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: isDark ? Colors.white : AppColors.textPrimaryLight,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
+class _AnimatedMascot extends StatelessWidget {
+  const _AnimatedMascot();
+  @override
+  Widget build(BuildContext context) {
+    return Pulse(
+      infinite: true,
+      duration: const Duration(seconds: 3),
+      child: Container(
+        height: 120,
+        width: 120,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white.withValues(alpha: 0.1),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.2),
+              blurRadius: 30,
+              spreadRadius: 5,
+            )
+          ],
+        ),
+        child: const Center(child: Text('💊', style: TextStyle(fontSize: 50))),
+      ),
+    );
+  }
+}
+
+class _SafeLottie extends StatelessWidget {
+  final String source;
+  final IconData fallbackIcon;
+  final Color fallbackColor;
+  const _SafeLottie({required this.source, required this.fallbackIcon, required this.fallbackColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return _LottieErrorBoundary(
+      fallback: Icon(fallbackIcon, size: 40, color: fallbackColor),
+      child: DotLottieView(
+        source: source,
+        sourceType: 'url',
+        autoplay: true,
+        loop: true,
+      ),
+    );
+  }
+}
+
+class _LottieErrorBoundary extends StatefulWidget {
+  final Widget child;
+  final Widget fallback;
+  const _LottieErrorBoundary({required this.child, required this.fallback});
+  @override
+  State<_LottieErrorBoundary> createState() => _LottieErrorBoundaryState();
+}
+
+class _LottieErrorBoundaryState extends State<_LottieErrorBoundary> {
+  bool _hasError = false;
+  @override
+  Widget build(BuildContext context) {
+    if (_hasError) return widget.fallback;
+    final oldBuilder = ErrorWidget.builder;
+    ErrorWidget.builder = (details) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_hasError) setState(() => _hasError = true);
+      });
+      return widget.fallback;
+    };
+    final result = Builder(builder: (context) => widget.child);
+    ErrorWidget.builder = oldBuilder;
+    return result;
+  }
+}
+
+class _PatternPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.1)
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke;
+    const spacing = 30.0;
+    for (double i = 0; i < size.width + size.height; i += spacing) {
+      canvas.drawLine(Offset(i, 0), Offset(i - size.height, size.height), paint);
+    }
+  }
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}

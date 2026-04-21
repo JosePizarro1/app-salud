@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dotlottie_flutter/dotlottie_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:animate_do/animate_do.dart';
+import 'package:flutter/services.dart';
+import '../../../app/theme/app_colors.dart';
 import '../../../app/widgets/theme_switcher.dart';
-import '../../../app/widgets/staggered_entry.dart';
-
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -17,320 +19,390 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   final emailCtrl = TextEditingController();
   final passCtrl = TextEditingController();
   bool isLoading = false;
-  AnimationController? _entryController; // Make it nullable to avoid late issues during hot reload
+  bool _obscurePass = true;
 
-  @override
-  void initState() {
-    super.initState();
-    _entryController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    );
-    _entryController?.forward();
-  }
+  void _login() async {
+    HapticFeedback.mediumImpact();
+    FocusScope.of(context).unfocus();
+    
+    if (emailCtrl.text.isEmpty || passCtrl.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor ingresa tus credenciales.')),
+      );
+      return;
+    }
 
-  @override
-  void dispose() {
-    _entryController?.dispose();
-    emailCtrl.dispose();
-    passCtrl.dispose();
-    super.dispose();
+    setState(() => isLoading = true);
+    
+    try {
+      await Supabase.instance.client.auth.signInWithPassword(
+        email: emailCtrl.text.trim(),
+        password: passCtrl.text.trim(),
+      );
+      if (mounted) context.go('/home');
+    } on AuthException catch (e) {
+      if (mounted) {
+        setState(() => isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message), backgroundColor: AppColors.error),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error inesperado.'), backgroundColor: AppColors.error),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Utilize native Theme colors instead of explicit hex references 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
-    // We get colors natively so when main.dart rebuilds through ThemeController, this catches it
-    final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
-    final primaryTextColor = isDark ? Colors.white : const Color(0xFF1E293B);
-    final secondaryTextColor = isDark ? Colors.white70 : Colors.black54;
-
     return Scaffold(
-      backgroundColor: backgroundColor,
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 600),
-        switchInCurve: Curves.easeInOutCubic,
-        switchOutCurve: Curves.easeInOutCubic,
-        child: isLoading 
-          ? _buildLoadingTransition(primaryTextColor)
-          : _buildLoginForm(isDark, secondaryTextColor, primaryTextColor),
-      ),
-    );
-  }
-
-  Widget _buildLoadingTransition(Color primaryTextColor) {
-    return SizedBox(
-      key: const ValueKey('loading'),
-      width: double.infinity,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      backgroundColor: isDark ? AppColors.bgDark : Colors.white,
+      body: Stack(
         children: [
-          TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0.8, end: 1.0),
-            duration: const Duration(seconds: 1),
-            curve: Curves.elasticOut,
-            builder: (context, value, child) {
-              return Transform.scale(scale: value, child: child);
-            },
-            child: const SizedBox(
-              height: 300,
-              width: 300,
-              child: DotLottieView(
-                source: "https://lottie.host/062056d9-b5d2-4b27-99df-e36652a9b97d/IMWRJOJKFZ.lottie",
-                sourceType: 'url',
-                autoplay: true,
-                loop: true,
+          // 🌊 Wavy Header
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: _WavyHeader(),
+          ),
+
+          // 📝 Contenido principal
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 30),
+              child: Column(
+                children: [
+                  const SizedBox(height: 10),
+                  const Align(
+                    alignment: Alignment.topRight,
+                    child: ThemeSwitcher(),
+                  ),
+                  
+                  const SizedBox(height: 20),
+
+                  // 🧠 Mascot (Safe Lottie)
+                  FadeInDown(
+                    child: Center(
+                      child: Container(
+                        height: 180,
+                        width: 180,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.transparent,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const _SafeLottie(
+                          source: "https://lottie.host/5a07409c-336e-49cd-9351-cc809ac29d7e/1U8fT6t7pW.lottie", // New Wellness Brain
+                          fallbackIcon: Icons.psychology_rounded,
+                          fallbackColor: AppColors.softPurple,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // 🏷️ Title & Subtitle
+                  FadeInUp(
+                    child: Column(
+                      children: [
+                        Text(
+                          "Vitali",
+                          style: GoogleFonts.outfit(
+                            fontSize: 42,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : const Color(0xFF2D3142),
+                          ),
+                        ),
+                        Text(
+                          "Your path to wellness",
+                          style: GoogleFonts.outfit(
+                            fontSize: 16,
+                            color: isDark ? Colors.white70 : Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  // 📧 User Input (Mint)
+                  FadeInUp(
+                    delay: const Duration(milliseconds: 200),
+                    child: _VitaliInput(
+                      controller: emailCtrl,
+                      hint: "Correo electrónico o usuario",
+                      icon: Icons.mail_outline_rounded,
+                      color: AppColors.mintLight,
+                      borderColor: AppColors.mint,
+                      isDark: isDark,
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // 🔒 Pass Input (Lavender)
+                  FadeInUp(
+                    delay: const Duration(milliseconds: 300),
+                    child: _VitaliInput(
+                      controller: passCtrl,
+                      hint: "Contraseña",
+                      icon: Icons.lock_outline_rounded,
+                      isObscure: _obscurePass,
+                      color: AppColors.lavenderLight,
+                      borderColor: AppColors.lavender,
+                      isDark: isDark,
+                      suffix: IconButton(
+                        icon: Icon(
+                          _obscurePass ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                          size: 20,
+                          color: isDark ? Colors.white54 : Colors.black45,
+                        ),
+                        onPressed: () => setState(() => _obscurePass = !_obscurePass),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // 🚀 Login Button
+                  FadeInUp(
+                    delay: const Duration(milliseconds: 400),
+                    child: isLoading 
+                      ? const CircularProgressIndicator()
+                      : _VitaliButton(
+                          text: "Iniciar Sesión",
+                          onPressed: _login,
+                          color: AppColors.mint,
+                        ),
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  const SizedBox(height: 10),
+
+                  const SizedBox(height: 40),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text("¿No tienes una cuenta? ", style: TextStyle(color: Colors.black45)),
+                      GestureDetector(
+                        onTap: () => context.push('/register'),
+                        child: const Text(
+                          "Regístrate",
+                          style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                ],
               ),
             ),
           ),
-          const SizedBox(height: 40),
-          _AnimatedLoadingText(color: primaryTextColor),
         ],
       ),
     );
   }
-
-  Widget _buildLoginForm(bool isDark, Color secondaryTextColor, Color primaryTextColor) {
-    return SafeArea(
-      key: const ValueKey('form'),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Switcher fluído con la pantalla
-            const Align(
-              alignment: Alignment.centerRight,
-              child: ThemeSwitcher(),
-            ),
-            
-            const SizedBox(height: 50),
-
-            // 🎬 Animación Lottie
-            StaggeredEntry(
-                  controller: _entryController!,
-                  index: 0,
-                  child: Center(
-                    child: SizedBox(
-                      height: 180,
-                      width: 180,
-                      child: DotLottieView(
-                        source: "https://lottie.host/5319cb02-834d-421c-a067-65deaffde35b/LsVuvLnSuc.lottie",
-                        sourceType: 'url',
-                        autoplay: true,
-                        loop: true,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-            // 💎 Nombre de la app imponente
-            StaggeredEntry(
-                  controller: _entryController!,
-                  index: 1,
-                  child: Text(
-                    "VITALI APP",
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.outfit(
-                      fontSize: 44,
-                      fontWeight: FontWeight.w900,
-                      color: primaryTextColor,
-                      letterSpacing: 3.0,
-                      height: 1.1,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-
-                StaggeredEntry(
-                  controller: _entryController!,
-                  index: 2,
-                  child: Text(
-                    "Inicia sesión para continuar",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16, color: secondaryTextColor, height: 1.5),
-                  ),
-                ),
-
-                const SizedBox(height: 40),
-
-                // 📩 Campo email
-                StaggeredEntry(
-                  controller: _entryController!,
-                  index: 3,
-                  child: _inputField(
-                    label: "Correo institucional",
-                    controller: emailCtrl,
-                    icon: Icons.email_outlined,
-                    isDark: isDark,
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // 🔐 Campo contraseña
-                StaggeredEntry(
-                  controller: _entryController!,
-                  index: 4,
-                  child: _inputField(
-                    label: "Contraseña",
-                    controller: passCtrl,
-                    icon: Icons.lock_outline,
-                    obscure: true,
-                    isDark: isDark,
-                  ),
-                ),
-
-                const SizedBox(height: 50),
-
-                // 🔵 Botón
-                StaggeredEntry(
-                  controller: _entryController!,
-                  index: 5,
-                  child: _AnimatedLoginButton(onPressed: _login),
-                ),
-              ],
-            ),
-          ),
-    );
-  }
-
-  // 🧩 Función login con animación mejorada
-  void _login() async {
-    // Escondemos el teclado si está abierto
-    FocusScope.of(context).unfocus();
-    
-    setState(() => isLoading = true);
-    
-    // Simular validación
-    await Future.delayed(const Duration(milliseconds: 3000));
-    
-    if (mounted) {
-      context.go('/home'); // Redirigir a Home directamente
-    }
-  }
-
-  // 📦 Widget campo de texto reutilizable
-  Widget _inputField({
-    required String label,
-    required TextEditingController controller,
-    required IconData icon,
-    bool obscure = false,
-    required bool isDark,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label,
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-              color: isDark ? Colors.white70 : Colors.black87,
-            )),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          obscureText: obscure,
-          style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-          decoration: InputDecoration(
-            prefixIcon: Icon(icon, color: isDark ? Colors.white38 : Colors.black38),
-            filled: true,
-            fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
-            contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide.none,
-            ),
-            hintText: label,
-            hintStyle: TextStyle(color: isDark ? Colors.white24 : Colors.black26),
-          ),
-        ),
-      ],
-    );
-  }
 }
 
-// 🚀 WIDGET PARA TEXTO DE CARGA ANIMADO
-class _AnimatedLoadingText extends StatefulWidget {
-  final Color color;
-  const _AnimatedLoadingText({required this.color});
-
-  @override
-  State<_AnimatedLoadingText> createState() => _AnimatedLoadingTextState();
-}
-
-class _AnimatedLoadingTextState extends State<_AnimatedLoadingText> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _opacity;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 1))..repeat(reverse: true);
-    _opacity = Tween<double>(begin: 0.4, end: 1.0).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
+class _WavyHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _opacity,
-      child: Text(
-        "Preparando tu experiencia Vitali...",
-        style: TextStyle(color: widget.color, fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: 0.2),
+    return SizedBox(
+      height: 140,
+      child: Stack(
+        children: [
+          ClipPath(
+            clipper: _TopWaveClipper(),
+            child: Container(color: AppColors.lavender.withValues(alpha: 0.3)),
+          ),
+          ClipPath(
+            clipper: _BottomWaveClipper(),
+            child: Container(color: AppColors.mint.withValues(alpha: 0.2)),
+          ),
+        ],
       ),
     );
   }
 }
 
-// 🚀 BOTÓN DE LOGIN ANIMADO (REUTILIZANDO ESTILO DE HOME)
-class _AnimatedLoginButton extends StatefulWidget {
-  final VoidCallback onPressed;
-  const _AnimatedLoginButton({required this.onPressed});
-
+class _TopWaveClipper extends CustomClipper<Path> {
   @override
-  State<_AnimatedLoginButton> createState() => _AnimatedLoginButtonState();
-}
-
-class _AnimatedLoginButtonState extends State<_AnimatedLoginButton> with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 150), lowerBound: 0.95, upperBound: 1.0, value: 1.0);
+  Path getClip(Size size) {
+    var path = Path();
+    path.lineTo(0, size.height * 0.7);
+    var firstControlPoint = Offset(size.width * 0.25, size.height);
+    var firstEndPoint = Offset(size.width * 0.5, size.height * 0.8);
+    path.quadraticBezierTo(firstControlPoint.dx, firstControlPoint.dy, firstEndPoint.dx, firstEndPoint.dy);
+    var secondControlPoint = Offset(size.width * 0.75, size.height * 0.6);
+    var secondEndPoint = Offset(size.width, size.height * 0.8);
+    path.quadraticBezierTo(secondControlPoint.dx, secondControlPoint.dy, secondEndPoint.dx, secondEndPoint.dy);
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
   }
   @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+}
+
+class _BottomWaveClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    var path = Path();
+    path.lineTo(0, size.height * 0.5);
+    var firstControlPoint = Offset(size.width * 0.25, size.height * 0.3);
+    var firstEndPoint = Offset(size.width * 0.5, size.height * 0.5);
+    path.quadraticBezierTo(firstControlPoint.dx, firstControlPoint.dy, firstEndPoint.dx, firstEndPoint.dy);
+    var secondControlPoint = Offset(size.width * 0.75, size.height * 0.7);
+    var secondEndPoint = Offset(size.width, size.height * 0.5);
+    path.quadraticBezierTo(secondControlPoint.dx, secondControlPoint.dy, secondEndPoint.dx, secondEndPoint.dy);
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+}
+
+class _VitaliInput extends StatelessWidget {
+  final TextEditingController controller;
+  final String hint;
+  final IconData icon;
+  final Color color;
+  final Color borderColor;
+  final bool isObscure;
+  final Widget? suffix;
+  final bool isDark;
+
+  const _VitaliInput({
+    required this.controller,
+    required this.hint,
+    required this.icon,
+    required this.color,
+    required this.borderColor,
+    this.isObscure = false,
+    this.suffix,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : color,
+        borderRadius: BorderRadius.circular(25),
+        border: Border.all(color: isDark ? Colors.white10 : borderColor, width: 1.5),
+      ),
+      child: TextField(
+        controller: controller,
+        obscureText: isObscure,
+        style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(color: isDark ? Colors.white38 : Colors.black38, fontSize: 14),
+          prefixIcon: Icon(icon, color: isDark ? Colors.white54 : Colors.black45, size: 22),
+          suffixIcon: suffix,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+        ),
+      ),
+    );
+  }
+}
+
+class _VitaliButton extends StatelessWidget {
+  final String text;
+  final VoidCallback onPressed;
+  final Color color;
+
+  const _VitaliButton({required this.text, required this.onPressed, required this.color});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTapDown: (_) => _ctrl.reverse(),
-      onTapUp: (_) => _ctrl.forward(),
-      onTapCancel: () => _ctrl.forward(),
-      onTap: widget.onPressed,
-      child: ScaleTransition(
-        scale: _ctrl,
-        child: Container(
-          height: 56,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: const LinearGradient(colors: [Color(0xFF6366F1), Color(0xFF818CF8)]),
-            boxShadow: [BoxShadow(color: const Color(0xFF6366F1).withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 8))],
+      onTap: onPressed,
+      child: Container(
+        height: 60,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(25),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.3),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          text,
+          style: GoogleFonts.outfit(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF2D3142),
           ),
-          alignment: Alignment.center,
-          child: const Text("INICIAR SESIÓN", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1.1)),
         ),
       ),
     );
   }
 }
+
+class _SafeLottie extends StatelessWidget {
+  final String source;
+  final IconData fallbackIcon;
+  final Color fallbackColor;
+  const _SafeLottie({required this.source, required this.fallbackIcon, required this.fallbackColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return _LottieErrorBoundary(
+      fallback: Icon(fallbackIcon, size: 80, color: fallbackColor),
+      child: DotLottieView(
+        source: source,
+        sourceType: 'url',
+        autoplay: true,
+        loop: true,
+      ),
+    );
+  }
+}
+
+class _LottieErrorBoundary extends StatefulWidget {
+  final Widget child;
+  final Widget fallback;
+  const _LottieErrorBoundary({required this.child, required this.fallback});
+  @override
+  State<_LottieErrorBoundary> createState() => _LottieErrorBoundaryState();
+}
+
+class _LottieErrorBoundaryState extends State<_LottieErrorBoundary> {
+  bool _hasError = false;
+  @override
+  Widget build(BuildContext context) {
+    if (_hasError) return widget.fallback;
+    final oldBuilder = ErrorWidget.builder;
+    ErrorWidget.builder = (details) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_hasError) setState(() => _hasError = true);
+      });
+      return widget.fallback;
+    };
+    final result = Builder(builder: (context) => widget.child);
+    ErrorWidget.builder = oldBuilder;
+    return result;
+  }
+}
+
 

@@ -31,6 +31,9 @@ dependencies:
   rive: ^0.13.3   # si ya instalaste, déjalo
   dotlottie_flutter: ^0.0.2
   supabase_flutter: ^2.12.2
+  flutter_dotenv: ^6.0.0
+  animate_do: ^3.3.4
+
 
 
 
@@ -55,6 +58,8 @@ flutter:
     - assets/images/
     - assets/lottie/start_button_hovering.lottie
     - assets/lottie/mascot.lottie
+    - .env
+
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
