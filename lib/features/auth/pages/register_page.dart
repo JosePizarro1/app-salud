@@ -4,9 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:animate_do/animate_do.dart';
-import 'package:dotlottie_flutter/dotlottie_flutter.dart';
 import '../../../app/theme/app_colors.dart';
-import '../../../app/widgets/theme_switcher.dart';
 import '../../../app/widgets/vitali_dialog.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -89,95 +87,48 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
     return Scaffold(
-      backgroundColor: isDark ? AppColors.bgDark : Colors.white,
       body: Stack(
+        fit: StackFit.expand,
         children: [
-          // 🌊 Wavy Header (Consistent with Login)
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: _WavyHeader(),
+          // ── Background image (100%) ──
+          Image.asset(
+            'assets/images/register_fondo.png',
+            fit: BoxFit.cover,
           ),
 
-          SafeArea(
+          // ── Back button ──
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 12,
+            left: 16,
+            child: FadeInLeft(
+              child: GestureDetector(
+                onTap: () => context.pop(),
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.7),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    size: 20,
+                    color: Color(0xFF2D3142),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // ── Form section (bottom) ──
+          Positioned(
+            bottom: 37,
+            left: 0,
+            right: 0,
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 30),
               child: Column(
                 children: [
-                  const SizedBox(height: 15), // Extra space for back button and switcher
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      FadeInLeft(
-                        child: GestureDetector(
-                          onTap: () => context.pop(),
-                          child: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white60,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.arrow_back_ios_new_rounded,
-                              size: 20,
-                              color: isDark ? Colors.white : const Color(0xFF2D3142),
-                            ),
-                          ),
-                        ),
-                      ),
-                      FadeInRight(child: const ThemeSwitcher()),
-                    ],
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  // 🧘 Mascot (Register specific)
-                  FadeInDown(
-                    child: Center(
-                      child: Container(
-                        height: 160,
-                        width: 160,
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.transparent,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const _SafeLottie(
-                          source: "https://lottie.host/ebd46162-4aa8-43d9-9524-733a1e263d95/f9C4eU7x6p.json", // Meditating person
-                          fallbackIcon: Icons.how_to_reg_rounded,
-                          fallbackColor: AppColors.mint,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  // 🏷️ Title
-                  FadeInUp(
-                    child: Column(
-                      children: [
-                        Text(
-                          "Únete a Vitali",
-                          style: GoogleFonts.outfit(
-                            fontSize: 36,
-                            fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : const Color(0xFF2D3142),
-                          ),
-                        ),
-                        Text(
-                          "Crea tu cuenta de bienestar",
-                          style: GoogleFonts.outfit(
-                            fontSize: 16,
-                            color: isDark ? Colors.white70 : Colors.black54,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 12),
 
                   // 👤 Name Input (Peach)
                   FadeInUp(
@@ -186,13 +137,13 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                       controller: nameCtrl,
                       hint: "Nombre completo",
                       icon: Icons.person_outline_rounded,
-                      color: AppColors.peachLight,
-                      borderColor: AppColors.peach,
+                      color: AppColors.surfaceSupport,
+                      borderColor: AppColors.primary.withValues(alpha: 0.3),
                       isDark: isDark,
                     ),
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
 
                   // 📧 Email Input (Mint)
                   FadeInUp(
@@ -201,13 +152,13 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                       controller: emailCtrl,
                       hint: "Usuario",
                       icon: Icons.alternate_email_rounded,
-                      color: AppColors.mintLight,
-                      borderColor: AppColors.mint,
+                      color: AppColors.surfaceAccent,
+                      borderColor: AppColors.accent,
                       isDark: isDark,
                     ),
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
 
                   // 🔒 Pass Input (Lavender)
                   FadeInUp(
@@ -217,8 +168,8 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                       hint: "Contraseña (Mín. 6 caracteres)",
                       icon: Icons.lock_outline_rounded,
                       isObscure: _obscureCode,
-                      color: AppColors.lavenderLight,
-                      borderColor: AppColors.lavender,
+                      color: AppColors.surfaceLight,
+                      borderColor: AppColors.secondary,
                       isDark: isDark,
                       suffix: IconButton(
                         icon: Icon(
@@ -231,7 +182,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                     ),
                   ),
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 20),
 
                   // 🚀 Register Button
                   FadeInUp(
@@ -241,26 +192,36 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                       : _VitaliButton(
                           text: "Crear Cuenta",
                           onPressed: _register,
-                          color: AppColors.mint,
+                          color: AppColors.primary,
                         ),
                   ),
 
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 16),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text("¿Ya tienes una cuenta? ", style: TextStyle(color: Colors.black45)),
-                      GestureDetector(
-                        onTap: () => context.pop(),
-                        child: const Text(
-                          "Inicia Sesión",
-                          style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary),
+                  // 📝 Login link
+                  FadeInUp(
+                    delay: const Duration(milliseconds: 500),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "¿Ya tienes una cuenta? ",
+                          style: TextStyle(
+                            color: isDark ? Colors.white54 : Colors.black45,
+                          ),
                         ),
-                      ),
-                    ],
+                        GestureDetector(
+                          onTap: () => context.pop(),
+                          child: const Text(
+                            "Inicia Sesión",
+                            style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 30),
+
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -269,66 +230,6 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
       ),
     );
   }
-}
-
-// 🌊 Reusing the Wavy Header logic for consistency
-class _WavyHeader extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 150,
-      child: Stack(
-        children: [
-          ClipPath(
-            clipper: _TopWaveClipper(),
-            child: Container(color: AppColors.lavender.withValues(alpha: 0.3)),
-          ),
-          ClipPath(
-            clipper: _BottomWaveClipper(),
-            child: Container(color: AppColors.mint.withValues(alpha: 0.2)),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TopWaveClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    var path = Path();
-    path.lineTo(0, size.height * 0.7);
-    var firstControlPoint = Offset(size.width * 0.25, size.height);
-    var firstEndPoint = Offset(size.width * 0.5, size.height * 0.8);
-    path.quadraticBezierTo(firstControlPoint.dx, firstControlPoint.dy, firstEndPoint.dx, firstEndPoint.dy);
-    var secondControlPoint = Offset(size.width * 0.75, size.height * 0.6);
-    var secondEndPoint = Offset(size.width, size.height * 0.8);
-    path.quadraticBezierTo(secondControlPoint.dx, secondControlPoint.dy, secondEndPoint.dx, secondEndPoint.dy);
-    path.lineTo(size.width, 0);
-    path.close();
-    return path;
-  }
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
-}
-
-class _BottomWaveClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    var path = Path();
-    path.lineTo(0, size.height * 0.5);
-    var firstControlPoint = Offset(size.width * 0.25, size.height * 0.3);
-    var firstEndPoint = Offset(size.width * 0.5, size.height * 0.5);
-    path.quadraticBezierTo(firstControlPoint.dx, firstControlPoint.dy, firstEndPoint.dx, firstEndPoint.dy);
-    var secondControlPoint = Offset(size.width * 0.75, size.height * 0.7);
-    var secondEndPoint = Offset(size.width, size.height * 0.5);
-    path.quadraticBezierTo(secondControlPoint.dx, secondControlPoint.dy, secondEndPoint.dx, secondEndPoint.dy);
-    path.lineTo(size.width, 0);
-    path.close();
-    return path;
-  }
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
 
 // 📦 Reusing consistent Input fields
@@ -371,7 +272,7 @@ class _VitaliInput extends StatelessWidget {
           prefixIcon: Icon(icon, color: isDark ? Colors.white54 : Colors.black45, size: 22),
           suffixIcon: suffix,
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+          contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
         ),
       ),
     );
@@ -390,7 +291,7 @@ class _VitaliButton extends StatelessWidget {
     return GestureDetector(
       onTap: onPressed,
       child: Container(
-        height: 60,
+        height: 54,
         width: double.infinity,
         decoration: BoxDecoration(
           color: color,
@@ -406,60 +307,14 @@ class _VitaliButton extends StatelessWidget {
         alignment: Alignment.center,
         child: Text(
           text,
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.poppins(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: const Color(0xFF2D3142),
+            color: Colors.white,
           ),
         ),
       ),
     );
-  }
-}
-
-class _SafeLottie extends StatelessWidget {
-  final String source;
-  final IconData fallbackIcon;
-  final Color fallbackColor;
-  const _SafeLottie({required this.source, required this.fallbackIcon, required this.fallbackColor});
-
-  @override
-  Widget build(BuildContext context) {
-    return _LottieErrorBoundary(
-      fallback: Icon(fallbackIcon, size: 80, color: fallbackColor),
-      child: DotLottieView(
-        source: source,
-        sourceType: 'url',
-        autoplay: true,
-        loop: true,
-      ),
-    );
-  }
-}
-
-class _LottieErrorBoundary extends StatefulWidget {
-  final Widget child;
-  final Widget fallback;
-  const _LottieErrorBoundary({required this.child, required this.fallback});
-  @override
-  State<_LottieErrorBoundary> createState() => _LottieErrorBoundaryState();
-}
-
-class _LottieErrorBoundaryState extends State<_LottieErrorBoundary> {
-  bool _hasError = false;
-  @override
-  Widget build(BuildContext context) {
-    if (_hasError) return widget.fallback;
-    final oldBuilder = ErrorWidget.builder;
-    ErrorWidget.builder = (details) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && !_hasError) setState(() => _hasError = true);
-      });
-      return widget.fallback;
-    };
-    final result = Builder(builder: (context) => widget.child);
-    ErrorWidget.builder = oldBuilder;
-    return result;
   }
 }
 
