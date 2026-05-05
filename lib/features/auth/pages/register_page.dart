@@ -137,7 +137,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                       controller: nameCtrl,
                       hint: "Nombre completo",
                       icon: Icons.person_outline_rounded,
-                      color: AppColors.surfaceSupport,
+                      color: Colors.white,
                       borderColor: AppColors.primary.withValues(alpha: 0.3),
                       isDark: isDark,
                     ),
@@ -152,7 +152,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                       controller: emailCtrl,
                       hint: "Usuario",
                       icon: Icons.alternate_email_rounded,
-                      color: AppColors.surfaceAccent,
+                      color: Colors.white,
                       borderColor: AppColors.accent,
                       isDark: isDark,
                     ),
@@ -168,8 +168,8 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                       hint: "Contraseña (Mín. 6 caracteres)",
                       icon: Icons.lock_outline_rounded,
                       isObscure: _obscureCode,
-                      color: AppColors.surfaceLight,
-                      borderColor: AppColors.secondary,
+                      color: Colors.white,
+                      borderColor: AppColors.primary.withValues(alpha: 0.3),
                       isDark: isDark,
                       suffix: IconButton(
                         icon: Icon(

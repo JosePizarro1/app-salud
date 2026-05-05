@@ -99,7 +99,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                       controller: emailCtrl,
                       hint: "Usuario institucional",
                       icon: Icons.alternate_email_rounded,
-                      color: AppColors.surfaceAccent,
+                      color: Colors.white,
                       borderColor: AppColors.accent,
                       isDark: isDark,
                     ),
@@ -115,8 +115,8 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                       hint: "Contraseña",
                       icon: Icons.lock_outline_rounded,
                       isObscure: _obscurePass,
-                      color: AppColors.surfaceLight,
-                      borderColor: AppColors.secondary,
+                      color: Colors.white,
+                      borderColor: AppColors.primary.withValues(alpha: 0.3),
                       isDark: isDark,
                       suffix: IconButton(
                         icon: Icon(
