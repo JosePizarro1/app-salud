@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:animate_do/animate_do.dart';
 import '../../../app/widgets/theme_switcher.dart';
 import '../../../app/theme/app_colors.dart';
+import '../widgets/module_header.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -14,15 +15,27 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   // Estado de escalado para cada módulo (0: Mesa/Modulo1, 1: Mod2, 2: Mod3, etc.)
-  final List<bool> _moduleScales = List.generate(7, (_) => false);
+  final List<bool> _moduleScales = List.generate(6, (_) => false);
 
-  void _triggerScale(int index) async {
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  Future<void> _triggerScale(int index) async {
     print("Modulo ${index + 1} presionado");
     setState(() => _moduleScales[index] = true);
     await Future.delayed(const Duration(milliseconds: 200));
     if (mounted) {
       setState(() => _moduleScales[index] = false);
     }
+    // Esperamos a que la escala regrese a su tamaño original antes de continuar
+    await Future.delayed(const Duration(milliseconds: 150));
   }
 
   @override
@@ -33,18 +46,18 @@ class _HomePageState extends State<HomePage> {
         children: [
           // ── Background image (100%) ──
           Image.asset(
-            'assets/images/fondo_home.jpg',
+            'assets/images/fondotiti.jpg',
             fit: BoxFit.cover,
           ),
 
           // ── GIF Character (Responsive %) ──
           Positioned(
-            left: MediaQuery.of(context).size.width * 0.21, // 1% más a la izquierda
-            top: MediaQuery.of(context).size.height * 0.32, // 4% más arriba
+            left: MediaQuery.of(context).size.width * 0.28, // 1% más a la izquierda
+            top: MediaQuery.of(context).size.height * 0.42, // 4% más arriba
             child: FadeIn(
               child: SizedBox(
-                width: MediaQuery.of(context).size.width * 0.56875, // 37.5% * 1.25
-                height: MediaQuery.of(context).size.height * 0.56875, // 37.5% * 1.25
+                width: MediaQuery.of(context).size.width * 0.45875, // 37.5% * 1.25
+                height: MediaQuery.of(context).size.height * 0.45875, // 37.5% * 1.25
                 child: Image.asset(
                   'assets/images/Video.GIF',
                   fit: BoxFit.contain,
@@ -53,10 +66,13 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
 
+          // ── Header (Configuración y Emergencia) ──
+          const ModuleHeader(),
+
           // ── Modulo 1 (Mesa) ──
           Positioned(
-            left: MediaQuery.of(context).size.width * 0.05,
-            bottom: MediaQuery.of(context).size.height * 0.34,
+            left: MediaQuery.of(context).size.width * 0,
+            bottom: MediaQuery.of(context).size.height * 0.24,
             child: FadeIn(
               delay: const Duration(milliseconds: 500),
               child: AnimatedScale(
@@ -65,13 +81,13 @@ class _HomePageState extends State<HomePage> {
                 curve: Curves.easeInOut,
                 child: InkWell(
                   onTap: () => _triggerScale(0),
-                  borderRadius: BorderRadius.circular(15),
+                 borderRadius: BorderRadius.circular(15),
                   child: Container(
-                    width: MediaQuery.of(context).size.width * 0.30,
-                    height: MediaQuery.of(context).size.height * 0.20,
+                    width: MediaQuery.of(context).size.width * 0.375,
+                    height: MediaQuery.of(context).size.height * 0.25,
                     decoration: const BoxDecoration(
                       image: DecorationImage(
-                        image: AssetImage('assets/images/mesa.png'),
+                        image: AssetImage('assets/images/modulo1.png'),
                         fit: BoxFit.contain,
                       ),
                     ),
@@ -83,7 +99,7 @@ class _HomePageState extends State<HomePage> {
 
           // ── Modulo 2 ──
           Positioned(
-            left: MediaQuery.of(context).size.width * 0.65,
+            left: MediaQuery.of(context).size.width * 0.6,
             bottom: MediaQuery.of(context).size.height * 0.35,
             child: FadeIn(
               delay: const Duration(milliseconds: 600),
@@ -92,10 +108,13 @@ class _HomePageState extends State<HomePage> {
                 duration: const Duration(milliseconds: 200),
                 curve: Curves.easeInOut,
                 child: InkWell(
-                  onTap: () => _triggerScale(1),
+                  onTap: () async {
+                    await _triggerScale(1);
+                    if (mounted) context.push('/module2');
+                  },
                   child: Container(
-                    width: MediaQuery.of(context).size.width * 0.375,
-                    height: MediaQuery.of(context).size.height * 0.25,
+                    width: MediaQuery.of(context).size.width * 0.4134375,
+                    height: MediaQuery.of(context).size.height * 0.275625,
                     decoration: const BoxDecoration(
                       image: DecorationImage(
                         image: AssetImage('assets/images/modulo2.PNG'),
@@ -110,8 +129,8 @@ class _HomePageState extends State<HomePage> {
 
           // ── Modulo 3 ──
           Positioned(
-            left: MediaQuery.of(context).size.width * 0.05,
-            bottom: MediaQuery.of(context).size.height * 0.44,
+            left: MediaQuery.of(context).size.width * 0.02,
+            bottom: MediaQuery.of(context).size.height * 0.39,
             child: FadeIn(
               delay: const Duration(milliseconds: 700),
               child: AnimatedScale(
@@ -119,10 +138,13 @@ class _HomePageState extends State<HomePage> {
                 duration: const Duration(milliseconds: 200),
                 curve: Curves.easeInOut,
                 child: InkWell(
-                  onTap: () => _triggerScale(2),
+                  onTap: () async {
+                    await _triggerScale(2);
+                    if (mounted) context.push('/module3');
+                  },
                   child: Container(
-                    width: MediaQuery.of(context).size.width * 0.375,
-                    height: MediaQuery.of(context).size.height * 0.25,
+                    width: MediaQuery.of(context).size.width * 0.45375,
+                    height: MediaQuery.of(context).size.height * 0.3025,
                     decoration: const BoxDecoration(
                       image: DecorationImage(
                         image: AssetImage('assets/images/modulo3.PNG'),
@@ -138,18 +160,18 @@ class _HomePageState extends State<HomePage> {
           // ── Modulo 4 ──
           Positioned(
             left: MediaQuery.of(context).size.width * 0.04,
-            bottom: MediaQuery.of(context).size.height * 0.10,
+            bottom: MediaQuery.of(context).size.height * 0.048,
             child: FadeIn(
               delay: const Duration(milliseconds: 800),
               child: AnimatedScale(
                 scale: _moduleScales[3] ? 1.4 : 1.0,
                 duration: const Duration(milliseconds: 200),
-                curve: Curves.easeInOut,
+                curve: Curves.easeInOut, 
                 child: InkWell(
                   onTap: () => _triggerScale(3),
                   child: Container(
-                    width: MediaQuery.of(context).size.width * 0.375,
-                    height: MediaQuery.of(context).size.height * 0.25,
+                    width: MediaQuery.of(context).size.width * 0.4125,
+                    height: MediaQuery.of(context).size.height * 0.275,
                     decoration: const BoxDecoration(
                       image: DecorationImage(
                         image: AssetImage('assets/images/modulo4.PNG'),
@@ -165,7 +187,7 @@ class _HomePageState extends State<HomePage> {
           // ── Modulo 5 ──
           Positioned(
             left: MediaQuery.of(context).size.width * 0.65,
-            bottom: MediaQuery.of(context).size.height * 0.2,
+            bottom: MediaQuery.of(context).size.height * 0.23,
             child: FadeIn(
               delay: const Duration(milliseconds: 900),
               child: AnimatedScale(
@@ -191,8 +213,8 @@ class _HomePageState extends State<HomePage> {
 
           // ── Modulo 6 ──
           Positioned(
-            left: MediaQuery.of(context).size.width * 0.45,
-            bottom: MediaQuery.of(context).size.height * 0.07,
+            left: MediaQuery.of(context).size.width * 0.55,
+            bottom: MediaQuery.of(context).size.height * 0.039,
             child: FadeIn(
               delay: const Duration(milliseconds: 1000),
               child: AnimatedScale(
@@ -202,8 +224,8 @@ class _HomePageState extends State<HomePage> {
                 child: InkWell(
                   onTap: () => _triggerScale(5),
                   child: Container(
-                    width: MediaQuery.of(context).size.width * 0.375,
-                    height: MediaQuery.of(context).size.height * 0.25,
+                    width: MediaQuery.of(context).size.width * 0.4125,
+                    height: MediaQuery.of(context).size.height * 0.275,
                     decoration: const BoxDecoration(
                       image: DecorationImage(
                         image: AssetImage('assets/images/modulo6.PNG'),
@@ -216,27 +238,6 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
 
-          // ── Top Header ──
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      FadeInRight(
-                        child: IconButton(
-                          icon: const Icon(Icons.settings_rounded, color: Colors.white, size: 28),
-                          onPressed: () => context.push('/settings'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
         ],
       ),
     );

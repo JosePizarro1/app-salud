@@ -82,6 +82,54 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
     }
   }
 
+  void _showTermsAndConditions() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Theme.of(context).brightness == Brightness.dark 
+            ? AppColors.surfaceDark 
+            : Colors.white,
+        title: Text(
+          "Términos y Condiciones",
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _termItem("Uso de Datos", "Recopilamos tu nombre y correo para identificarte en la plataforma."),
+              _termItem("Monitoreo de Módulos", "Registramos a qué módulos accedes para mejorar nuestro contenido y servicios universitarios."),
+              _termItem("Privacidad", "Tus datos son procesados de forma segura y no se comparten con terceros externos."),
+              _termItem("Carácter Informativo", "Esta app es una herramienta de apoyo y no sustituye el consejo médico profesional."),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Entendido", style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _termItem(String title, String desc) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+          const SizedBox(height: 4),
+          Text(desc, style: const TextStyle(fontSize: 13, color: Colors.grey)),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -143,7 +191,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                     ),
                   ),
 
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 6),
 
                   // 📧 Email Input (Mint)
                   FadeInUp(
@@ -158,7 +206,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                     ),
                   ),
 
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 6),
 
                   // 🔒 Pass Input (Lavender)
                   FadeInUp(
@@ -182,7 +230,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 12),
 
                   // 🚀 Register Button
                   FadeInUp(
@@ -196,7 +244,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                         ),
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
 
                   // 📝 Login link
                   FadeInUp(
@@ -218,6 +266,24 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                           ),
                         ),
                       ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // 📜 Terms & Conditions
+                  FadeInUp(
+                    delay: const Duration(milliseconds: 600),
+                    child: GestureDetector(
+                      onTap: _showTermsAndConditions,
+                      child: Text(
+                        "Al registrarte, aceptas nuestros\nTérminos, Condiciones y Uso de Datos",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: isDark ? Colors.white38 : Colors.black38,
+                        ),
+                      ),
                     ),
                   ),
 
