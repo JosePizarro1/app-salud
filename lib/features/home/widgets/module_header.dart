@@ -131,7 +131,7 @@ class _ModuleHeaderState extends State<ModuleHeader> {
                   width: MediaQuery.of(context).size.width * 0.15,
                   height: MediaQuery.of(context).size.width * 0.15,
                   child: Image.asset(
-                    'assets/images/Bhome.png',
+                    'assets/images/Bhome.PNG',
                     fit: BoxFit.contain,
                   ),
                 ),

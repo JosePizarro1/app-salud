@@ -59,7 +59,7 @@ class _HomePageState extends State<HomePage> {
                 width: MediaQuery.of(context).size.width * 0.45875, // 37.5% * 1.25
                 height: MediaQuery.of(context).size.height * 0.45875, // 37.5% * 1.25
                 child: Image.asset(
-                  'assets/images/Video.GIF',
+                  'assets/images/Video.gif',
                   fit: BoxFit.contain,
                 ),
               ),
@@ -117,7 +117,7 @@ class _HomePageState extends State<HomePage> {
                     height: MediaQuery.of(context).size.height * 0.275625,
                     decoration: const BoxDecoration(
                       image: DecorationImage(
-                        image: AssetImage('assets/images/modulo2.PNG'),
+                        image: AssetImage('assets/images/modulo2.png'),
                         fit: BoxFit.contain,
                       ),
                     ),
@@ -147,7 +147,7 @@ class _HomePageState extends State<HomePage> {
                     height: MediaQuery.of(context).size.height * 0.3025,
                     decoration: const BoxDecoration(
                       image: DecorationImage(
-                        image: AssetImage('assets/images/modulo3.PNG'),
+                        image: AssetImage('assets/images/modulo3.png'),
                         fit: BoxFit.contain,
                       ),
                     ),
@@ -174,7 +174,7 @@ class _HomePageState extends State<HomePage> {
                     height: MediaQuery.of(context).size.height * 0.275,
                     decoration: const BoxDecoration(
                       image: DecorationImage(
-                        image: AssetImage('assets/images/modulo4.PNG'),
+                        image: AssetImage('assets/images/modulo4.png'),
                         fit: BoxFit.contain,
                       ),
                     ),
@@ -201,7 +201,7 @@ class _HomePageState extends State<HomePage> {
                     height: MediaQuery.of(context).size.height * 0.25,
                     decoration: const BoxDecoration(
                       image: DecorationImage(
-                        image: AssetImage('assets/images/modulo5.PNG'),
+                        image: AssetImage('assets/images/modulo5.png'),
                         fit: BoxFit.contain,
                       ),
                     ),
@@ -228,7 +228,7 @@ class _HomePageState extends State<HomePage> {
                     height: MediaQuery.of(context).size.height * 0.275,
                     decoration: const BoxDecoration(
                       image: DecorationImage(
-                        image: AssetImage('assets/images/modulo6.PNG'),
+                        image: AssetImage('assets/images/modulo6.png'),
                         fit: BoxFit.contain,
                       ),
                     ),
