@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../widgets/module_header.dart';
 
 class Module3Page extends StatefulWidget {
@@ -65,7 +66,10 @@ class _Module3PageState extends State<Module3Page> {
                 _buildMenuButton(
                   index: 2,
                   imagePath: 'assets/images/Bemociones.png',
-                  onTap: () => _triggerScale(2),
+                  onTap: () async {
+                    await _triggerScale(2);
+                    if (mounted) context.push('/emotions');
+                  },
                 ),
               ],
             ),

@@ -66,7 +66,7 @@ class _ModuleHeaderState extends State<ModuleHeader> {
         if (!widget.showHome)
           Positioned(
             left: MediaQuery.of(context).size.width * 0.05,
-            top: MediaQuery.of(context).size.height * 0.05,
+            top: MediaQuery.of(context).size.height * 0.10,
           child: AnimatedScale(
             scale: _isConfigPressed ? 1.3 : 1.0,
             duration: const Duration(milliseconds: 200),
@@ -91,7 +91,7 @@ class _ModuleHeaderState extends State<ModuleHeader> {
         // ── Botón Emergencia ──
         Positioned(
           right: MediaQuery.of(context).size.width * 0.05,
-          top: MediaQuery.of(context).size.height * 0.035,
+          top: MediaQuery.of(context).size.height * 0.085,
           child: AnimatedScale(
             scale: _isEmergencyPressed ? 1.3 : (_isPulsing ? 1.1 : 1.0),
             duration: const Duration(milliseconds: 1500),
@@ -117,7 +117,7 @@ class _ModuleHeaderState extends State<ModuleHeader> {
         if (widget.showHome)
           Positioned(
             left: MediaQuery.of(context).size.width * 0.05,
-            top: MediaQuery.of(context).size.height * 0.041,
+            top: MediaQuery.of(context).size.height * 0.091,
             child: AnimatedScale(
               scale: _isHomePressed ? 1.3 : 1.0,
               duration: const Duration(milliseconds: 200),

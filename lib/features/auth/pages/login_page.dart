@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/services.dart';
+import 'dart:ui';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/widgets/vitali_dialog.dart';
 
@@ -72,18 +73,31 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     final screenHeight = MediaQuery.of(context).size.height;
     
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // ── Background image (100%) ──
-          Image.asset(
-            'assets/images/login_fondo.png',
-            fit: BoxFit.cover,
+          // ── Background image with Blur ──
+          TweenAnimationBuilder<double>(
+            duration: const Duration(milliseconds: 300),
+            tween: Tween<double>(
+              begin: 0.0,
+              end: MediaQuery.of(context).viewInsets.bottom > 0 ? 5.0 : 0.0,
+            ),
+            builder: (context, blurValue, child) {
+              return ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: blurValue, sigmaY: blurValue),
+                child: Image.asset(
+                  'assets/images/login_fondo.png',
+                  fit: BoxFit.cover,
+                ),
+              );
+            },
           ),
 
           // ── Form section (bottom) ──
           Positioned(
-            bottom: 37,
+            bottom: 37 + MediaQuery.of(context).viewInsets.bottom,
             left: 0,
             right: 0,
             child: SingleChildScrollView(

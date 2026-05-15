@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:ui';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -135,13 +136,26 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // ── Background image (100%) ──
-          Image.asset(
-            'assets/images/register_fondo.png',
-            fit: BoxFit.cover,
+          // ── Background image with Blur ──
+          TweenAnimationBuilder<double>(
+            duration: const Duration(milliseconds: 300),
+            tween: Tween<double>(
+              begin: 0.0,
+              end: MediaQuery.of(context).viewInsets.bottom > 0 ? 5.0 : 0.0,
+            ),
+            builder: (context, blurValue, child) {
+              return ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: blurValue, sigmaY: blurValue),
+                child: Image.asset(
+                  'assets/images/register_fondo.png',
+                  fit: BoxFit.cover,
+                ),
+              );
+            },
           ),
 
           // ── Back button ──
@@ -169,7 +183,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
 
           // ── Form section (bottom) ──
           Positioned(
-            bottom: 37,
+            bottom: 37 + MediaQuery.of(context).viewInsets.bottom,
             left: 0,
             right: 0,
             child: SingleChildScrollView(

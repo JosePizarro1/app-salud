@@ -7,6 +7,7 @@ import '../features/home/pages/emergency_page.dart';
 import '../features/home/pages/module2_page.dart';
 import '../features/home/pages/module3_page.dart';
 import '../features/settings/pages/settings_page.dart';
+import '../features/emotions/pages/emotions_calendar_page.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/welcome',
@@ -42,6 +43,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/module3',
       builder: (context, state) => const Module3Page(),
+    ),
+    GoRoute(
+      path: '/emotions',
+      builder: (context, state) => const EmotionsCalendarPage(),
     ),
   ],
 );
