@@ -80,7 +80,10 @@ class _HomePageState extends State<HomePage> {
                 duration: const Duration(milliseconds: 200),
                 curve: Curves.easeInOut,
                 child: InkWell(
-                  onTap: () => _triggerScale(0),
+                  onTap: () async {
+                    await _triggerScale(0);
+                    if (mounted) context.push('/module1');
+                  },
                  borderRadius: BorderRadius.circular(15),
                   child: Container(
                     width: MediaQuery.of(context).size.width * 0.375,
@@ -168,7 +171,10 @@ class _HomePageState extends State<HomePage> {
                 duration: const Duration(milliseconds: 200),
                 curve: Curves.easeInOut, 
                 child: InkWell(
-                  onTap: () => _triggerScale(3),
+                  onTap: () async {
+                    await _triggerScale(3);
+                    if (mounted) context.push('/module4');
+                  },
                   child: Container(
                     width: MediaQuery.of(context).size.width * 0.4125,
                     height: MediaQuery.of(context).size.height * 0.275,
@@ -195,7 +201,10 @@ class _HomePageState extends State<HomePage> {
                 duration: const Duration(milliseconds: 200),
                 curve: Curves.easeInOut,
                 child: InkWell(
-                  onTap: () => _triggerScale(4),
+                  onTap: () async {
+                    await _triggerScale(4);
+                    if (mounted) context.push('/module5');
+                  },
                   child: Container(
                     width: MediaQuery.of(context).size.width * 0.375,
                     height: MediaQuery.of(context).size.height * 0.25,

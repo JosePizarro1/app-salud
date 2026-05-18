@@ -6,6 +6,7 @@ import 'app/theme.dart';
 import 'app/router.dart';
 import 'app/theme_controller.dart';
 import 'app/widgets/connectivity_wrapper.dart';
+import 'app/widgets/session_lifecycle_wrapper.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,7 +42,9 @@ class MyApp extends StatelessWidget {
           darkTheme: AppTheme.darkTheme,
           themeMode: ThemeController.instance.themeMode,
           routerConfig: appRouter,
-          builder: (context, child) => ConnectivityWrapper(child: child!),
+          builder: (context, child) => SessionLifecycleWrapper(
+            child: ConnectivityWrapper(child: child!),
+          ),
         );
       },
     );

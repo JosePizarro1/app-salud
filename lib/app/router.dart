@@ -4,10 +4,14 @@ import '../features/auth/pages/login_page.dart';
 import '../features/auth/pages/register_page.dart';
 import '../features/home/pages/home_page.dart';
 import '../features/home/pages/emergency_page.dart';
+import '../features/home/pages/module1_page.dart';
 import '../features/home/pages/module2_page.dart';
 import '../features/home/pages/module3_page.dart';
+import '../features/home/pages/module4_page.dart';
+import '../features/home/pages/module5_page.dart';
 import '../features/settings/pages/settings_page.dart';
 import '../features/emotions/pages/emotions_calendar_page.dart';
+import '../features/games/pages/sudoku_page.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/welcome',
@@ -37,6 +41,10 @@ final appRouter = GoRouter(
       builder: (context, state) => const EmergencyPage(),
     ),
     GoRoute(
+      path: '/module1',
+      builder: (context, state) => const Module1Page(),
+    ),
+    GoRoute(
       path: '/module2',
       builder: (context, state) => const Module2Page(),
     ),
@@ -45,8 +53,20 @@ final appRouter = GoRouter(
       builder: (context, state) => const Module3Page(),
     ),
     GoRoute(
+      path: '/module4',
+      builder: (context, state) => const Module4Page(),
+    ),
+    GoRoute(
+      path: '/module5',
+      builder: (context, state) => const Module5Page(),
+    ),
+    GoRoute(
       path: '/emotions',
       builder: (context, state) => const EmotionsCalendarPage(),
+    ),
+    GoRoute(
+      path: '/sudoku',
+      builder: (context, state) => const SudokuPage(),
     ),
   ],
 );
