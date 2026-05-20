@@ -7,9 +7,13 @@ import 'app/router.dart';
 import 'app/theme_controller.dart';
 import 'app/widgets/connectivity_wrapper.dart';
 import 'app/widgets/session_lifecycle_wrapper.dart';
+import 'services/notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize notifications gracefully
+  await NotificationService().init();
   
   await dotenv.load(fileName: ".env");
   

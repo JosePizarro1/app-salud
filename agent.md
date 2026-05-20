@@ -5,6 +5,8 @@
 - **Main Tables**:
   - `public.users`: Profiles with `full_name` and `student_code`.
   - `public.emotion_entries`: Emotional registry (one per user per day).
+  - `public.diary_entries`: Daily personal diary entries (responses to prompt questions).
+  - `public.daily_tasks`: Daily customizable tasks and self-care list (empty by default).
 - **Authentication**: Using `@unjbg.edu.pe` as a standard institution domain.
 
 ## Key Features

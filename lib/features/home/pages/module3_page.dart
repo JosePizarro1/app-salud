@@ -48,7 +48,10 @@ class _Module3PageState extends State<Module3Page> {
                 _buildMenuButton(
                   index: 0,
                   imagePath: 'assets/images/Bmeditacion.png',
-                  onTap: () => _triggerScale(0),
+                  onTap: () async {
+                    await _triggerScale(0);
+                    if (mounted) context.push('/meditation');
+                  },
                 ),
                 
                 const SizedBox(width: 10),

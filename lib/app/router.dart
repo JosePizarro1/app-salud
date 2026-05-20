@@ -11,6 +11,7 @@ import '../features/home/pages/module4_page.dart';
 import '../features/home/pages/module5_page.dart';
 import '../features/settings/pages/settings_page.dart';
 import '../features/emotions/pages/emotions_calendar_page.dart';
+import '../features/emotions/pages/meditation_page.dart';
 import '../features/games/pages/sudoku_page.dart';
 
 final appRouter = GoRouter(
@@ -63,6 +64,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/emotions',
       builder: (context, state) => const EmotionsCalendarPage(),
+    ),
+    GoRoute(
+      path: '/meditation',
+      builder: (context, state) => const MeditationPage(),
     ),
     GoRoute(
       path: '/sudoku',

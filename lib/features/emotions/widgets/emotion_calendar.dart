@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../app/theme/app_colors.dart';
 import '../models/emotion_entry.dart';
 import '../services/emotion_storage.dart';
 
@@ -12,6 +13,9 @@ class EmotionCalendar extends StatelessWidget {
   final SharedPreferences? prefs; // Not used anymore but kept for compatibility if needed
   final Map<String, EmotionType> emotions;
   final void Function(String dateStr) onDayTap;
+  final String? selectedDateStr;
+  final String selectedSection;
+  final Map<String, List<Map<String, dynamic>>> diarioTasks;
 
   const EmotionCalendar({
     super.key,
@@ -22,6 +26,9 @@ class EmotionCalendar extends StatelessWidget {
     this.prefs,
     required this.emotions,
     required this.onDayTap,
+    this.selectedDateStr,
+    required this.selectedSection,
+    required this.diarioTasks,
   });
 
   static const List<String> _dayLabels = ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa', 'Do'];
@@ -123,9 +130,31 @@ class EmotionCalendar extends StatelessWidget {
                   '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
               final emotion = emotions[dateStr];
               final isToday = now.year == year && now.month == month && now.day == day;
+              final isSelected = selectedDateStr == dateStr;
 
               final dayDate = DateTime(year, month, day);
               final isFuture = dayDate.isAfter(now);
+
+              final dayTasks = diarioTasks[dateStr];
+              final hasTasks = dayTasks != null && dayTasks.isNotEmpty;
+              final hasPending = hasTasks && dayTasks.any((t) => !t['done']);
+              final allDone = hasTasks && dayTasks.every((t) => t['done']);
+
+              // Color de fondo
+              Color circleColor = Colors.transparent;
+              if (selectedSection == 'diario' && emotion != null) {
+                circleColor = emotion.color.withValues(alpha: 0.85);
+              } else if (selectedSection == 'tareas') {
+                if (allDone) {
+                  circleColor = AppColors.accent.withValues(alpha: 0.15);
+                } else if (hasPending) {
+                  circleColor = Colors.red.withValues(alpha: 0.1);
+                } else if (isSelected) {
+                  circleColor = AppColors.primary.withValues(alpha: 0.15);
+                }
+              } else if (isSelected) {
+                circleColor = AppColors.primary.withValues(alpha: 0.15);
+              }
 
               return GestureDetector(
                 onTap: isFuture ? null : () => onDayTap(dateStr),
@@ -137,30 +166,53 @@ class EmotionCalendar extends StatelessWidget {
                     width: 42,
                     height: 42,
                     decoration: BoxDecoration(
-                      color: emotion != null ? emotion.color.withValues(alpha: 0.85) : Colors.transparent,
+                      color: circleColor,
                       shape: BoxShape.circle,
-                      border: isToday
+                      border: isSelected
                           ? Border.all(
-                              color: const Color(0xFFFF8A71),
+                              color: AppColors.primary,
                               width: 2.5,
                             )
-                          : null,
+                          : (isToday
+                              ? Border.all(
+                                  color: const Color(0xFFFF8A71),
+                                  width: 1.5,
+                                )
+                              : null),
                     ),
                     child: Center(
-                      child: emotion != null
+                      child: (selectedSection == 'diario' && emotion != null)
                           ? Text(
                               emotion.emoji,
                               style: const TextStyle(fontSize: 16),
                             )
-                          : Text(
-                              '$day',
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                fontWeight: isToday ? FontWeight.bold : FontWeight.w400,
-                                color: isToday
-                                    ? const Color(0xFFFF8A71)
-                                    : const Color(0xFF2D3142),
-                              ),
+                          : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  '$day',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 13,
+                                    fontWeight: isSelected || isToday ? FontWeight.bold : FontWeight.w400,
+                                    color: isSelected
+                                        ? AppColors.primary
+                                        : (isToday
+                                            ? const Color(0xFFFF8A71)
+                                            : const Color(0xFF2D3142)),
+                                  ),
+                                ),
+                                if (selectedSection == 'tareas' && hasTasks) ...[
+                                  const SizedBox(height: 2),
+                                  Container(
+                                    width: 5,
+                                    height: 5,
+                                    decoration: BoxDecoration(
+                                      color: allDone ? AppColors.accent : Colors.red,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                     ),
                   ),

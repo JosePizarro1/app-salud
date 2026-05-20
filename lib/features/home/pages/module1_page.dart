@@ -45,7 +45,7 @@ class _Module1PageState extends State<Module1Page> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _buildMenuButton(
-                  imagePath: 'assets/images/Brespiracion.png',
+                  imagePath: 'assets/images/Bsudoku.png',
                   onTap: () async {
                     await _triggerScale();
                     if (mounted) context.push('/sudoku');
