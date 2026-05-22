@@ -23,12 +23,26 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Precache heavy images on first build for instant rendering
+    precacheImage(const AssetImage('assets/images/fondotiti.jpg'), context);
+    precacheImage(const AssetImage('assets/images/Video.gif'), context);
+    precacheImage(const AssetImage('assets/images/modulo1.png'), context);
+    precacheImage(const AssetImage('assets/images/modulo2.png'), context);
+    precacheImage(const AssetImage('assets/images/modulo3.png'), context);
+    precacheImage(const AssetImage('assets/images/modulo4.png'), context);
+    precacheImage(const AssetImage('assets/images/modulo5.png'), context);
+    precacheImage(const AssetImage('assets/images/modulo6.png'), context);
+  }
+
+  @override
   void dispose() {
     super.dispose();
   }
 
   Future<void> _triggerScale(int index) async {
-    print("Modulo ${index + 1} presionado");
+    debugPrint("Modulo ${index + 1} presionado");
     setState(() => _moduleScales[index] = true);
     await Future.delayed(const Duration(milliseconds: 200));
     if (mounted) {

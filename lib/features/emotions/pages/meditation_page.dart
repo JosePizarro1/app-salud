@@ -120,6 +120,18 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Precache button images for instant rendering
+    precacheImage(const AssetImage('assets/images/modulo_respiracion/B1minuto.png'), context);
+    precacheImage(const AssetImage('assets/images/modulo_respiracion/B3minutos.png'), context);
+    precacheImage(const AssetImage('assets/images/modulo_respiracion/B5minutos.png'), context);
+    precacheImage(const AssetImage('assets/images/modulo_respiracion/Bcampana.PNG'), context);
+    precacheImage(const AssetImage('assets/images/modulo_respiracion/sol.png'), context);
+    precacheImage(const AssetImage('assets/images/modulo_respiracion/luna.png'), context);
+  }
+
+  @override
   void dispose() {
     _sessionTimer?.cancel();
     _breathingTimer?.cancel();
@@ -1521,18 +1533,20 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
         ),
 
         // ── Particle background ──
-        AnimatedBuilder(
-          animation: _particleController,
-          builder: (context, _) {
-            return CustomPaint(
-              painter: _ParticlePainter(
-                particles: _particles,
-                animValue: _particleController.value,
-                isPaused: _isAudioPaused,
-              ),
-              size: Size.infinite,
-            );
-          },
+        RepaintBoundary(
+          child: AnimatedBuilder(
+            animation: _particleController,
+            builder: (context, _) {
+              return CustomPaint(
+                painter: _ParticlePainter(
+                  particles: _particles,
+                  animValue: _particleController.value,
+                  isPaused: _isAudioPaused,
+                ),
+                size: Size.infinite,
+              );
+            },
+          ),
         ),
 
         // ── Player UI ──
@@ -1574,66 +1588,68 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                 const Spacer(),
 
                 // ── Circular progress timer ──
-                SizedBox(
-                  width: circleSize,
-                  height: circleSize,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // Background arc
-                      SizedBox(
-                        width: circleSize,
-                        height: circleSize,
-                        child: CustomPaint(
-                          painter: _CircularProgressPainter(
-                            progress: progress,
-                            trackColor: Colors.white.withOpacity(0.1), // Dark bg adjustments
-                            progressColor: const Color(0xFF88D49E),
-                            strokeWidth: 8,
+                RepaintBoundary(
+                  child: SizedBox(
+                    width: circleSize,
+                    height: circleSize,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Background arc
+                        SizedBox(
+                          width: circleSize,
+                          height: circleSize,
+                          child: CustomPaint(
+                            painter: _CircularProgressPainter(
+                              progress: progress,
+                              trackColor: Colors.white.withOpacity(0.1),
+                              progressColor: const Color(0xFF88D49E),
+                              strokeWidth: 8,
+                            ),
                           ),
                         ),
-                      ),
 
-                      // Progress indicator dot
-                      SizedBox(
-                        width: circleSize,
-                        height: circleSize,
-                        child: CustomPaint(
-                          painter: _ProgressDotPainter(
-                            progress: progress,
-                            dotColor: Colors.white,
-                            dotSize: 14,
+                        // Progress indicator dot
+                        SizedBox(
+                          width: circleSize,
+                          height: circleSize,
+                          child: CustomPaint(
+                            painter: _ProgressDotPainter(
+                              progress: progress,
+                              dotColor: Colors.white,
+                              dotSize: 14,
+                            ),
                           ),
                         ),
-                      ),
 
-                      // Play/Pause button in center
-                      GestureDetector(
-                        onTap: _togglePause,
-                        child: Container(
-                          width: 72,
-                          height: 72,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withOpacity(0.85),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.08),
-                                blurRadius: 20,
-                                offset: const Offset(0, 6),
-                              ),
-                            ],
-                          ),
-                          child: Icon(
-                            _isAudioPaused
-                                ? Icons.play_arrow_rounded
-                                : Icons.pause_rounded,
-                            size: 36,
-                            color: const Color(0xFF2D3142),
+                        // Play/Pause button in center
+                        GestureDetector(
+                          onTap: _togglePause,
+                          child: Container(
+                            width: 72,
+                            height: 72,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withOpacity(0.85),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.08),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              _isAudioPaused
+                                  ? Icons.play_arrow_rounded
+                                  : Icons.pause_rounded,
+                              size: 36,
+                              color: const Color(0xFF2D3142),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
 
@@ -1822,12 +1838,27 @@ class _CircularProgressPainter extends CustomPainter {
   final Color progressColor;
   final double strokeWidth;
 
+  // Cached Paint objects to avoid GC pressure
+  late final Paint _trackPaint;
+  late final Paint _progressPaint;
+
   _CircularProgressPainter({
     required this.progress,
     required this.trackColor,
     required this.progressColor,
     required this.strokeWidth,
-  });
+  }) {
+    _trackPaint = Paint()
+      ..color = trackColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+    _progressPaint = Paint()
+      ..color = progressColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1839,40 +1870,30 @@ class _CircularProgressPainter extends CustomPainter {
     const arcSweep = 2 * pi * 0.78; // ~280° arc (open at bottom)
 
     // Track
-    final trackPaint = Paint()
-      ..color = trackColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),
       startAngle,
       arcSweep,
       false,
-      trackPaint,
+      _trackPaint,
     );
 
     // Progress
-    final progressPaint = Paint()
-      ..color = progressColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-
     final progressSweep = arcSweep * progress.clamp(0.0, 1.0);
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),
       startAngle,
       progressSweep,
       false,
-      progressPaint,
+      _progressPaint,
     );
   }
 
   @override
   bool shouldRepaint(covariant _CircularProgressPainter oldDelegate) =>
-      oldDelegate.progress != progress;
+      oldDelegate.progress != progress ||
+      oldDelegate.trackColor != trackColor ||
+      oldDelegate.progressColor != progressColor;
 }
 
 /// Dot at the end of the progress arc
@@ -1881,11 +1902,20 @@ class _ProgressDotPainter extends CustomPainter {
   final Color dotColor;
   final double dotSize;
 
+  // Cached Paint objects
+  late final Paint _glowPaint;
+  late final Paint _dotPaint;
+
   _ProgressDotPainter({
     required this.progress,
     required this.dotColor,
     required this.dotSize,
-  });
+  }) {
+    _glowPaint = Paint()
+      ..color = Colors.white.withOpacity(0.5)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+    _dotPaint = Paint()..color = dotColor;
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1902,14 +1932,10 @@ class _ProgressDotPainter extends CustomPainter {
     );
 
     // Glow
-    final glowPaint = Paint()
-      ..color = Colors.white.withOpacity(0.5)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
-    canvas.drawCircle(dotCenter, dotSize * 0.8, glowPaint);
+    canvas.drawCircle(dotCenter, dotSize * 0.8, _glowPaint);
 
     // Dot
-    final dotPaint = Paint()..color = dotColor;
-    canvas.drawCircle(dotCenter, dotSize / 2, dotPaint);
+    canvas.drawCircle(dotCenter, dotSize / 2, _dotPaint);
   }
 
   @override
@@ -1951,6 +1977,9 @@ class _ParticlePainter extends CustomPainter {
   final bool isPaused;
   static final Random _random = Random();
 
+  // Reusable Paint object to avoid allocating per-particle
+  final Paint _particlePaint = Paint();
+
   _ParticlePainter({
     required this.particles,
     required this.animValue,
@@ -1969,14 +1998,14 @@ class _ParticlePainter extends CustomPainter {
         p.reset(_random);
       }
 
-      final paint = Paint()
+      _particlePaint
         ..color = Colors.white.withOpacity(p.opacity * (isPaused ? 0.4 : 1.0))
         ..maskFilter = MaskFilter.blur(BlurStyle.normal, p.size * 0.5);
 
       canvas.drawCircle(
         Offset(p.x * size.width, p.y * size.height),
         p.size,
-        paint,
+        _particlePaint,
       );
     }
   }

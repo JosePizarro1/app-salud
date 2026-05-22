@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:animate_do/animate_do.dart';
 import 'dart:async';
 
 class ChatMessage {
@@ -816,10 +817,9 @@ class _TitiChatPageState extends State<TitiChatPage> {
     );
   }
 
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFE5DDD5), // WhatsApp classic beige background
+      backgroundColor: const Color(0xFFF4F7FB), // Modern light pastel background
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(80),
         child: Container(
@@ -979,9 +979,10 @@ class _TitiChatPageState extends State<TitiChatPage> {
   }
 
   Widget _buildMessageBubble(ChatMessage msg) {
+    Widget bubble;
     if (msg.isUser) {
       // User Message Bubble (Right alignment)
-      return Padding(
+      bubble = Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.end,
@@ -1039,7 +1040,7 @@ class _TitiChatPageState extends State<TitiChatPage> {
       );
     } else {
       // Titi's Message Bubble (Left alignment)
-      return Padding(
+      bubble = Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1110,6 +1111,13 @@ class _TitiChatPageState extends State<TitiChatPage> {
         ),
       );
     }
+    
+    // Wrap with FadeInUp for smooth entry
+    return FadeInUp(
+      duration: const Duration(milliseconds: 300),
+      from: 15,
+      child: bubble,
+    );
   }
 
   // Bouncing typing animation with dots
@@ -1117,13 +1125,17 @@ class _TitiChatPageState extends State<TitiChatPage> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: List.generate(3, (index) {
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 2.0),
-          width: 6,
-          height: 6,
-          decoration: const BoxDecoration(
-            color: Color(0xFF4C7CC2),
-            shape: BoxShape.circle,
+        return Pulse(
+          infinite: true,
+          delay: Duration(milliseconds: index * 200),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 2.0),
+            width: 6,
+            height: 6,
+            decoration: const BoxDecoration(
+              color: Color(0xFF4C7CC2),
+              shape: BoxShape.circle,
+            ),
           ),
         );
       }),
@@ -1300,56 +1312,70 @@ class _TitiChatPageState extends State<TitiChatPage> {
   }
 
   Widget _buildOptionSelectorCard(List<String> options) {
-    return Column(
-      children: options.map((opt) {
-        return Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey[200]!, width: 1.5),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.01),
-                blurRadius: 6,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () => _onOptionSelected(opt),
-              borderRadius: BorderRadius.circular(16),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        opt,
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF2C2C2C),
-                        ),
-                      ),
-                    ),
-                    Container(
-                      width: 20,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.grey[300]!, width: 2),
-                      ),
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.35, // Prevent overflowing screen
+      ),
+      child: RawScrollbar(
+        thumbColor: Colors.grey[300],
+        radius: const Radius.circular(10),
+        thickness: 4,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.only(right: 8.0),
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            children: options.map((opt) {
+              return Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey[200]!, width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.01),
+                      blurRadius: 6,
+                      offset: const Offset(0, 3),
                     ),
                   ],
                 ),
-              ),
-            ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => _onOptionSelected(opt),
+                    borderRadius: BorderRadius.circular(16),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              opt,
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF2C2C2C),
+                              ),
+                            ),
+                          ),
+                          Container(
+                            width: 20,
+                            height: 20,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.grey[300]!, width: 2),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
           ),
-        );
-      }).toList(),
+        ),
+      ),
     );
   }
 }
