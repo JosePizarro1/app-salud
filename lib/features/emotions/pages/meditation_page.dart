@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../../home/widgets/module_header.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../services/notification_service.dart';
@@ -18,21 +21,39 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
   bool _wiggleCheckbox = false;
   int? _selectedTimeOption;
 
-  // Breathing Session State
+  // Flow State
   bool _isSessionActive = false;
   bool _isSessionFinished = false;
+  bool _isConfiguring = false;
+  bool _isSelectingAudio = false; // NEW: audio selection view
+  bool _isPlaying = false;        // NEW: player view active
   int _selectedMinutes = 1;
   int _secondsRemaining = 0;
   Timer? _sessionTimer;
 
   // Breathing loop state: 'inhale', 'hold', 'exhale', 'hold_empty'
-  String _breathingPhase = 'inhale'; 
+  String _breathingPhase = 'inhale';
   int _phaseSeconds = 0;
   Timer? _breathingTimer;
 
   // Animation controller for the breathing circle
   late AnimationController _circleAnimController;
   late Animation<double> _circleScaleAnimation;
+
+  // ── Audio Player State ──
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  int? _selectedAudioIndex; // 1-4
+  int _totalAudioDuration = 0; // in seconds
+  int _currentAudioPosition = 0; // in seconds
+  bool _isAudioPaused = false;
+  StreamSubscription? _durationSub;
+  StreamSubscription? _positionSub;
+  StreamSubscription? _completionSub;
+
+  // ── Particle Animation ──
+  late AnimationController _particleController;
+  final List<_Particle> _particles = [];
+  final _random = Random();
 
   // Notification Configuration State
   bool _isDayNotificationEnabled = false;
@@ -45,6 +66,35 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
   int _nightMinute = 0;
   String _nightPeriod = 'PM';
 
+  // Audio paths per category
+  static const Map<int, List<String>> _audioPaths = {
+    1: [
+      'audio/AUDIOS DE MEDITACIÓN GUIADA/AUDIOS 01 MINUTO/AUDIO-1.mp3',
+      'audio/AUDIOS DE MEDITACIÓN GUIADA/AUDIOS 01 MINUTO/AUDIO-2.mp3',
+      'audio/AUDIOS DE MEDITACIÓN GUIADA/AUDIOS 01 MINUTO/AUDIO-3.mp3',
+      'audio/AUDIOS DE MEDITACIÓN GUIADA/AUDIOS 01 MINUTO/audio-4.mp3',
+    ],
+    3: [
+      'audio/AUDIOS DE MEDITACIÓN GUIADA/AUDIOS 03 MINUTOS/AUDIO-1.mp3',
+      'audio/AUDIOS DE MEDITACIÓN GUIADA/AUDIOS 03 MINUTOS/AUDIO-2.mp3',
+      'audio/AUDIOS DE MEDITACIÓN GUIADA/AUDIOS 03 MINUTOS/AUDIO-3.mp3',
+      'audio/AUDIOS DE MEDITACIÓN GUIADA/AUDIOS 03 MINUTOS/AUDIO-4.mp3',
+    ],
+    5: [
+      'audio/AUDIOS DE MEDITACIÓN GUIADA/AUDIOS 05 MINUTOS/AUDIO 1.mp3',
+      'audio/AUDIOS DE MEDITACIÓN GUIADA/AUDIOS 05 MINUTOS/AUDIO 2.mp3',
+      'audio/AUDIOS DE MEDITACIÓN GUIADA/AUDIOS 05 MINUTOS/AUDIO 3.mp3',
+      'audio/AUDIOS DE MEDITACIÓN GUIADA/AUDIOS 05 MINUTOS/AUDIO 4.mp3',
+    ],
+  };
+
+  static const List<String> _audioTitles = [
+    'Meditación de Calma Interior 🌸',
+    'Conexión con tu Respiración 🌿',
+    'Relajación Consciente 🌙',
+    'Momento de Bienestar ✨',
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -55,6 +105,17 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
     _circleScaleAnimation = Tween<double>(begin: 1.0, end: 2.2).animate(
       CurvedAnimation(parent: _circleAnimController, curve: Curves.easeInOut),
     );
+
+    _particleController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    )..repeat();
+
+    // Generate particles
+    for (int i = 0; i < 30; i++) {
+      _particles.add(_Particle(random: _random));
+    }
+
     _loadNotificationSettings();
   }
 
@@ -63,6 +124,11 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
     _sessionTimer?.cancel();
     _breathingTimer?.cancel();
     _circleAnimController.dispose();
+    _particleController.dispose();
+    _audioPlayer.dispose();
+    _durationSub?.cancel();
+    _positionSub?.cancel();
+    _completionSub?.cancel();
     super.dispose();
   }
 
@@ -91,7 +157,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
     });
   }
 
-  // Starts the interactive guided breathing session
+  // Starts the 10s configuring breathing phase
   void _startBreathingSession(int minutes) {
     if (!_isCommitted) {
       _triggerWiggle();
@@ -110,30 +176,41 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
       return;
     }
 
-    // Prevent timer multiplication by cancelling any existing active timers before launching a new session
+    // Prevent timer multiplication
     _sessionTimer?.cancel();
     _breathingTimer?.cancel();
 
     setState(() {
       _selectedMinutes = minutes;
-      _secondsRemaining = minutes * 60;
+      _secondsRemaining = 8; // 8 segundos de configuración
       _isSessionActive = true;
       _isSessionFinished = false;
+      _isConfiguring = true;
+      _isSelectingAudio = false;
+      _isPlaying = false;
       _breathingPhase = 'inhale';
       _phaseSeconds = 4;
     });
 
-    _circleAnimController.reset(); // Reset animation scale back to standard before starting
+    _circleAnimController.reset();
     _circleAnimController.forward();
 
-    // 1. Overall session countdown timer
+    // 1. Overall session countdown timer (Configurando)
     _sessionTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_secondsRemaining > 1) {
         setState(() {
           _secondsRemaining--;
         });
       } else {
-        _endSession(completed: true);
+        // End of 10s configuring phase → Show audio selection
+        _sessionTimer?.cancel();
+        _breathingTimer?.cancel();
+        _circleAnimController.stop();
+        _circleAnimController.reset();
+        setState(() {
+          _isConfiguring = false;
+          _isSelectingAudio = true;
+        });
       }
     });
 
@@ -154,13 +231,11 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
       _phaseSeconds = 4;
       if (_breathingPhase == 'inhale') {
         _breathingPhase = 'hold';
-        // Keep circle expanded
       } else if (_breathingPhase == 'hold') {
         _breathingPhase = 'exhale';
         _circleAnimController.reverse();
       } else if (_breathingPhase == 'exhale') {
         _breathingPhase = 'hold_empty';
-        // Keep circle contracted
       } else {
         _breathingPhase = 'inhale';
         _circleAnimController.forward();
@@ -168,14 +243,88 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
     });
   }
 
+  // ── Start audio playback ──
+  Future<void> _startAudioPlayback(int audioIndex) async {
+    HapticFeedback.mediumImpact();
+    setState(() {
+      _selectedAudioIndex = audioIndex;
+      _isSelectingAudio = false;
+      _isPlaying = true;
+      _isAudioPaused = false;
+      _currentAudioPosition = 0;
+      _totalAudioDuration = _selectedMinutes * 60; // fallback
+    });
+
+    final paths = _audioPaths[_selectedMinutes]!;
+    final path = paths[audioIndex - 1];
+
+    // Listen to audio events
+    _durationSub?.cancel();
+    _positionSub?.cancel();
+    _completionSub?.cancel();
+
+    _durationSub = _audioPlayer.onDurationChanged.listen((d) {
+      if (mounted) {
+        setState(() => _totalAudioDuration = d.inSeconds);
+      }
+    });
+
+    _positionSub = _audioPlayer.onPositionChanged.listen((p) {
+      if (mounted) {
+        setState(() => _currentAudioPosition = p.inSeconds);
+      }
+    });
+
+    _completionSub = _audioPlayer.onPlayerComplete.listen((_) {
+      if (mounted) {
+        _endSession(completed: true);
+      }
+    });
+
+    try {
+      await _audioPlayer.play(AssetSource(path));
+    } catch (e) {
+      debugPrint('Error playing audio: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al reproducir audio', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          ),
+        );
+      }
+    }
+  }
+
+  void _togglePause() {
+    HapticFeedback.lightImpact();
+    if (_isAudioPaused) {
+      _audioPlayer.resume();
+    } else {
+      _audioPlayer.pause();
+    }
+    setState(() => _isAudioPaused = !_isAudioPaused);
+  }
+
+  void _seekRelative(int seconds) {
+    final newPos = (_currentAudioPosition + seconds).clamp(0, _totalAudioDuration);
+    _audioPlayer.seek(Duration(seconds: newPos));
+  }
+
   void _endSession({required bool completed}) {
     _sessionTimer?.cancel();
     _breathingTimer?.cancel();
     _circleAnimController.stop();
-    _circleAnimController.reset(); // Safely shrink the visual scale back to standard on exit
+    _circleAnimController.reset();
+    _audioPlayer.stop();
 
     setState(() {
       _isSessionActive = false;
+      _isConfiguring = false;
+      _isSelectingAudio = false;
+      _isPlaying = false;
       if (completed) {
         _isSessionFinished = true;
       }
@@ -188,14 +337,20 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
     return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
+  String _formatTimeShort(int totalSeconds) {
+    final int minutes = totalSeconds ~/ 60;
+    final int seconds = totalSeconds % 60;
+    return '$minutes:${seconds.toString().padLeft(2, '0')}';
+  }
+
   Color _getPhaseColor() {
     switch (_breathingPhase) {
       case 'inhale':
-        return AppColors.accent; // Mint/Fresh
+        return AppColors.accent;
       case 'hold':
-        return AppColors.secondary; // Lavender/Calm
+        return AppColors.secondary;
       case 'exhale':
-        return AppColors.primary; // Coral/Release
+        return AppColors.primary;
       default:
         return const Color(0xFF9083ED);
     }
@@ -216,6 +371,21 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
     }
   }
 
+  // Which view to show
+  Widget _getCurrentView() {
+    if (_isSessionActive) {
+      if (_isConfiguring) return _buildBreathingSessionView();
+      if (_isSelectingAudio) return _buildAudioSelectionView();
+      if (_isPlaying) return _buildPlayerView();
+      return _buildBreathingSessionView();
+    }
+    if (_isSessionFinished) return _buildFinishedView();
+    return _buildSelectionView();
+  }
+
+  // Should header be visible
+  bool get _showHeader => !_isSessionActive || _isConfiguring || _isSelectingAudio || _isPlaying;
+
   // Helper widget to build time inputs inside modal
   Widget _buildTimeInputBox({
     required TextEditingController controller,
@@ -226,7 +396,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
       width: 65,
       height: 48,
       decoration: BoxDecoration(
-        color: const Color(0xFFE2E7FF), // Lavender tint
+        color: const Color(0xFFE2E7FF),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: const Color(0xFF3B60B3).withOpacity(0.3),
@@ -250,7 +420,6 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
             contentPadding: EdgeInsets.zero,
           ),
           onTap: () {
-            // Auto-select all text on tap to easily replace the entire value
             controller.selection = TextSelection(
               baseOffset: 0,
               extentOffset: controller.text.length,
@@ -282,10 +451,9 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
       ),
       child: Column(
         children: [
-          // AM
           Expanded(
             child: GestureDetector(
-              behavior: HitTestBehavior.opaque, // Ensures the entire rectangular half is fully tap-sensitive
+              behavior: HitTestBehavior.opaque,
               onTap: () => onPeriodChanged('AM'),
               child: Container(
                 width: double.infinity,
@@ -305,10 +473,9 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
               ),
             ),
           ),
-          // PM
           Expanded(
             child: GestureDetector(
-              behavior: HitTestBehavior.opaque, // Ensures the entire rectangular half is fully tap-sensitive
+              behavior: HitTestBehavior.opaque,
               onTap: () => onPeriodChanged('PM'),
               child: Container(
                 width: double.infinity,
@@ -335,7 +502,6 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
 
   // Routine Modal Bottom Sheet Builder
   void _showRoutineModal() async {
-    // Load local variables from state
     bool localDayEnabled = _isDayNotificationEnabled;
     int localDayHour = _dayHour;
     int localDayMinute = _dayMinute;
@@ -378,7 +544,6 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Top indicator line
                       Container(
                         width: 50,
                         height: 5,
@@ -389,7 +554,6 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                       ),
                       const SizedBox(height: 16),
 
-                      // Title
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -413,7 +577,6 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                       ),
                       const SizedBox(height: 8),
 
-                      // Subtitle
                       Text(
                         'Selecciona los horarios en los que deseas recibir recordatorios para tus pausas de meditación',
                         textAlign: TextAlign.center,
@@ -464,7 +627,6 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                       ),
                       const SizedBox(height: 12),
 
-                      // Time Input Row for Day
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -538,7 +700,6 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                       ),
                       const SizedBox(height: 12),
 
-                      // Time Input Row for Night
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -588,7 +749,6 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                             final int? nHour = int.tryParse(nightHourController.text);
                             final int? nMin = int.tryParse(nightMinController.text);
 
-                            // Intelligently default and only validate time configuration for ENABLED reminders
                             int finalDHour = dHour ?? 7;
                             int finalDMin = dMin ?? 0;
                             int finalNHour = nHour ?? 8;
@@ -634,7 +794,6 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                               finalNMin = nMin;
                             }
 
-                            // Save to local SharedPreferences cache
                             final prefs = await SharedPreferences.getInstance();
                             await prefs.setBool('meditation_day_enabled', localDayEnabled);
                             await prefs.setInt('meditation_day_hour', finalDHour);
@@ -645,10 +804,6 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                             await prefs.setInt('meditation_night_hour', finalNHour);
                             await prefs.setInt('meditation_night_minute', finalNMin);
                             await prefs.setString('meditation_night_period', localNightPeriod);
-
-                            debugPrint('💾 [MeditationPage] Guardando configuración de rutina en SharedPreferences:');
-                            debugPrint('   ☀️ Día habilitado: $localDayEnabled ($finalDHour:$finalDMin $localDayPeriod)');
-                            debugPrint('   🌙 Noche habilitada: $localNightEnabled ($finalNHour:$finalNMin $localNightPeriod)');
 
                             // Schedule day notification
                             if (localDayEnabled) {
@@ -667,7 +822,6 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                               await NotificationService().cancelNotification(1);
                             }
 
-                            // Schedule night notification
                             if (localNightEnabled) {
                               int hour24 = finalNHour;
                               if (localNightPeriod == 'PM' && finalNHour != 12) hour24 += 12;
@@ -684,7 +838,6 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                               await NotificationService().cancelNotification(2);
                             }
 
-                            // Reload main state settings
                             await _loadNotificationSettings();
 
                             if (mounted) {
@@ -740,7 +893,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Background soft tinted wall
+          // Background gradient
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -755,44 +908,43 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
           SafeArea(
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 400),
-              child: _isSessionActive
-                  ? _buildBreathingSessionView()
-                  : _isSessionFinished
-                      ? _buildFinishedView()
-                      : _buildSelectionView(),
+              child: _getCurrentView(),
             ),
           ),
 
-          // Shared Header with Home Button (only visible if not active in breathing)
-          // Placed last in stack to ensure touch events are successfully processed and not blocked by SafeArea
-          if (!_isSessionActive) ...[
+          // Header always visible
+          if (_showHeader) ...[
             const ModuleHeader(showHome: true),
 
-            // Notification Routine Trigger Bell Button in Header
-            Positioned(
-              right: MediaQuery.of(context).size.width * 0.24, // Placed beautifully next to the Emergency Button
-              top: MediaQuery.of(context).size.height * 0.095, // Perfectly aligned horizontally
-              child: BounceableScale(
-                onTap: _showRoutineModal,
-                child: SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.20,
-                  height: MediaQuery.of(context).size.width * 0.095,
-                  child: Image.asset(
-                    isNotificationActive
-                        ? 'assets/images/modulo_respiracion/Bactivar_notificacion.png'
-                        : 'assets/images/modulo_respiracion/Bdesactivar_notificacion.png',
-                    fit: BoxFit.contain,
+            // Notification Routine Trigger Bell Button
+            if (!_isPlaying)
+              Positioned(
+                left: MediaQuery.of(context).size.width * 0.22,
+                top: MediaQuery.of(context).size.height * 0.082,
+                child: BounceableScale(
+                  onTap: _showRoutineModal,
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.19,
+                    height: MediaQuery.of(context).size.width * 0.19,
+                    child: Opacity(
+                      opacity: isNotificationActive ? 1.0 : 0.55,
+                      child: Image.asset(
+                        'assets/images/modulo_respiracion/Bcampana.PNG',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
           ],
         ],
       ),
     );
   }
 
-  // --- 1. Selection View (Matching attached image) ---
+  // ═══════════════════════════════════════════════════════════════════
+  // --- 1. Selection View ---
+  // ═══════════════════════════════════════════════════════════════════
   Widget _buildSelectionView() {
     return Center(
       key: const ValueKey('selection_view'),
@@ -803,7 +955,6 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const SizedBox(height: 40),
-              // Main content card with thin green/mint border
               Container(
                 width: double.infinity,
                 constraints: const BoxConstraints(maxWidth: 420),
@@ -812,7 +963,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(32),
                   border: Border.all(
-                    color: const Color(0xFF88D49E), // Light green border
+                    color: const Color(0xFF88D49E),
                     width: 3.5,
                   ),
                   boxShadow: [
@@ -826,7 +977,6 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Title "¡Tomemos una pequeña pausa!"
                     CustomFadeIn(
                       duration: const Duration(milliseconds: 600),
                       slideUp: false,
@@ -838,7 +988,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                             style: GoogleFonts.outfit(
                               fontSize: 34,
                               fontWeight: FontWeight.w800,
-                              color: const Color(0xFF3B60B3), // Navy blue tint
+                              color: const Color(0xFF3B60B3),
                               height: 1.15,
                             ),
                           ),
@@ -848,7 +998,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                             style: GoogleFonts.outfit(
                               fontSize: 34,
                               fontWeight: FontWeight.w800,
-                              color: const Color(0xFF28AF52), // Gorgeous green tint
+                              color: const Color(0xFF28AF52),
                               height: 1.15,
                             ),
                           ),
@@ -857,39 +1007,32 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                     ),
                     const SizedBox(height: 16),
 
-                    // Subtitle
                     Text(
                       'Cada sesión se adapta a tu tiempo disponible.',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.poppins(
                         fontSize: 14.5,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFF4C7CC2), // Indigo subtitle color
+                        color: const Color(0xFF4C7CC2),
                       ),
                     ),
                     const SizedBox(height: 20),
 
-                    // 1 Minuto Button
                     _buildTimeButton(
                       imagePath: 'assets/images/modulo_respiracion/B1minuto.png',
                       minutes: 1,
                     ),
                     const SizedBox(height: 10),
-
-                    // 3 Minutos Button
                     _buildTimeButton(
                       imagePath: 'assets/images/modulo_respiracion/B3minutos.png',
                       minutes: 3,
                     ),
                     const SizedBox(height: 10),
-
-                    // 5 Minutos Button
                     _buildTimeButton(
                       imagePath: 'assets/images/modulo_respiracion/B5minutos.png',
                       minutes: 5,
                     ),
 
-                    // Commitment elements will ONLY show once a time option is selected
                     if (_selectedTimeOption != null) ...[
                       const SizedBox(height: 24),
                       CustomFadeIn(
@@ -897,22 +1040,17 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                         slideUp: true,
                         child: Column(
                           children: [
-                            // Today Choice Text
                             Text(
                               'Hoy elijo dedicarme unos minutos',
                               textAlign: TextAlign.center,
                               style: GoogleFonts.outfit(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
-                                color: const Color(0xFF4C7CC2), // Light Indigo accent
+                                color: const Color(0xFF4C7CC2),
                               ),
                             ),
                             const SizedBox(height: 16),
-
-                            // Commitment Checkbox
                             _buildCommitmentCheckbox(),
-
-                            // Beautiful primary call-to-action button showing when committed
                             if (_isCommitted) ...[
                               const SizedBox(height: 20),
                               CustomFadeIn(
@@ -977,11 +1115,11 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
         opacity: opacity,
         child: SizedBox(
           width: double.infinity,
-          height: MediaQuery.of(context).size.height * 0.088, // 8.8% screen height prevents cutting the outline borders!
+          height: MediaQuery.of(context).size.height * 0.088,
           child: Image.asset(
             imagePath,
-            fit: BoxFit.cover, // Auto-crops the transparent vertical margins!
-            alignment: Alignment.center, // Keeps the actual button graphic centered
+            fit: BoxFit.cover,
+            alignment: Alignment.center,
           ),
         ),
       ),
@@ -998,14 +1136,13 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       decoration: BoxDecoration(
         color: _wiggleCheckbox
-            ? const Color(0xFFFFF2ED) // Slight reddish flash for attention
+            ? const Color(0xFFFFF2ED)
             : Colors.transparent,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Beautiful custom checkbox
           GestureDetector(
             onTap: () {
               setState(() {
@@ -1025,7 +1162,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                       ? const Color(0xFF28AF52)
                       : _wiggleCheckbox
                           ? AppColors.primary
-                          : const Color(0xFF28AF52), // Matching the green checkbox style
+                          : const Color(0xFF28AF52),
                   width: 2.2,
                 ),
               ),
@@ -1034,8 +1171,6 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                   : null,
             ),
           ),
-          
-          // Commitment Text
           Expanded(
             child: GestureDetector(
               onTap: () {
@@ -1059,7 +1194,9 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
     );
   }
 
-  // --- 2. Breathing guided exercise view (Box breathing technique) ---
+  // ═══════════════════════════════════════════════════════════════════
+  // --- 2. Breathing / Configuring View ---
+  // ═══════════════════════════════════════════════════════════════════
   Widget _buildBreathingSessionView() {
     final double size = MediaQuery.of(context).size.width * 0.42;
 
@@ -1070,7 +1207,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Timer countdown + phase indicator
+            // Timer countdown + close button
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -1108,7 +1245,6 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
             Stack(
               alignment: Alignment.center,
               children: [
-                // Glowing outer pulse ring
                 AnimatedBuilder(
                   animation: _circleScaleAnimation,
                   builder: (context, child) {
@@ -1129,8 +1265,6 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                     );
                   },
                 ),
-
-                // Core expanding animated lung/circle
                 AnimatedBuilder(
                   animation: _circleScaleAnimation,
                   builder: (context, child) {
@@ -1165,7 +1299,6 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
             ),
             const Spacer(),
 
-            // Dynamic phase guiding text
             CustomFadeIn(
               key: ValueKey(_breathingPhase),
               duration: const Duration(milliseconds: 300),
@@ -1182,14 +1315,16 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
             ),
             const SizedBox(height: 10),
 
-            // Tip description
             Text(
-              'Mantén los hombros relajados e inhala por la nariz.',
+              _isConfiguring 
+                  ? 'Espera un momento mientras se configura...\nMantén los hombros relajados.'
+                  : 'Mantén los hombros relajados e inhala por la nariz.',
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                 fontSize: 13,
                 color: Colors.grey.shade600,
                 fontWeight: FontWeight.w500,
+                height: 1.5,
               ),
             ),
             const Spacer(),
@@ -1199,7 +1334,394 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
     );
   }
 
+  // ═══════════════════════════════════════════════════════════════════
+  // --- 2b. Audio Selection View (NEW) ---
+  // ═══════════════════════════════════════════════════════════════════
+  Widget _buildAudioSelectionView() {
+    return Center(
+      key: const ValueKey('audio_selection_view'),
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+          child: Column(
+            children: [
+              const SizedBox(height: 100),
+              CustomFadeIn(
+                duration: const Duration(milliseconds: 500),
+                slideUp: false,
+                child: Column(
+                  children: [
+                    const Text('🎧', style: TextStyle(fontSize: 48)),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Elige tu meditación',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.outfit(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF3B60B3),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Sesión de $_selectedMinutes ${_selectedMinutes == 1 ? 'minuto' : 'minutos'}',
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF28AF52),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 28),
+
+              // Audio option cards
+              ...List.generate(4, (i) {
+                final idx = i + 1;
+                final colors = [
+                  [const Color(0xFF88D49E), const Color(0xFF28AF52)],
+                  [const Color(0xFF9BB8ED), const Color(0xFF3B60B3)],
+                  [const Color(0xFFE8A0C8), const Color(0xFFE56BB5)],
+                  [const Color(0xFFFFCC80), const Color(0xFFFF9800)],
+                ];
+                final icons = ['🌸', '🌿', '🌙', '✨'];
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: CustomFadeIn(
+                    duration: const Duration(milliseconds: 400),
+                    delay: i * 0.12,
+                    slideUp: true,
+                    child: BounceableScale(
+                      onTap: () => _startAudioPlayback(idx),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              colors[i][0].withOpacity(0.15),
+                              colors[i][1].withOpacity(0.08),
+                            ],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: colors[i][0].withOpacity(0.4),
+                            width: 2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: colors[i][0].withOpacity(0.12),
+                              blurRadius: 15,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: colors[i][1].withOpacity(0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: Text(icons[i], style: const TextStyle(fontSize: 24)),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Audio $idx',
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: colors[i][1],
+                                      letterSpacing: 1.2,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    _audioTitles[i],
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFF2D3142),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(
+                              Icons.play_circle_fill_rounded,
+                              color: colors[i][1],
+                              size: 36,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+
+              const SizedBox(height: 16),
+              // Back button
+              TextButton.icon(
+                onPressed: () => _endSession(completed: false),
+                icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                label: Text(
+                  'Volver al menú',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.grey.shade600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // --- 2c. Audio Player View (Circular Timer + Particles) ---
+  // ═══════════════════════════════════════════════════════════════════
+  Widget _buildPlayerView() {
+    final screenW = MediaQuery.of(context).size.width;
+    final circleSize = screenW * 0.6;
+    final progress = _totalAudioDuration > 0
+        ? _currentAudioPosition / _totalAudioDuration
+        : 0.0;
+
+    return Stack(
+      key: const ValueKey('player_view'),
+      fit: StackFit.expand,
+      children: [
+        // ── Dark relaxing background ──
+        Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+        ),
+
+        // ── Particle background ──
+        AnimatedBuilder(
+          animation: _particleController,
+          builder: (context, _) {
+            return CustomPaint(
+              painter: _ParticlePainter(
+                particles: _particles,
+                animValue: _particleController.value,
+                isPaused: _isAudioPaused,
+              ),
+              size: Size.infinite,
+            );
+          },
+        ),
+
+        // ── Player UI ──
+        SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: Column(
+              children: [
+                const SizedBox(height: 180),
+
+                // Title
+                CustomFadeIn(
+                  duration: const Duration(milliseconds: 500),
+                  slideUp: false,
+                  child: Column(
+                    children: [
+                      Text(
+                        _audioTitles[(_selectedAudioIndex ?? 1) - 1],
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.outfit(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white, // Changed to white for dark bg
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Sesión de $_selectedMinutes ${_selectedMinutes == 1 ? 'minuto' : 'minutos'}',
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF88D49E), // Lighter green for dark bg
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const Spacer(),
+
+                // ── Circular progress timer ──
+                SizedBox(
+                  width: circleSize,
+                  height: circleSize,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Background arc
+                      SizedBox(
+                        width: circleSize,
+                        height: circleSize,
+                        child: CustomPaint(
+                          painter: _CircularProgressPainter(
+                            progress: progress,
+                            trackColor: Colors.white.withOpacity(0.1), // Dark bg adjustments
+                            progressColor: const Color(0xFF88D49E),
+                            strokeWidth: 8,
+                          ),
+                        ),
+                      ),
+
+                      // Progress indicator dot
+                      SizedBox(
+                        width: circleSize,
+                        height: circleSize,
+                        child: CustomPaint(
+                          painter: _ProgressDotPainter(
+                            progress: progress,
+                            dotColor: Colors.white,
+                            dotSize: 14,
+                          ),
+                        ),
+                      ),
+
+                      // Play/Pause button in center
+                      GestureDetector(
+                        onTap: _togglePause,
+                        child: Container(
+                          width: 72,
+                          height: 72,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.85),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.08),
+                                blurRadius: 20,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            _isAudioPaused
+                                ? Icons.play_arrow_rounded
+                                : Icons.pause_rounded,
+                            size: 36,
+                            color: const Color(0xFF2D3142),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // ── Time display + controls ──
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Rewind
+                    GestureDetector(
+                      onTap: () => _seekRelative(-10),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withOpacity(0.15),
+                        ),
+                        child: const Icon(Icons.replay_10_rounded, size: 22, color: Colors.white),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+
+                    // Time pill
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: Colors.white.withOpacity(0.2)),
+                      ),
+                      child: Text(
+                        '${_formatTimeShort(_currentAudioPosition)} - ${_formatTimeShort(_totalAudioDuration)}',
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+
+                    // Forward
+                    GestureDetector(
+                      onTap: () => _seekRelative(10),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withOpacity(0.15),
+                        ),
+                        child: const Icon(Icons.forward_10_rounded, size: 22, color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const Spacer(),
+
+                // Stop button
+                TextButton.icon(
+                  onPressed: () => _endSession(completed: false),
+                  icon: const Icon(Icons.stop_circle_outlined, size: 20),
+                  label: Text(
+                    'Terminar sesión',
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.redAccent.shade200,
+                  ),
+                ),
+                const SizedBox(height: 100),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
   // --- 3. Finished / Celebration View ---
+  // ═══════════════════════════════════════════════════════════════════
   Widget _buildFinishedView() {
     return Center(
       key: const ValueKey('finished_view'),
@@ -1289,7 +1811,184 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
   }
 }
 
-// Custom simple helper for scale dynamic taps
+// ═══════════════════════════════════════════════════════════════════
+// Custom Painters
+// ═══════════════════════════════════════════════════════════════════
+
+/// Circular progress arc painter (like the image reference)
+class _CircularProgressPainter extends CustomPainter {
+  final double progress;
+  final Color trackColor;
+  final Color progressColor;
+  final double strokeWidth;
+
+  _CircularProgressPainter({
+    required this.progress,
+    required this.trackColor,
+    required this.progressColor,
+    required this.strokeWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.width - strokeWidth) / 2;
+
+    // Arc goes from top (270°) sweeping clockwise
+    const startAngle = -pi / 2;
+    const arcSweep = 2 * pi * 0.78; // ~280° arc (open at bottom)
+
+    // Track
+    final trackPaint = Paint()
+      ..color = trackColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      startAngle,
+      arcSweep,
+      false,
+      trackPaint,
+    );
+
+    // Progress
+    final progressPaint = Paint()
+      ..color = progressColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    final progressSweep = arcSweep * progress.clamp(0.0, 1.0);
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      startAngle,
+      progressSweep,
+      false,
+      progressPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _CircularProgressPainter oldDelegate) =>
+      oldDelegate.progress != progress;
+}
+
+/// Dot at the end of the progress arc
+class _ProgressDotPainter extends CustomPainter {
+  final double progress;
+  final Color dotColor;
+  final double dotSize;
+
+  _ProgressDotPainter({
+    required this.progress,
+    required this.dotColor,
+    required this.dotSize,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.width - 8) / 2;
+
+    const startAngle = -pi / 2;
+    const arcSweep = 2 * pi * 0.78;
+
+    final angle = startAngle + arcSweep * progress.clamp(0.0, 1.0);
+    final dotCenter = Offset(
+      center.dx + radius * cos(angle),
+      center.dy + radius * sin(angle),
+    );
+
+    // Glow
+    final glowPaint = Paint()
+      ..color = Colors.white.withOpacity(0.5)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+    canvas.drawCircle(dotCenter, dotSize * 0.8, glowPaint);
+
+    // Dot
+    final dotPaint = Paint()..color = dotColor;
+    canvas.drawCircle(dotCenter, dotSize / 2, dotPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _ProgressDotPainter oldDelegate) =>
+      oldDelegate.progress != progress;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Particle System
+// ═══════════════════════════════════════════════════════════════════
+
+class _Particle {
+  late double x;
+  late double y;
+  late double size;
+  late double speedY;
+  late double opacity;
+  late double wobbleSpeed;
+  late double wobbleAmplitude;
+
+  _Particle({required Random random}) {
+    reset(random, initialPlacement: true);
+  }
+
+  void reset(Random random, {bool initialPlacement = false}) {
+    x = random.nextDouble();
+    y = initialPlacement ? random.nextDouble() : 1.0 + random.nextDouble() * 0.2;
+    size = 2.0 + random.nextDouble() * 5.0;
+    speedY = 0.0005 + random.nextDouble() * 0.0015;
+    opacity = 0.15 + random.nextDouble() * 0.35;
+    wobbleSpeed = 0.5 + random.nextDouble() * 2.0;
+    wobbleAmplitude = 0.01 + random.nextDouble() * 0.03;
+  }
+}
+
+class _ParticlePainter extends CustomPainter {
+  final List<_Particle> particles;
+  final double animValue;
+  final bool isPaused;
+  static final Random _random = Random();
+
+  _ParticlePainter({
+    required this.particles,
+    required this.animValue,
+    required this.isPaused,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (final p in particles) {
+      if (!isPaused) {
+        p.y -= p.speedY;
+        p.x += sin(animValue * pi * 2 * p.wobbleSpeed) * p.wobbleAmplitude * 0.1;
+      }
+
+      if (p.y < -0.05) {
+        p.reset(_random);
+      }
+
+      final paint = Paint()
+        ..color = Colors.white.withOpacity(p.opacity * (isPaused ? 0.4 : 1.0))
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, p.size * 0.5);
+
+      canvas.drawCircle(
+        Offset(p.x * size.width, p.y * size.height),
+        p.size,
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ParticlePainter oldDelegate) => true;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Reusable Widgets
+// ═══════════════════════════════════════════════════════════════════
+
 class BounceableScale extends StatefulWidget {
   final Widget child;
   final VoidCallback onTap;
@@ -1321,12 +2020,11 @@ class _BounceableScaleState extends State<BounceableScale> {
   }
 }
 
-// Highly optimized, print-free custom FadeIn transition with smooth SlideTransition
 class CustomFadeIn extends StatefulWidget {
   final Widget child;
   final Duration duration;
   final double delay;
-  final bool slideUp; // true for SlideUp, false for SlideDown
+  final bool slideUp;
 
   const CustomFadeIn({
     super.key,

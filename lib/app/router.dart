@@ -13,6 +13,9 @@ import '../features/settings/pages/settings_page.dart';
 import '../features/emotions/pages/emotions_calendar_page.dart';
 import '../features/emotions/pages/meditation_page.dart';
 import '../features/games/pages/sudoku_page.dart';
+import '../features/home/pages/titi_chat_page.dart';
+import '../features/home/pages/active_pause_page.dart';
+import '../features/home/pages/active_pause_timer_page.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/welcome',
@@ -72,6 +75,21 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/sudoku',
       builder: (context, state) => const SudokuPage(),
+    ),
+    GoRoute(
+      path: '/titi_chat',
+      builder: (context, state) => const TitiChatPage(),
+    ),
+    GoRoute(
+      path: '/active_pause',
+      builder: (context, state) => const ActivePausePage(),
+    ),
+    GoRoute(
+      path: '/active_pause_timer',
+      builder: (context, state) {
+        final exercise = state.extra as ActivePauseExercise;
+        return ActivePauseTimerPage(exercise: exercise);
+      },
     ),
   ],
 );

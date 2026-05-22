@@ -38,6 +38,8 @@ dependencies:
   flutter_local_notifications: ^17.2.2
   timezone: ^0.9.4
   flutter_timezone: ^5.0.2
+  url_launcher: ^6.3.1
+  audioplayers: ^6.1.0
 
 
 
@@ -62,8 +64,14 @@ flutter:
     - assets/rive/
     - assets/images/
     - assets/images/modulo_respiracion/
+    - assets/images/pausa_activa/
+    - assets/audio/
+    - "assets/audio/AUDIOS DE MEDITACIÓN GUIADA/AUDIOS 01 MINUTO/"
+    - "assets/audio/AUDIOS DE MEDITACIÓN GUIADA/AUDIOS 03 MINUTOS/"
+    - "assets/audio/AUDIOS DE MEDITACIÓN GUIADA/AUDIOS 05 MINUTOS/"
     - assets/lottie/start_button_hovering.lottie
     - assets/lottie/mascot.lottie
+    - assets/lottie/success_celebration.lottie
     - .env
 
 

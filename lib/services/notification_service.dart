@@ -45,6 +45,13 @@ class NotificationService {
       await _notificationsPlugin.initialize(
         initSettings,
       );
+
+      // Request notification permissions for Android 13+ (API 33+)
+      await _notificationsPlugin
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
+          ?.requestNotificationsPermission();
+
       _initialized = true;
       debugPrint('🔔 [NotificationService] Inicializado correctamente.');
     } catch (e) {
@@ -124,6 +131,98 @@ class NotificationService {
       debugPrint('✅ [NotificationService] Notificación $id cancelada correctamente.');
     } catch (e) {
       debugPrint('❌ [NotificationService] Error al cancelar la notificación: $e');
+    }
+  }
+
+  /// Triggers a notification immediately
+  Future<void> showImmediateNotification({
+    required int id,
+    required String title,
+    required String body,
+  }) async {
+    if (kIsWeb) return;
+    await init();
+
+    try {
+      const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+        'test_channel',
+        'Canal de Prueba',
+        channelDescription: 'Canal para pruebas rápidas de notificaciones',
+        importance: Importance.max,
+        priority: Priority.high,
+      );
+
+      const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      );
+
+      const NotificationDetails platformDetails = NotificationDetails(
+        android: androidDetails,
+        iOS: iosDetails,
+      );
+
+      await _notificationsPlugin.show(
+        id,
+        title,
+        body,
+        platformDetails,
+      );
+      debugPrint('✅ [NotificationService] ¡Notificación inmediata mostrada exitosamente!');
+    } catch (e) {
+      debugPrint('❌ [NotificationService] Error al mostrar notificación inmediata: $e');
+    }
+  }
+
+  /// Schedules a notification to fire after a specified number of seconds
+  Future<void> showDelayedNotification({
+    required int id,
+    required String title,
+    required String body,
+    required int seconds,
+  }) async {
+    if (kIsWeb) return;
+    await init();
+
+    try {
+      final tz.TZDateTime scheduledDate =
+          tz.TZDateTime.now(tz.local).add(Duration(seconds: seconds));
+
+      debugPrint('📅 [NotificationService] Programando notificación retrasada para dentro de $seconds segundos (${scheduledDate.toLocal()})');
+
+      const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+        'test_channel',
+        'Canal de Prueba',
+        channelDescription: 'Canal para pruebas rápidas de notificaciones',
+        importance: Importance.max,
+        priority: Priority.high,
+      );
+
+      const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      );
+
+      const NotificationDetails platformDetails = NotificationDetails(
+        android: androidDetails,
+        iOS: iosDetails,
+      );
+
+      await _notificationsPlugin.zonedSchedule(
+        id,
+        title,
+        body,
+        scheduledDate,
+        platformDetails,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+      );
+      debugPrint('✅ [NotificationService] ¡Notificación retrasada agendada!');
+    } catch (e) {
+      debugPrint('❌ [NotificationService] Error al programar notificación retrasada: $e');
     }
   }
 }

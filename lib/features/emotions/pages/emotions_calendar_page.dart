@@ -244,7 +244,7 @@ class _EmotionsCalendarPageState extends State<EmotionsCalendarPage> {
                   onRefresh: _loadData,
                   color: AppColors.primary,
                   child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                    physics: const AlwaysScrollableScrollPhysics(parent: ClampingScrollPhysics()),
                     child: Column(
                       children: [
                         const SizedBox(height: 8),
