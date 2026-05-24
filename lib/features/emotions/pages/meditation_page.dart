@@ -5,9 +5,16 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:animate_do/animate_do.dart';
+import 'package:video_player/video_player.dart';
+import '../../../app/widgets/bounceable_scale.dart';
+import '../../../app/widgets/custom_fade_in.dart';
+import '../widgets/meditation_painters.dart';
 import '../../home/widgets/module_header.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../services/notification_service.dart';
+
 
 class MeditationPage extends StatefulWidget {
   const MeditationPage({super.key});
@@ -31,6 +38,22 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
   int _secondsRemaining = 0;
   Timer? _sessionTimer;
 
+  // Feedback Flow State
+  bool _showFeedback = false;
+  int _feedbackStep = 1;
+  String? _selectedExperience;
+  String? _selectedFeeling;
+  bool _isSavingFeedback = false;
+
+  // Video Recommendations State
+  bool _showRecommendations = false;
+  List<Map<String, dynamic>> _recommendedVideos = [];
+  bool _isLoadingVideos = false;
+  VideoPlayerController? _activeVideoController;
+  bool _isPlayerInitialized = false;
+  String? _playingVideoUrl;
+
+
   // Breathing loop state: 'inhale', 'hold', 'exhale', 'hold_empty'
   String _breathingPhase = 'inhale';
   int _phaseSeconds = 0;
@@ -52,7 +75,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
 
   // ── Particle Animation ──
   late AnimationController _particleController;
-  final List<_Particle> _particles = [];
+  final List<Particle> _particles = [];
   final _random = Random();
 
   // Notification Configuration State
@@ -113,7 +136,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
 
     // Generate particles
     for (int i = 0; i < 30; i++) {
-      _particles.add(_Particle(random: _random));
+      _particles.add(Particle(random: _random));
     }
 
     _loadNotificationSettings();
@@ -141,8 +164,10 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
     _durationSub?.cancel();
     _positionSub?.cancel();
     _completionSub?.cancel();
+    _activeVideoController?.dispose();
     super.dispose();
   }
+
 
   // Load saved routine notifications from shared_preferences cache
   Future<void> _loadNotificationSettings() async {
@@ -289,7 +314,13 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
 
     _completionSub = _audioPlayer.onPlayerComplete.listen((_) {
       if (mounted) {
-        _endSession(completed: true);
+        _audioPlayer.stop();
+        setState(() {
+          _showFeedback = true;
+          _feedbackStep = 1;
+          _selectedExperience = null;
+          _selectedFeeling = null;
+        });
       }
     });
 
@@ -337,6 +368,12 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
       _isConfiguring = false;
       _isSelectingAudio = false;
       _isPlaying = false;
+      _showFeedback = false;
+      _feedbackStep = 1;
+      _selectedExperience = null;
+      _selectedFeeling = null;
+      _selectedTimeOption = null;
+      _isCommitted = false;
       if (completed) {
         _isSessionFinished = true;
       }
@@ -385,6 +422,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
 
   // Which view to show
   Widget _getCurrentView() {
+    if (_showRecommendations) return _buildRecommendationsView();
     if (_isSessionActive) {
       if (_isConfiguring) return _buildBreathingSessionView();
       if (_isSelectingAudio) return _buildAudioSelectionView();
@@ -396,7 +434,8 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
   }
 
   // Should header be visible
-  bool get _showHeader => !_isSessionActive || _isConfiguring || _isSelectingAudio || _isPlaying;
+  bool get _showHeader => !_isSessionActive && !_isSessionFinished && !_showRecommendations;
+
 
   // Helper widget to build time inputs inside modal
   Widget _buildTimeInputBox({
@@ -966,7 +1005,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const SizedBox(height: 40),
+              const SizedBox(height: 110),
               Container(
                 width: double.infinity,
                 constraints: const BoxConstraints(maxWidth: 420),
@@ -1357,7 +1396,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
           child: Column(
             children: [
-              const SizedBox(height: 100),
+              const SizedBox(height: 60),
               CustomFadeIn(
                 duration: const Duration(milliseconds: 500),
                 slideUp: false,
@@ -1538,7 +1577,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
             animation: _particleController,
             builder: (context, _) {
               return CustomPaint(
-                painter: _ParticlePainter(
+                painter: ParticlePainter(
                   particles: _particles,
                   animValue: _particleController.value,
                   isPaused: _isAudioPaused,
@@ -1549,185 +1588,686 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
           ),
         ),
 
-        // ── Player UI ──
-        SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: Column(
-              children: [
-                const SizedBox(height: 180),
+        // ── Player UI or Feedback Card ──
+        if (_showFeedback)
+          _buildFeedbackOverlay()
+        else
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                children: [
+                  const SizedBox(height: 70),
 
-                // Title
-                CustomFadeIn(
-                  duration: const Duration(milliseconds: 500),
-                  slideUp: false,
-                  child: Column(
-                    children: [
-                      Text(
-                        _audioTitles[(_selectedAudioIndex ?? 1) - 1],
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.outfit(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white, // Changed to white for dark bg
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Sesión de $_selectedMinutes ${_selectedMinutes == 1 ? 'minuto' : 'minutos'}',
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF88D49E), // Lighter green for dark bg
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const Spacer(),
-
-                // ── Circular progress timer ──
-                RepaintBoundary(
-                  child: SizedBox(
-                    width: circleSize,
-                    height: circleSize,
-                    child: Stack(
-                      alignment: Alignment.center,
+                  // Title
+                  CustomFadeIn(
+                    duration: const Duration(milliseconds: 500),
+                    slideUp: false,
+                    child: Column(
                       children: [
-                        // Background arc
-                        SizedBox(
-                          width: circleSize,
-                          height: circleSize,
-                          child: CustomPaint(
-                            painter: _CircularProgressPainter(
-                              progress: progress,
-                              trackColor: Colors.white.withOpacity(0.1),
-                              progressColor: const Color(0xFF88D49E),
-                              strokeWidth: 8,
-                            ),
+                        Text(
+                          _audioTitles[(_selectedAudioIndex ?? 1) - 1],
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.outfit(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white, // Changed to white for dark bg
                           ),
                         ),
-
-                        // Progress indicator dot
-                        SizedBox(
-                          width: circleSize,
-                          height: circleSize,
-                          child: CustomPaint(
-                            painter: _ProgressDotPainter(
-                              progress: progress,
-                              dotColor: Colors.white,
-                              dotSize: 14,
-                            ),
-                          ),
-                        ),
-
-                        // Play/Pause button in center
-                        GestureDetector(
-                          onTap: _togglePause,
-                          child: Container(
-                            width: 72,
-                            height: 72,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.white.withOpacity(0.85),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.08),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 6),
-                                ),
-                              ],
-                            ),
-                            child: Icon(
-                              _isAudioPaused
-                                  ? Icons.play_arrow_rounded
-                                  : Icons.pause_rounded,
-                              size: 36,
-                              color: const Color(0xFF2D3142),
-                            ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Sesión de $_selectedMinutes ${_selectedMinutes == 1 ? 'minuto' : 'minutos'}',
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF88D49E), // Lighter green for dark bg
                           ),
                         ),
                       ],
                     ),
                   ),
-                ),
 
-                const SizedBox(height: 24),
+                  const Spacer(),
 
-                // ── Time display + controls ──
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Rewind
-                    GestureDetector(
-                      onTap: () => _seekRelative(-10),
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white.withOpacity(0.15),
-                        ),
-                        child: const Icon(Icons.replay_10_rounded, size: 22, color: Colors.white),
+                  // ── Circular progress timer ──
+                  RepaintBoundary(
+                    child: SizedBox(
+                      width: circleSize,
+                      height: circleSize,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // Background arc
+                          SizedBox(
+                            width: circleSize,
+                            height: circleSize,
+                            child: CustomPaint(
+                              painter: CircularProgressPainter(
+                                progress: progress,
+                                trackColor: Colors.white.withOpacity(0.1),
+                                progressColor: const Color(0xFF88D49E),
+                                strokeWidth: 8,
+                              ),
+                            ),
+                          ),
+
+                          // Progress indicator dot
+                          SizedBox(
+                            width: circleSize,
+                            height: circleSize,
+                            child: CustomPaint(
+                              painter: ProgressDotPainter(
+                                progress: progress,
+                                dotColor: Colors.white,
+                                dotSize: 14,
+                              ),
+                            ),
+                          ),
+
+
+                          // Play/Pause button in center
+                          GestureDetector(
+                            onTap: _togglePause,
+                            child: Container(
+                              width: 72,
+                              height: 72,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white.withOpacity(0.85),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.08),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 6),
+                                  ),
+                                ],
+                              ),
+                              child: Icon(
+                                _isAudioPaused
+                                    ? Icons.play_arrow_rounded
+                                    : Icons.pause_rounded,
+                                size: 36,
+                                color: const Color(0xFF2D3142),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(width: 16),
-
-                    // Time pill
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: Colors.white.withOpacity(0.2)),
-                      ),
-                      child: Text(
-                        '${_formatTimeShort(_currentAudioPosition)} - ${_formatTimeShort(_totalAudioDuration)}',
-                        style: GoogleFonts.spaceGrotesk(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-
-                    // Forward
-                    GestureDetector(
-                      onTap: () => _seekRelative(10),
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white.withOpacity(0.15),
-                        ),
-                        child: const Icon(Icons.forward_10_rounded, size: 22, color: Colors.white),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const Spacer(),
-
-                // Stop button
-                TextButton.icon(
-                  onPressed: () => _endSession(completed: false),
-                  icon: const Icon(Icons.stop_circle_outlined, size: 20),
-                  label: Text(
-                    'Terminar sesión',
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.redAccent.shade200,
+
+                  const SizedBox(height: 24),
+
+                  // ── Time display + controls ──
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Rewind
+                      GestureDetector(
+                        onTap: () => _seekRelative(-10),
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.15),
+                          ),
+                          child: const Icon(Icons.replay_10_rounded, size: 22, color: Colors.white),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+
+                      // Time pill
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(color: Colors.white.withOpacity(0.2)),
+                        ),
+                        child: Text(
+                          '${_formatTimeShort(_currentAudioPosition)} - ${_formatTimeShort(_totalAudioDuration)}',
+                          style: GoogleFonts.spaceGrotesk(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+
+                      // Forward
+                      GestureDetector(
+                        onTap: () => _seekRelative(10),
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.15),
+                          ),
+                          child: const Icon(Icons.forward_10_rounded, size: 22, color: Colors.white),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const Spacer(),
+
+                  // Stop button
+                  TextButton.icon(
+                    onPressed: () => _endSession(completed: false),
+                    icon: const Icon(Icons.stop_circle_outlined, size: 20),
+                    label: Text(
+                      'Terminar sesión',
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.redAccent.shade200,
+                    ),
+                  ),
+                  const SizedBox(height: 100),
+                ],
+              ),
+            ),
+          ),
+
+      ],
+    );
+  }
+
+  Widget _buildFeedbackOverlay() {
+    return SafeArea(
+      child: Column(
+        children: [
+          const Spacer(),
+          FadeInUp(
+            duration: const Duration(milliseconds: 500),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              decoration: const BoxDecoration(
+                color: Color(0xFF1E1F2C),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+              ),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                child: _feedbackStep == 1
+                    ? _buildFeedbackStep1()
+                    : _buildFeedbackStep2(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeedbackStep1() {
+    return Column(
+      key: const ValueKey('step1'),
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Center(
+          child: Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        Text(
+          '¿Cómo fue tu experiencia con esta meditación?',
+          style: GoogleFonts.outfit(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Queremos conocer tu opinión',
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            color: Colors.white.withOpacity(0.6),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 24),
+        _buildExperienceOption('Positiva'),
+        const SizedBox(height: 12),
+        _buildExperienceOption('Neutral'),
+        const SizedBox(height: 12),
+        _buildExperienceOption('Negativa'),
+        const SizedBox(height: 28),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '1/2',
+              style: GoogleFonts.poppins(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Colors.white.withOpacity(0.4),
+              ),
+            ),
+            SizedBox(
+              height: 48,
+              child: ElevatedButton(
+                onPressed: _selectedExperience == null
+                    ? null
+                    : () {
+                        HapticFeedback.mediumImpact();
+                        setState(() {
+                          _feedbackStep = 2;
+                        });
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1B8A74),
+                  disabledBackgroundColor: const Color(0xFF1B8A74).withOpacity(0.3),
+                  foregroundColor: Colors.white,
+                  disabledForegroundColor: Colors.white.withOpacity(0.3),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  elevation: 0,
+                ),
+                child: Text(
+                  'Continuar',
+                  style: GoogleFonts.outfit(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 100),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildExperienceOption(String option) {
+    final bool isSelected = _selectedExperience == option;
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        setState(() {
+          _selectedExperience = option;
+        });
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+        decoration: BoxDecoration(
+          color: const Color(0xFF2B2D3C),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF1B8A74) : Colors.transparent,
+            width: 2.2,
+          ),
+        ),
+        child: Row(
+          children: [
+            Text(
+              option,
+              style: GoogleFonts.poppins(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? Colors.white : Colors.white.withOpacity(0.8),
+              ),
+            ),
+            const Spacer(),
+            if (isSelected)
+              const Icon(
+                Icons.check_circle_rounded,
+                color: Color(0xFF1B8A74),
+                size: 20,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFeedbackStep2() {
+    return Column(
+      key: const ValueKey('step2'),
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Center(
+          child: Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        Text(
+          '¿Cómo te sientes ahora?',
+          style: GoogleFonts.outfit(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Selecciona la sensación que mejor te describa',
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            color: Colors.white.withOpacity(0.6),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 20),
+        _buildFeelingOption('Relajado 🧘‍♂️'),
+        const SizedBox(height: 8),
+        _buildFeelingOption('Con energía ⚡'),
+        const SizedBox(height: 8),
+        _buildFeelingOption('Más tranquilo 🍃'),
+        const SizedBox(height: 8),
+        _buildFeelingOption('Distraído 🌀'),
+        const SizedBox(height: 8),
+        _buildFeelingOption('Con sueño 💤'),
+        const SizedBox(height: 24),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    setState(() {
+                      _feedbackStep = 1;
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.08),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.arrow_back_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  '2/2',
+                  style: GoogleFonts.poppins(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white.withOpacity(0.4),
+                  ),
+                ),
               ],
+            ),
+            SizedBox(
+              height: 48,
+              child: ElevatedButton(
+                onPressed: _selectedFeeling == null || _isSavingFeedback
+                    ? null
+                    : _saveFeedbackToSupabase,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1B8A74),
+                  disabledBackgroundColor: const Color(0xFF1B8A74).withOpacity(0.3),
+                  foregroundColor: Colors.white,
+                  disabledForegroundColor: Colors.white.withOpacity(0.3),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  elevation: 0,
+                ),
+                child: _isSavingFeedback
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : Text(
+                        'Finalizar',
+                        style: GoogleFonts.outfit(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFeelingOption(String option) {
+    final bool isSelected = _selectedFeeling == option;
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        setState(() {
+          _selectedFeeling = option;
+        });
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+        decoration: BoxDecoration(
+          color: const Color(0xFF2B2D3C),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF1B8A74) : Colors.transparent,
+            width: 2.2,
+          ),
+        ),
+        child: Row(
+          children: [
+            Text(
+              option,
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? Colors.white : Colors.white.withOpacity(0.8),
+              ),
+            ),
+            const Spacer(),
+            if (isSelected)
+              const Icon(
+                Icons.check_circle_rounded,
+                color: Color(0xFF1B8A74),
+                size: 18,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _saveFeedbackToSupabase() async {
+    if (_selectedExperience == null || _selectedFeeling == null) return;
+    
+    setState(() {
+      _isSavingFeedback = true;
+    });
+    
+    try {
+      final client = Supabase.instance.client;
+      final userId = client.auth.currentUser?.id;
+      if (userId != null) {
+        await client.from('meditation_feedback').insert({
+          'user_id': userId,
+          'duration_minutes': _selectedMinutes,
+          'experience': _selectedExperience,
+          'feeling': _selectedFeeling,
+        });
+      }
+    } catch (e) {
+      debugPrint('Error saving meditation feedback to Supabase: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSavingFeedback = false;
+          _showFeedback = false;
+          _feedbackStep = 1;
+          _selectedExperience = null;
+          _selectedFeeling = null;
+          _isPlaying = false;
+        });
+        _loadRecommendedVideos();
+      }
+    }
+  }
+
+  Future<void> _loadRecommendedVideos() async {
+    setState(() {
+      _isLoadingVideos = true;
+      _showRecommendations = true;
+      _isPlaying = false;
+    });
+    
+    try {
+      final client = Supabase.instance.client;
+      final response = await client
+          .from('recommended_videos')
+          .select()
+          .order('order_index', ascending: true);
+      
+      if (mounted) {
+        setState(() {
+          _recommendedVideos = List<Map<String, dynamic>>.from(response);
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading recommended videos: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingVideos = false;
+        });
+      }
+    }
+  }
+
+
+  Widget _buildRecommendationsView() {
+    return Scaffold(
+      backgroundColor: const Color(0xFF0F121D),
+      body: Stack(
+        children: [
+          // Main scrollable content
+          SafeArea(
+            child: Center(
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 600),
+                padding: const EdgeInsets.symmetric(horizontal: 18.0),
+                child: _isLoadingVideos && _recommendedVideos.isEmpty
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: Color(0xFF28AF52),
+                        ),
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 80),
+                          // Header row (Titi recommends)
+                          _buildRecommendationsHeader(),
+                          const SizedBox(height: 16),
+                          
+                          // Scrollable videos list
+                          Expanded(
+                            child: _recommendedVideos.isEmpty
+                                ? _buildEmptyRecommendations()
+                                : ListView.builder(
+                                    physics: const BouncingScrollPhysics(),
+                                    itemCount: _recommendedVideos.length + 1, // +1 for the exit button
+                                    itemBuilder: (context, index) {
+                                      if (index == _recommendedVideos.length) {
+                                        return _buildRecommendationsExitButton();
+                                      }
+                                      
+                                      final video = _recommendedVideos[index];
+                                      if (index == 0) {
+                                        return _buildFeaturedVideoCard(video);
+                                      }
+                                      return _buildStandardVideoRow(video);
+                                    },
+                                  ),
+                          ),
+                        ],
+                      ),
+              ),
+            ),
+          ),
+
+          // Video Player Overlay
+          if (_playingVideoUrl != null)
+            _buildVideoPlayerOverlay(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecommendationsHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'TITI RECOMIENDA:',
+                style: GoogleFonts.outfit(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF88D49E),
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '"MEDITACIÓN Y RELAJACIÓN"',
+                style: GoogleFonts.outfit(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        // Decorative Avatar
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: const Color(0xFF88D49E), width: 1.5),
+            image: const DecorationImage(
+              image: AssetImage('assets/images/mascot.png'),
+              fit: BoxFit.cover,
             ),
           ),
         ),
@@ -1735,10 +2275,416 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
     );
   }
 
+
+  Widget _buildEmptyRecommendations() {
+    return Center(
+      child: Text(
+        'No se encontraron recomendaciones disponibles.',
+        style: GoogleFonts.poppins(color: Colors.white70),
+      ),
+    );
+  }
+
+  Widget _buildFeaturedVideoCard(Map<String, dynamic> video) {
+    return FadeInUp(
+      duration: const Duration(milliseconds: 600),
+      child: GestureDetector(
+        onTap: () => _playVideo(video['video_url']),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 20),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E2030),
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 15,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Large Image Preview with overlay buttons
+              AspectRatio(
+                aspectRatio: 16 / 9,
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.network(
+                        video['thumbnail_url'],
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: const Color(0xFF2B2D3C),
+                          child: const Icon(Icons.image_not_supported, color: Colors.white24, size: 40),
+                        ),
+                      ),
+                      // Dark gradient cover
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Colors.transparent, Colors.black.withOpacity(0.5)],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
+                        ),
+                      ),
+                      // Duration overlay
+                      Positioned(
+                        left: 12,
+                        bottom: 12,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.65),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 14),
+                              const SizedBox(width: 3),
+                              Text(
+                                video['duration'],
+                                style: GoogleFonts.spaceGrotesk(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      // Play icon at bottom-right
+                      Positioned(
+                        right: 12,
+                        bottom: 12,
+                        child: Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF28AF52),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF28AF52).withOpacity(0.4),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 26),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Video Title and Description below
+              Padding(
+                padding: const EdgeInsets.all(18.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      video['title'],
+                      style: GoogleFonts.outfit(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      video['description'],
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        color: Colors.white.withOpacity(0.7),
+                        height: 1.45,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStandardVideoRow(Map<String, dynamic> video) {
+    return FadeInUp(
+      duration: const Duration(milliseconds: 500),
+      child: GestureDetector(
+        onTap: () => _playVideo(video['video_url']),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E2030),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            children: [
+              // Image Thumbnail (Left)
+              SizedBox(
+                width: 110,
+                height: 70,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.network(
+                        video['thumbnail_url'],
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: const Color(0xFF2B2D3C),
+                          child: const Icon(Icons.image_not_supported, color: Colors.white24, size: 24),
+                        ),
+                      ),
+                      Container(
+                        color: Colors.black.withOpacity(0.15),
+                      ),
+                      // Duration label
+                      Positioned(
+                        left: 6,
+                        bottom: 6,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.7),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            video['duration'],
+                            style: GoogleFonts.spaceGrotesk(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              // Text Details (Right)
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      video['title'],
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.outfit(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      video['description'],
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.poppins(
+                        fontSize: 11.5,
+                        color: Colors.white.withOpacity(0.6),
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Tiny Play Button
+              Container(
+                width: 32,
+                height: 32,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF28AF52),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 18),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecommendationsExitButton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24.0),
+      child: SizedBox(
+        width: double.infinity,
+        height: 52,
+        child: ElevatedButton(
+          onPressed: () {
+            HapticFeedback.mediumImpact();
+            setState(() {
+              _showRecommendations = false;
+              _selectedTimeOption = null;
+              _isCommitted = false;
+            });
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF28AF52),
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            elevation: 0,
+          ),
+          child: Text(
+            'Volver al Menú',
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVideoPlayerOverlay() {
+    return Container(
+      color: Colors.black.withOpacity(0.9),
+      width: double.infinity,
+      height: double.infinity,
+      alignment: Alignment.center,
+      child: SafeArea(
+        child: Column(
+          children: [
+            // Top action bar
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  IconButton(
+                    onPressed: _closeVideoPlayer,
+                    icon: const Icon(Icons.close_rounded, color: Colors.white, size: 28),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.white.withOpacity(0.1),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Spacer(),
+            
+            // Video aspect area
+            _isPlayerInitialized && _activeVideoController != null
+                ? Container(
+                    constraints: const BoxConstraints(maxWidth: 800),
+                    child: AspectRatio(
+                      aspectRatio: _activeVideoController!.value.aspectRatio,
+                      child: Stack(
+                        alignment: Alignment.bottomCenter,
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                if (_activeVideoController!.value.isPlaying) {
+                                  _activeVideoController!.pause();
+                                } else {
+                                  _activeVideoController!.play();
+                                }
+                              });
+                            },
+                            child: VideoPlayer(_activeVideoController!),
+                          ),
+                          // Subtle play/pause indicator in middle
+                          if (!_activeVideoController!.value.isPlaying)
+                            GestureDetector(
+                              onTap: () => setState(() => _activeVideoController!.play()),
+                              child: Container(
+                                width: 64,
+                                height: 64,
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.6),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 36),
+                              ),
+                            ),
+                          // Video progress bar at bottom
+                          VideoProgressIndicator(
+                            _activeVideoController!,
+                            allowScrubbing: true,
+                            colors: const VideoProgressColors(
+                              playedColor: Color(0xFF28AF52),
+                              bufferedColor: Colors.white24,
+                              backgroundColor: Colors.white12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : const Center(
+                    child: CircularProgressIndicator(
+                      color: Color(0xFF28AF52),
+                    ),
+                  ),
+            
+            const Spacer(),
+            const SizedBox(height: 50),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _playVideo(String url) async {
+    HapticFeedback.mediumImpact();
+    await _activeVideoController?.dispose();
+    
+    setState(() {
+      _playingVideoUrl = url;
+      _isPlayerInitialized = false;
+      _activeVideoController = VideoPlayerController.networkUrl(Uri.parse(url));
+    });
+
+    try {
+      await _activeVideoController!.initialize();
+      if (mounted && _playingVideoUrl == url) {
+        setState(() {
+          _isPlayerInitialized = true;
+        });
+        _activeVideoController!.play();
+      }
+    } catch (e) {
+      debugPrint('Error initializing video player: $e');
+    }
+  }
+
+  void _closeVideoPlayer() {
+    _activeVideoController?.pause();
+    setState(() {
+      _playingVideoUrl = null;
+      _isPlayerInitialized = false;
+    });
+  }
+
   // ═══════════════════════════════════════════════════════════════════
   // --- 3. Finished / Celebration View ---
   // ═══════════════════════════════════════════════════════════════════
   Widget _buildFinishedView() {
+
+
     return Center(
       key: const ValueKey('finished_view'),
       child: CustomFadeIn(
@@ -1827,293 +2773,3 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// Custom Painters
-// ═══════════════════════════════════════════════════════════════════
-
-/// Circular progress arc painter (like the image reference)
-class _CircularProgressPainter extends CustomPainter {
-  final double progress;
-  final Color trackColor;
-  final Color progressColor;
-  final double strokeWidth;
-
-  // Cached Paint objects to avoid GC pressure
-  late final Paint _trackPaint;
-  late final Paint _progressPaint;
-
-  _CircularProgressPainter({
-    required this.progress,
-    required this.trackColor,
-    required this.progressColor,
-    required this.strokeWidth,
-  }) {
-    _trackPaint = Paint()
-      ..color = trackColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-    _progressPaint = Paint()
-      ..color = progressColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-  }
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = (size.width - strokeWidth) / 2;
-
-    // Arc goes from top (270°) sweeping clockwise
-    const startAngle = -pi / 2;
-    const arcSweep = 2 * pi * 0.78; // ~280° arc (open at bottom)
-
-    // Track
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      startAngle,
-      arcSweep,
-      false,
-      _trackPaint,
-    );
-
-    // Progress
-    final progressSweep = arcSweep * progress.clamp(0.0, 1.0);
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      startAngle,
-      progressSweep,
-      false,
-      _progressPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _CircularProgressPainter oldDelegate) =>
-      oldDelegate.progress != progress ||
-      oldDelegate.trackColor != trackColor ||
-      oldDelegate.progressColor != progressColor;
-}
-
-/// Dot at the end of the progress arc
-class _ProgressDotPainter extends CustomPainter {
-  final double progress;
-  final Color dotColor;
-  final double dotSize;
-
-  // Cached Paint objects
-  late final Paint _glowPaint;
-  late final Paint _dotPaint;
-
-  _ProgressDotPainter({
-    required this.progress,
-    required this.dotColor,
-    required this.dotSize,
-  }) {
-    _glowPaint = Paint()
-      ..color = Colors.white.withOpacity(0.5)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
-    _dotPaint = Paint()..color = dotColor;
-  }
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = (size.width - 8) / 2;
-
-    const startAngle = -pi / 2;
-    const arcSweep = 2 * pi * 0.78;
-
-    final angle = startAngle + arcSweep * progress.clamp(0.0, 1.0);
-    final dotCenter = Offset(
-      center.dx + radius * cos(angle),
-      center.dy + radius * sin(angle),
-    );
-
-    // Glow
-    canvas.drawCircle(dotCenter, dotSize * 0.8, _glowPaint);
-
-    // Dot
-    canvas.drawCircle(dotCenter, dotSize / 2, _dotPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _ProgressDotPainter oldDelegate) =>
-      oldDelegate.progress != progress;
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// Particle System
-// ═══════════════════════════════════════════════════════════════════
-
-class _Particle {
-  late double x;
-  late double y;
-  late double size;
-  late double speedY;
-  late double opacity;
-  late double wobbleSpeed;
-  late double wobbleAmplitude;
-
-  _Particle({required Random random}) {
-    reset(random, initialPlacement: true);
-  }
-
-  void reset(Random random, {bool initialPlacement = false}) {
-    x = random.nextDouble();
-    y = initialPlacement ? random.nextDouble() : 1.0 + random.nextDouble() * 0.2;
-    size = 2.0 + random.nextDouble() * 5.0;
-    speedY = 0.0005 + random.nextDouble() * 0.0015;
-    opacity = 0.15 + random.nextDouble() * 0.35;
-    wobbleSpeed = 0.5 + random.nextDouble() * 2.0;
-    wobbleAmplitude = 0.01 + random.nextDouble() * 0.03;
-  }
-}
-
-class _ParticlePainter extends CustomPainter {
-  final List<_Particle> particles;
-  final double animValue;
-  final bool isPaused;
-  static final Random _random = Random();
-
-  // Reusable Paint object to avoid allocating per-particle
-  final Paint _particlePaint = Paint();
-
-  _ParticlePainter({
-    required this.particles,
-    required this.animValue,
-    required this.isPaused,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    for (final p in particles) {
-      if (!isPaused) {
-        p.y -= p.speedY;
-        p.x += sin(animValue * pi * 2 * p.wobbleSpeed) * p.wobbleAmplitude * 0.1;
-      }
-
-      if (p.y < -0.05) {
-        p.reset(_random);
-      }
-
-      _particlePaint
-        ..color = Colors.white.withOpacity(p.opacity * (isPaused ? 0.4 : 1.0))
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, p.size * 0.5);
-
-      canvas.drawCircle(
-        Offset(p.x * size.width, p.y * size.height),
-        p.size,
-        _particlePaint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _ParticlePainter oldDelegate) => true;
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// Reusable Widgets
-// ═══════════════════════════════════════════════════════════════════
-
-class BounceableScale extends StatefulWidget {
-  final Widget child;
-  final VoidCallback onTap;
-
-  const BounceableScale({super.key, required this.child, required this.onTap});
-
-  @override
-  State<BounceableScale> createState() => _BounceableScaleState();
-}
-
-class _BounceableScaleState extends State<BounceableScale> {
-  double _scale = 1.0;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _scale = 0.95),
-      onTapUp: (_) {
-        setState(() => _scale = 1.0);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _scale = 1.0),
-      child: AnimatedScale(
-        scale: _scale,
-        duration: const Duration(milliseconds: 100),
-        child: widget.child,
-      ),
-    );
-  }
-}
-
-class CustomFadeIn extends StatefulWidget {
-  final Widget child;
-  final Duration duration;
-  final double delay;
-  final bool slideUp;
-
-  const CustomFadeIn({
-    super.key,
-    required this.child,
-    this.duration = const Duration(milliseconds: 600),
-    this.delay = 0.0,
-    this.slideUp = true,
-  });
-
-  @override
-  State<CustomFadeIn> createState() => _CustomFadeInState();
-}
-
-class _CustomFadeInState extends State<CustomFadeIn> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _opacity;
-  late Animation<Offset> _slide;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: widget.duration,
-    );
-
-    _opacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-    );
-
-    _slide = Tween<Offset>(
-      begin: widget.slideUp ? const Offset(0.0, 0.15) : const Offset(0.0, -0.15),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-    );
-
-    if (widget.delay > 0.0) {
-      Future.delayed(Duration(milliseconds: (widget.delay * 1000).toInt()), () {
-        if (mounted) _controller.forward();
-      });
-    } else {
-      _controller.forward();
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _opacity,
-      child: SlideTransition(
-        position: _slide,
-        child: widget.child,
-      ),
-    );
-  }
-}

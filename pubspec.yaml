@@ -28,7 +28,6 @@ dependencies:
   go_router: ^14.1.4
   google_fonts: ^6.1.0
   cupertino_icons: ^1.0.8
-  rive: ^0.13.3   # si ya instalaste, déjalo
   dotlottie_flutter: ^0.0.2
   supabase_flutter: ^2.12.2
   flutter_dotenv: ^6.0.0
@@ -40,6 +39,8 @@ dependencies:
   flutter_timezone: ^5.0.2
   url_launcher: ^6.3.1
   audioplayers: ^6.1.0
+  video_player: ^2.9.2
+
 
 
 
@@ -61,8 +62,8 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
   assets:
-    - assets/rive/
     - assets/images/
+
     - assets/images/modulo_respiracion/
     - assets/images/pausa_activa/
     - assets/audio/
