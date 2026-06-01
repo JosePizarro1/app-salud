@@ -34,6 +34,13 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       return;
     }
 
+    // Interceptar acceso de Administrador
+    final username = emailCtrl.text.replaceAll('@unjbg.edu.pe', '').trim();
+    if (username == 'admin123' && passCtrl.text.trim() == 'admin123') {
+      if (mounted) context.go('/admin/dashboard');
+      return;
+    }
+
     setState(() => isLoading = true);
     
     try {

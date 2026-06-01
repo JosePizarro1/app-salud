@@ -16,6 +16,7 @@ import '../features/games/pages/sudoku_page.dart';
 import '../features/home/pages/titi_chat_page.dart';
 import '../features/home/pages/active_pause_page.dart';
 import '../features/home/pages/active_pause_timer_page.dart';
+import '../features/admin/pages/admin_dashboard_page.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/welcome',
@@ -90,6 +91,10 @@ final appRouter = GoRouter(
         final exercise = state.extra as ActivePauseExercise;
         return ActivePauseTimerPage(exercise: exercise);
       },
+    ),
+    GoRoute(
+      path: '/admin/dashboard',
+      builder: (context, state) => const AdminDashboardPage(),
     ),
   ],
 );
