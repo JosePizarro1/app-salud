@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:animate_do/animate_do.dart';
 import '../widgets/module_header.dart';
 
 class Module3Page extends StatefulWidget {
@@ -31,6 +32,22 @@ class _Module3PageState extends State<Module3Page> {
           Image.asset(
             'assets/images/fondo_modulo3.PNG',
             fit: BoxFit.cover,
+          ),
+
+          // ── GIF Character (Escalado y posicionado) ──
+          Positioned(
+            left: MediaQuery.of(context).size.width * 0.203,
+            top: MediaQuery.of(context).size.height * 0.27,
+            child: FadeIn(
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width * 0.673,
+                height: MediaQuery.of(context).size.height * 0.673,
+                child: Image.asset(
+                  'assets/images/Video.gif',
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
           ),
 
           // Shared Header with Home Button

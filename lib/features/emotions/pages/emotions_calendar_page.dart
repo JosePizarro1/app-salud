@@ -224,8 +224,11 @@ class _EmotionsCalendarPageState extends State<EmotionsCalendarPage> {
         ? Color.lerp(const Color(0xFFF5F0FF), todayEmotion.color.withValues(alpha: 0.08), 0.5)!
         : const Color(0xFFF5F0FF);
 
-    return Scaffold(
-      body: AnimatedContainer(
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      behavior: HitTestBehavior.translucent,
+      child: Scaffold(
+        body: AnimatedContainer(
         duration: const Duration(milliseconds: 500),
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -540,7 +543,8 @@ class _EmotionsCalendarPageState extends State<EmotionsCalendarPage> {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 
   // ── Vista Interactiva: Lista de Tareas (Opción 9) ──
