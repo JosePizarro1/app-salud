@@ -56,7 +56,7 @@ class _ActivePauseTimerPageState extends State<ActivePauseTimerPage>
   /// Pre-loads the audio source so playback is instant on completion
   Future<void> _prepareAudio() async {
     try {
-      await _audioPlayer.setSource(AssetSource('audio/completado_sonid.mp3'));
+      await _audioPlayer.setSource(AssetSource('audio/success_cheerful.mp3'));
       await _audioPlayer.setVolume(0.7);
       _audioReady = true;
     } catch (_) {
@@ -81,7 +81,7 @@ class _ActivePauseTimerPageState extends State<ActivePauseTimerPage>
       } else {
         // Fallback: play directly if preload failed
         await _audioPlayer.play(
-          AssetSource('audio/completado_sonid.mp3'),
+          AssetSource('audio/success_cheerful.mp3'),
           volume: 0.7,
         );
       }
@@ -386,7 +386,7 @@ class _ActivePauseTimerPageState extends State<ActivePauseTimerPage>
                     color: Colors.transparent,
                     child: DotLottieView(
                       sourceType: 'asset',
-                      source: 'lottie/success_celebration.lottie',
+                      source: 'assets/lottie/success_celebration.lottie',
                       autoplay: true,
                       loop: false,
                     ),

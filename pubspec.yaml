@@ -63,6 +63,9 @@ dev_dependencies:
 flutter:
   assets:
     - assets/images/
+    - assets/images/ModuloYoga/
+    - assets/images/ModuloYoga/iloveimg-compressed (1)/
+    - assets/images/ModuloYoga/pasos/
 
     - assets/images/modulo_respiracion/
     - assets/images/pausa_activa/

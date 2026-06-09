@@ -16,6 +16,10 @@ import '../features/games/pages/sudoku_page.dart';
 import '../features/home/pages/titi_chat_page.dart';
 import '../features/home/pages/active_pause_page.dart';
 import '../features/home/pages/active_pause_timer_page.dart';
+import '../features/home/pages/relax_page.dart';
+import '../features/home/pages/breathing_page.dart';
+import '../features/home/pages/box_breathing_page.dart';
+import '../features/home/pages/yoga_routine_page.dart';
 import '../features/admin/pages/admin_dashboard_page.dart';
 
 final appRouter = GoRouter(
@@ -91,6 +95,22 @@ final appRouter = GoRouter(
         final exercise = state.extra as ActivePauseExercise;
         return ActivePauseTimerPage(exercise: exercise);
       },
+    ),
+    GoRoute(
+      path: '/relax',
+      builder: (context, state) => const RelaxPage(),
+    ),
+    GoRoute(
+      path: '/breathing',
+      builder: (context, state) => const BreathingPage(),
+    ),
+    GoRoute(
+      path: '/box_breathing',
+      builder: (context, state) => const BoxBreathingPage(),
+    ),
+    GoRoute(
+      path: '/yoga',
+      builder: (context, state) => const YogaRoutinePage(),
     ),
     GoRoute(
       path: '/admin/dashboard',
