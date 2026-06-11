@@ -75,7 +75,7 @@ class NoInternetPage extends StatelessWidget {
             child: Image.asset(
               'assets/images/fondo_home.jpg',
               fit: BoxFit.cover,
-              color: Colors.black.withOpacity(0.4),
+              color: Colors.black.withValues(alpha: 0.4),
               colorBlendMode: BlendMode.darken,
             ),
           ),
@@ -126,7 +126,7 @@ class NoInternetPage extends StatelessWidget {
                 
                 ElevatedButton(
                   onPressed: () async {
-                    final results = await Connectivity().checkConnectivity();
+                    await Connectivity().checkConnectivity();
                     // Esto forzará la actualización del estado
                   },
                   style: ElevatedButton.styleFrom(

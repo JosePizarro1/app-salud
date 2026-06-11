@@ -70,7 +70,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
           context.go('/home');
         }
       }
-    } on AuthException catch (e) {
+    } on AuthException catch (_) {
       if (mounted) {
         VitaliDialog.show(
           context,

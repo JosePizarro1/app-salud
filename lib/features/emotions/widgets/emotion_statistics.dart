@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../models/emotion_entry.dart';
-import '../services/emotion_storage.dart';
 
 class EmotionStatistics extends StatelessWidget {
   final Map<EmotionType, int> monthlyStats;

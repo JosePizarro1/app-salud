@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:animate_do/animate_do.dart';
-import '../../../app/widgets/theme_switcher.dart';
-import '../../../app/theme/app_colors.dart';
 import '../widgets/module_header.dart';
 
 class HomePage extends StatefulWidget {
@@ -96,7 +93,7 @@ class _HomePageState extends State<HomePage> {
                 child: InkWell(
                   onTap: () async {
                     await _triggerScale(0);
-                    if (mounted) context.push('/module1');
+                    if (context.mounted) context.push('/module1');
                   },
                  borderRadius: BorderRadius.circular(15),
                   child: Container(
@@ -127,7 +124,7 @@ class _HomePageState extends State<HomePage> {
                 child: InkWell(
                   onTap: () async {
                     await _triggerScale(1);
-                    if (mounted) context.push('/module2');
+                    if (context.mounted) context.push('/module2');
                   },
                   child: Container(
                     width: MediaQuery.of(context).size.width * 0.4134375,
@@ -157,7 +154,7 @@ class _HomePageState extends State<HomePage> {
                 child: InkWell(
                   onTap: () async {
                     await _triggerScale(2);
-                    if (mounted) context.push('/module3');
+                    if (context.mounted) context.push('/module3');
                   },
                   child: Container(
                     width: MediaQuery.of(context).size.width * 0.45375,
@@ -187,7 +184,7 @@ class _HomePageState extends State<HomePage> {
                 child: InkWell(
                   onTap: () async {
                     await _triggerScale(3);
-                    if (mounted) context.push('/module4');
+                    if (context.mounted) context.push('/module4');
                   },
                   child: Container(
                     width: MediaQuery.of(context).size.width * 0.4125,
@@ -217,7 +214,7 @@ class _HomePageState extends State<HomePage> {
                 child: InkWell(
                   onTap: () async {
                     await _triggerScale(4);
-                    if (mounted) context.push('/module5');
+                    if (context.mounted) context.push('/module5');
                   },
                   child: Container(
                     width: MediaQuery.of(context).size.width * 0.375,
@@ -245,7 +242,10 @@ class _HomePageState extends State<HomePage> {
                 duration: const Duration(milliseconds: 200),
                 curve: Curves.easeInOut,
                 child: InkWell(
-                  onTap: () => _triggerScale(5),
+                  onTap: () async {
+                    await _triggerScale(5);
+                    if (context.mounted) context.push('/module6');
+                  },
                   child: Container(
                     width: MediaQuery.of(context).size.width * 0.4125,
                     height: MediaQuery.of(context).size.height * 0.275,

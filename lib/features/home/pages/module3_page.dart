@@ -67,7 +67,7 @@ class _Module3PageState extends State<Module3Page> {
                   imagePath: 'assets/images/Bmeditacion.png',
                   onTap: () async {
                     await _triggerScale(0);
-                    if (mounted) context.push('/meditation');
+                    if (context.mounted) context.push('/meditation');
                   },
                 ),
                 
@@ -88,7 +88,7 @@ class _Module3PageState extends State<Module3Page> {
                   imagePath: 'assets/images/Bemociones.png',
                   onTap: () async {
                     await _triggerScale(2);
-                    if (mounted) context.push('/emotions');
+                    if (context.mounted) context.push('/emotions');
                   },
                 ),
               ],

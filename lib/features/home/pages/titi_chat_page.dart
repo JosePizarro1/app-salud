@@ -817,6 +817,7 @@ class _TitiChatPageState extends State<TitiChatPage> {
     );
   }
 
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FB), // Modern light pastel background

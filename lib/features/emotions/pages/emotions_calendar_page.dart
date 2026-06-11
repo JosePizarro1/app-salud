@@ -7,10 +7,8 @@ import '../../../app/theme/app_colors.dart';
 import '../models/emotion_entry.dart';
 import '../services/emotion_storage.dart';
 import '../services/diary_storage.dart';
-import '../services/task_storage.dart';
 import '../widgets/emotion_calendar.dart';
 import '../widgets/emotion_picker_modal.dart';
-import '../widgets/emotion_statistics.dart';
 
 class EmotionsCalendarPage extends StatefulWidget {
   const EmotionsCalendarPage({super.key});
@@ -25,26 +23,21 @@ class _EmotionsCalendarPageState extends State<EmotionsCalendarPage> {
   Map<String, EmotionType> _emotions = {};
   bool _isLoading = true;
 
-  // ── Nuevas variables de estado para Opciones 9 y 10 ──
-  String _selectedSection = 'tareas'; // 'tareas' o 'diario'
+  // ── Nuevas variables de estado ──
   late String _selectedDateStr;
   Timer? _debounceTimer;
 
-  // Almacén en memoria de los diarios por fecha (Opción 10)
+  // Almacén en memoria de los diarios por fecha
   final Map<String, Map<String, String>> _diarioEntries = {};
 
-  // Almacén en memoria de las tareas por fecha (Opción 9)
-  final Map<String, List<Map<String, dynamic>>> _diarioTasks = {};
-
-  // Controladores para la simulación del Diario Personal (Opción 10)
+  // Controladores para la simulación del Diario Personal
   final TextEditingController _emocionElegidaCtrl = TextEditingController();
   final TextEditingController _porqueCtrl = TextEditingController();
   final TextEditingController _metaCtrl = TextEditingController();
   final TextEditingController _prioridadesCtrl = TextEditingController();
   final TextEditingController _logrosCtrl = TextEditingController();
-  final TextEditingController _newTaskCtrl = TextEditingController();
 
-  // ── Auxiliares para Diario y Tareas por Fecha ──
+  // ── Auxiliares para Diario ──
   void _saveDiarioField(String key, String value) {
     if (!_diarioEntries.containsKey(_selectedDateStr)) {
       _diarioEntries[_selectedDateStr] = {};
@@ -82,13 +75,6 @@ class _EmotionsCalendarPageState extends State<EmotionsCalendarPage> {
     _logrosCtrl.text = entry['logros'] ?? '';
   }
 
-  List<Map<String, dynamic>> _getTasksForSelectedDate() {
-    if (!_diarioTasks.containsKey(_selectedDateStr)) {
-      _diarioTasks[_selectedDateStr] = [];
-    }
-    return _diarioTasks[_selectedDateStr]!;
-  }
-
   @override
   void dispose() {
     _flushDebounceSave();
@@ -97,7 +83,6 @@ class _EmotionsCalendarPageState extends State<EmotionsCalendarPage> {
     _metaCtrl.dispose();
     _prioridadesCtrl.dispose();
     _logrosCtrl.dispose();
-    _newTaskCtrl.dispose();
     _debounceTimer?.cancel();
     super.dispose();
   }
@@ -118,7 +103,6 @@ class _EmotionsCalendarPageState extends State<EmotionsCalendarPage> {
       final results = await Future.wait([
         EmotionStorage.getEmotionsForMonth(_currentYear, _currentMonth),
         DiaryStorage.getDiaryForMonth(_currentYear, _currentMonth),
-        TaskStorage.getTasksForMonth(_currentYear, _currentMonth),
       ]);
 
       if (mounted) {
@@ -127,9 +111,6 @@ class _EmotionsCalendarPageState extends State<EmotionsCalendarPage> {
 
           _diarioEntries.clear();
           _diarioEntries.addAll(results[1] as Map<String, Map<String, String>>);
-
-          _diarioTasks.clear();
-          _diarioTasks.addAll(results[2] as Map<String, List<Map<String, dynamic>>>);
 
           _isLoading = false;
           _loadDiarioForSelectedDate();
@@ -239,10 +220,9 @@ class _EmotionsCalendarPageState extends State<EmotionsCalendarPage> {
         ),
         child: Stack(
           children: [
-            // ── Scrollable Content ──
             SafeArea(
               child: Padding(
-                padding: const EdgeInsets.only(top: 70),
+                padding: const EdgeInsets.only(top: 130),
                 child: RefreshIndicator(
                   onRefresh: _loadData,
                   color: AppColors.primary,
@@ -250,7 +230,7 @@ class _EmotionsCalendarPageState extends State<EmotionsCalendarPage> {
                     physics: const AlwaysScrollableScrollPhysics(parent: ClampingScrollPhysics()),
                     child: Column(
                       children: [
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 10),
 
                         // ── Title ──
                         FadeInDown(
@@ -312,8 +292,6 @@ class _EmotionsCalendarPageState extends State<EmotionsCalendarPage> {
                                 emotions: _emotions,
                                 onDayTap: _registerEmotion,
                                 selectedDateStr: _selectedDateStr,
-                                selectedSection: _selectedSection,
-                                diarioTasks: _diarioTasks,
                               ),
                         ),
 
@@ -430,104 +408,10 @@ class _EmotionsCalendarPageState extends State<EmotionsCalendarPage> {
 
                         const SizedBox(height: 20),
 
-                        // ── Selector de Secciones (Opción 9 y 10) ──
-                        FadeInUp(
-                          delay: const Duration(milliseconds: 500),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            child: Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.95),
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.04),
-                                    blurRadius: 15,
-                                    offset: const Offset(0, 5),
-                                  ),
-                                ],
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: GestureDetector(
-                                      onTap: () => setState(() => _selectedSection = 'tareas'),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(vertical: 12),
-                                        decoration: BoxDecoration(
-                                          color: _selectedSection == 'tareas'
-                                              ? AppColors.primary
-                                              : Colors.transparent,
-                                          borderRadius: BorderRadius.circular(15),
-                                        ),
-                                        child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Icon(
-                                              Icons.check_box_outlined,
-                                              color: _selectedSection == 'tareas' ? Colors.white : AppColors.textSecondaryLight,
-                                              size: 20,
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              'Lista de Tareas',
-                                              style: GoogleFonts.poppins(
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w600,
-                                                color: _selectedSection == 'tareas' ? Colors.white : AppColors.textSecondaryLight,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: GestureDetector(
-                                      onTap: () => setState(() => _selectedSection = 'diario'),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(vertical: 12),
-                                        decoration: BoxDecoration(
-                                          color: _selectedSection == 'diario'
-                                              ? AppColors.primary
-                                              : Colors.transparent,
-                                          borderRadius: BorderRadius.circular(15),
-                                        ),
-                                        child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Icon(
-                                              Icons.book_outlined,
-                                              color: _selectedSection == 'diario' ? Colors.white : AppColors.textSecondaryLight,
-                                              size: 20,
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              'Diario Personal',
-                                              style: GoogleFonts.poppins(
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w600,
-                                                color: _selectedSection == 'diario' ? Colors.white : AppColors.textSecondaryLight,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        // ── Vista de Sección Seleccionada (Interactiva) ──
+                        // ── Vista de Diario Personal (Interactiva) ──
                         FadeInUp(
                           delay: const Duration(milliseconds: 600),
-                          child: _selectedSection == 'tareas'
-                              ? _buildTareasView()
-                              : _buildDiarioView(todayEmotion),
+                          child: _buildDiarioView(todayEmotion),
                         ),
 
                         const SizedBox(height: 100),
@@ -545,201 +429,6 @@ class _EmotionsCalendarPageState extends State<EmotionsCalendarPage> {
       ),
     ),
   );
-  }
-
-  // ── Vista Interactiva: Lista de Tareas (Opción 9) ──
-  Widget _buildTareasView() {
-    final tasksForDate = _getTasksForSelectedDate();
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Dimensión de Horario Personal',
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF2D3142),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Organiza tu día con hábitos de autocuidado y bienestar.',
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              color: Colors.grey.shade500,
-            ),
-          ),
-          const SizedBox(height: 16),
-          // Lista de tareas
-          ...tasksForDate.asMap().entries.map((entry) {
-            final index = entry.key;
-            final task = entry.value;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: GestureDetector(
-                onTap: () {
-                  final newDone = !(task['done'] as bool);
-                  setState(() {
-                    task['done'] = newDone;
-                  });
-                  if (task['id'] != null) {
-                    TaskStorage.toggleTask(task['id'] as int, newDone);
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: task['done']
-                        ? AppColors.accent.withValues(alpha: 0.1)
-                        : Colors.grey.shade50,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: task['done']
-                          ? AppColors.accent.withValues(alpha: 0.3)
-                          : Colors.grey.shade100,
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        width: 24,
-                        height: 24,
-                        decoration: BoxDecoration(
-                          color: task['done'] ? AppColors.accent : Colors.transparent,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: task['done'] ? AppColors.accent : Colors.grey.shade300,
-                            width: 2,
-                          ),
-                        ),
-                        child: task['done']
-                            ? const Icon(Icons.check, size: 16, color: Colors.white)
-                            : null,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          task['title'],
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: task['done']
-                                ? Colors.grey.shade500
-                                : const Color(0xFF2D3142),
-                            decoration: task['done']
-                                ? TextDecoration.lineThrough
-                                : null,
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete_outline_rounded, color: Colors.grey, size: 20),
-                        onPressed: () {
-                          final taskId = task['id'];
-                          setState(() {
-                            tasksForDate.removeAt(index);
-                          });
-                          if (taskId != null) {
-                            TaskStorage.deleteTask(taskId as int);
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }),
-          const SizedBox(height: 12),
-          // Campo para agregar nueva tarea
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade200, width: 1.5),
-                  ),
-                  child: TextField(
-                    controller: _newTaskCtrl,
-                    style: GoogleFonts.poppins(fontSize: 14),
-                    decoration: InputDecoration(
-                      hintText: 'Añadir nueva tarea personal...',
-                      hintStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: () async {
-                  if (_newTaskCtrl.text.trim().isNotEmpty) {
-                    String title = _newTaskCtrl.text.trim();
-                    // Si no empieza con un emoji, le ponemos '📌 ' por defecto
-                    if (!RegExp(r'^[\u2000-\u32FF\uFF00-\uFFEF\uD800-\uDBFF\uDC00-\uDFFF]').hasMatch(title)) {
-                      title = '📌 $title';
-                    }
-
-                    // Optimistic update
-                    final optimisticTask = <String, dynamic>{
-                      'title': title,
-                      'done': false,
-                      'id': null,
-                    };
-                    setState(() {
-                      tasksForDate.add(optimisticTask);
-                      _newTaskCtrl.clear();
-                    });
-
-                    final newId = await TaskStorage.addTask(_selectedDateStr, title, tasksForDate.length - 1);
-                    if (newId != null && mounted) {
-                      setState(() {
-                        optimisticTask['id'] = newId;
-                      });
-                    }
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.3),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(Icons.add, color: Colors.white, size: 22),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
   }
 
   // ── Vista Interactiva: Simulación de Diario Personal (Opción 10) ──

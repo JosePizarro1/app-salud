@@ -53,7 +53,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
         password: passCtrl.text.trim(),
       );
       if (mounted) context.go('/home');
-    } on AuthException catch (e) {
+    } on AuthException catch (_) {
       if (mounted) {
         setState(() => isLoading = false);
         VitaliDialog.show(
@@ -62,7 +62,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           message: "Credenciales incorrectas. Por favor, revisa tu correo o contraseña.",
         );
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         setState(() => isLoading = false);
         VitaliDialog.show(
@@ -77,7 +77,6 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final screenHeight = MediaQuery.of(context).size.height;
     
     return Scaffold(
       resizeToAvoidBottomInset: false,

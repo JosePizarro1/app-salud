@@ -445,6 +445,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> with SingleTick
         final name = user['full_name'] as String? ?? 'N/A';
         final email = user['email'] as String? ?? 'N/A';
         final code = user['student_code'] as String? ?? 'N/A';
+        final points = user['points'] as int? ?? 0;
         final createdAtStr = user['created_at'] as String?;
         
         String formattedDate = 'N/A';
@@ -516,6 +517,22 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> with SingleTick
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.secondary,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: isDark ? Colors.white10 : const Color(0xFFFFF2ED),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '⭐ $points pts',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primary,
                                 ),
                               ),
                             ),

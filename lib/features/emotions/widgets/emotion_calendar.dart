@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../app/theme/app_colors.dart';
 import '../models/emotion_entry.dart';
-import '../services/emotion_storage.dart';
 
 class EmotionCalendar extends StatelessWidget {
   final int year;
@@ -14,9 +13,6 @@ class EmotionCalendar extends StatelessWidget {
   final Map<String, EmotionType> emotions;
   final void Function(String dateStr) onDayTap;
   final String? selectedDateStr;
-  final String selectedSection;
-  final Map<String, List<Map<String, dynamic>>> diarioTasks;
-
   const EmotionCalendar({
     super.key,
     required this.year,
@@ -27,8 +23,6 @@ class EmotionCalendar extends StatelessWidget {
     required this.emotions,
     required this.onDayTap,
     this.selectedDateStr,
-    required this.selectedSection,
-    required this.diarioTasks,
   });
 
   static const List<String> _dayLabels = ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa', 'Do'];
@@ -135,23 +129,10 @@ class EmotionCalendar extends StatelessWidget {
               final dayDate = DateTime(year, month, day);
               final isFuture = dayDate.isAfter(now);
 
-              final dayTasks = diarioTasks[dateStr];
-              final hasTasks = dayTasks != null && dayTasks.isNotEmpty;
-              final hasPending = hasTasks && dayTasks.any((t) => !t['done']);
-              final allDone = hasTasks && dayTasks.every((t) => t['done']);
-
               // Color de fondo
               Color circleColor = Colors.transparent;
-              if (selectedSection == 'diario' && emotion != null) {
+              if (emotion != null) {
                 circleColor = emotion.color.withValues(alpha: 0.85);
-              } else if (selectedSection == 'tareas') {
-                if (allDone) {
-                  circleColor = AppColors.accent.withValues(alpha: 0.15);
-                } else if (hasPending) {
-                  circleColor = Colors.red.withValues(alpha: 0.1);
-                } else if (isSelected) {
-                  circleColor = AppColors.primary.withValues(alpha: 0.15);
-                }
               } else if (isSelected) {
                 circleColor = AppColors.primary.withValues(alpha: 0.15);
               }
@@ -181,7 +162,7 @@ class EmotionCalendar extends StatelessWidget {
                               : null),
                     ),
                     child: Center(
-                      child: (selectedSection == 'diario' && emotion != null)
+                      child: emotion != null
                           ? Text(
                               emotion.emoji,
                               style: const TextStyle(fontSize: 16),
@@ -201,17 +182,6 @@ class EmotionCalendar extends StatelessWidget {
                                             : const Color(0xFF2D3142)),
                                   ),
                                 ),
-                                if (selectedSection == 'tareas' && hasTasks) ...[
-                                  const SizedBox(height: 2),
-                                  Container(
-                                    width: 5,
-                                    height: 5,
-                                    decoration: BoxDecoration(
-                                      color: allDone ? AppColors.accent : Colors.red,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                ],
                               ],
                             ),
                     ),

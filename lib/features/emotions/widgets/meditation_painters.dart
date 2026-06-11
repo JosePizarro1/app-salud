@@ -52,7 +52,7 @@ class ParticlePainter extends CustomPainter {
       }
 
       _particlePaint
-        ..color = Colors.white.withOpacity(p.opacity * (isPaused ? 0.4 : 1.0))
+        ..color = Colors.white.withValues(alpha: p.opacity * (isPaused ? 0.4 : 1.0))
         ..maskFilter = MaskFilter.blur(BlurStyle.normal, p.size * 0.5);
 
       canvas.drawCircle(
@@ -141,7 +141,7 @@ class ProgressDotPainter extends CustomPainter {
     required this.dotSize,
   }) {
     _glowPaint = Paint()
-      ..color = Colors.white.withOpacity(0.5)
+      ..color = Colors.white.withValues(alpha: 0.5)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
     _dotPaint = Paint()..color = dotColor;
   }

@@ -48,7 +48,7 @@ class _Module1PageState extends State<Module1Page> {
                   imagePath: 'assets/images/Bsudoku.png',
                   onTap: () async {
                     await _triggerScale();
-                    if (mounted) context.push('/sudoku');
+                    if (context.mounted) context.push('/sudoku');
                   },
                 ),
               ],

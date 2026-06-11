@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:animate_do/animate_do.dart';
 import '../../../app/theme/app_colors.dart';
@@ -152,11 +151,11 @@ class _SudokuPageState extends State<SudokuPage> {
                         margin: const EdgeInsets.symmetric(horizontal: 25),
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           borderRadius: BorderRadius.circular(30),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.secondary.withOpacity(0.1),
+                              color: AppColors.secondary.withValues(alpha: 0.1),
                               blurRadius: 30,
                               offset: const Offset(0, 15),
                             ),
@@ -194,7 +193,7 @@ class _SudokuPageState extends State<SudokuPage> {
                         _buildActionButton(
                           Icons.backspace_rounded, 
                           () => _onNumberTap(0),
-                          color: AppColors.error.withOpacity(0.1),
+                          color: AppColors.error.withValues(alpha: 0.1),
                           iconColor: AppColors.error,
                         ),
                         _buildActionButton(
@@ -206,7 +205,7 @@ class _SudokuPageState extends State<SudokuPage> {
                               _selectedCol = null;
                             });
                           },
-                          color: AppColors.secondary.withOpacity(0.1),
+                          color: AppColors.secondary.withValues(alpha: 0.1),
                           iconColor: AppColors.secondary,
                         ),
                       ],
@@ -230,8 +229,8 @@ class _SudokuPageState extends State<SudokuPage> {
     bool isError = value != 0 && !isInitial && value != _engine.solution[r][c];
 
     // Bordes para diferenciar los bloques 2x2
-    BorderSide thickBorder = BorderSide(color: AppColors.primary.withOpacity(0.2), width: 2.5);
-    BorderSide thinBorder = BorderSide(color: Colors.grey.withOpacity(0.1), width: 1);
+    BorderSide thickBorder = BorderSide(color: AppColors.primary.withValues(alpha: 0.2), width: 2.5);
+    BorderSide thinBorder = BorderSide(color: Colors.grey.withValues(alpha: 0.1), width: 1);
 
     return GestureDetector(
       onTap: () => _onCellTap(r, c),
@@ -239,8 +238,8 @@ class _SudokuPageState extends State<SudokuPage> {
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
           color: isSelected 
-              ? AppColors.primary.withOpacity(0.15) 
-              : (isInitial ? Colors.grey.withOpacity(0.05) : Colors.transparent),
+              ? AppColors.primary.withValues(alpha: 0.15) 
+              : (isInitial ? Colors.grey.withValues(alpha: 0.05) : Colors.transparent),
           border: Border(
             top: r == 0 ? BorderSide.none : (r % 2 == 0 ? thickBorder : thinBorder),
             left: c == 0 ? BorderSide.none : (c % 2 == 0 ? thickBorder : thinBorder),
@@ -278,7 +277,7 @@ class _SudokuPageState extends State<SudokuPage> {
             borderRadius: BorderRadius.circular(18),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withOpacity(0.15),
+                color: AppColors.primary.withValues(alpha: 0.15),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
               ),

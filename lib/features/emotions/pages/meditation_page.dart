@@ -450,7 +450,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
         color: const Color(0xFFE2E7FF),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: const Color(0xFF3B60B3).withOpacity(0.3),
+          color: const Color(0xFF3B60B3).withValues(alpha: 0.3),
           width: 2,
         ),
       ),
@@ -1019,7 +1019,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
+                      color: Colors.black.withValues(alpha: 0.04),
                       blurRadius: 25,
                       offset: const Offset(0, 12),
                     ),
@@ -1181,8 +1181,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       transform: _wiggleCheckbox
-          ? (Matrix4.identity()
-            ..translate(5.0 * (DateTime.now().millisecond % 2 == 0 ? 1 : -1)))
+          ? Matrix4.translationValues(5.0 * (DateTime.now().millisecond % 2 == 0 ? 1 : -1), 0.0, 0.0)
           : Matrix4.identity(),
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       decoration: BoxDecoration(
@@ -1268,7 +1267,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10),
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10),
                     ],
                   ),
                   child: Text(
@@ -1304,10 +1303,10 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                       height: size * _circleScaleAnimation.value,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: _getPhaseColor().withOpacity(0.12),
+                        color: _getPhaseColor().withValues(alpha: 0.12),
                         boxShadow: [
                           BoxShadow(
-                            color: _getPhaseColor().withOpacity(0.25),
+                            color: _getPhaseColor().withValues(alpha: 0.25),
                             blurRadius: 35,
                             spreadRadius: 5,
                           ),
@@ -1327,7 +1326,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                         gradient: LinearGradient(
                           colors: [
                             _getPhaseColor(),
-                            _getPhaseColor().withOpacity(0.7),
+                            _getPhaseColor().withValues(alpha: 0.7),
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
@@ -1452,20 +1451,20 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
-                              colors[i][0].withOpacity(0.15),
-                              colors[i][1].withOpacity(0.08),
+                              colors[i][0].withValues(alpha: 0.15),
+                              colors[i][1].withValues(alpha: 0.08),
                             ],
                             begin: Alignment.centerLeft,
                             end: Alignment.centerRight,
                           ),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: colors[i][0].withOpacity(0.4),
+                            color: colors[i][0].withValues(alpha: 0.4),
                             width: 2,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: colors[i][0].withOpacity(0.12),
+                              color: colors[i][0].withValues(alpha: 0.12),
                               blurRadius: 15,
                               offset: const Offset(0, 6),
                             ),
@@ -1477,7 +1476,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                               width: 48,
                               height: 48,
                               decoration: BoxDecoration(
-                                color: colors[i][1].withOpacity(0.15),
+                                color: colors[i][1].withValues(alpha: 0.15),
                                 shape: BoxShape.circle,
                               ),
                               child: Center(
@@ -1644,7 +1643,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                             child: CustomPaint(
                               painter: CircularProgressPainter(
                                 progress: progress,
-                                trackColor: Colors.white.withOpacity(0.1),
+                                trackColor: Colors.white.withValues(alpha: 0.1),
                                 progressColor: const Color(0xFF88D49E),
                                 strokeWidth: 8,
                               ),
@@ -1673,10 +1672,10 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                               height: 72,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: Colors.white.withOpacity(0.85),
+                                color: Colors.white.withValues(alpha: 0.85),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.08),
+                                    color: Colors.black.withValues(alpha: 0.08),
                                     blurRadius: 20,
                                     offset: const Offset(0, 6),
                                   ),
@@ -1710,7 +1709,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                           height: 4,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Colors.white.withOpacity(0.15),
+                            color: Colors.white.withValues(alpha: 0.15),
                           ),
                           child: const Icon(Icons.replay_10_rounded, size: 22, color: Colors.white),
                         ),
@@ -1721,9 +1720,9 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
+                          color: Colors.white.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: Colors.white.withOpacity(0.2)),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
                         ),
                         child: Text(
                           '${_formatTimeShort(_currentAudioPosition)} - ${_formatTimeShort(_totalAudioDuration)}',
@@ -1744,7 +1743,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                           height: 4,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Colors.white.withOpacity(0.15),
+                            color: Colors.white.withValues(alpha: 0.15),
                           ),
                           child: const Icon(Icons.forward_10_rounded, size: 22, color: Colors.white),
                         ),
@@ -1817,7 +1816,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
+              color: Colors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -1836,7 +1835,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
           'Queremos conocer tu opinión',
           style: GoogleFonts.poppins(
             fontSize: 13,
-            color: Colors.white.withOpacity(0.6),
+            color: Colors.white.withValues(alpha: 0.6),
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -1855,7 +1854,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
               style: GoogleFonts.poppins(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: Colors.white.withOpacity(0.4),
+                color: Colors.white.withValues(alpha: 0.4),
               ),
             ),
             SizedBox(
@@ -1871,9 +1870,9 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                       },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1B8A74),
-                  disabledBackgroundColor: const Color(0xFF1B8A74).withOpacity(0.3),
+                  disabledBackgroundColor: const Color(0xFF1B8A74).withValues(alpha: 0.3),
                   foregroundColor: Colors.white,
-                  disabledForegroundColor: Colors.white.withOpacity(0.3),
+                  disabledForegroundColor: Colors.white.withValues(alpha: 0.3),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24),
                   ),
@@ -1922,7 +1921,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
               style: GoogleFonts.poppins(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.white : Colors.white.withOpacity(0.8),
+                color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.8),
               ),
             ),
             const Spacer(),
@@ -1949,7 +1948,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
+              color: Colors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -1968,7 +1967,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
           'Selecciona la sensación que mejor te describa',
           style: GoogleFonts.poppins(
             fontSize: 13,
-            color: Colors.white.withOpacity(0.6),
+            color: Colors.white.withValues(alpha: 0.6),
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -1998,7 +1997,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.08),
+                      color: Colors.white.withValues(alpha: 0.08),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -2014,7 +2013,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                   style: GoogleFonts.poppins(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white.withOpacity(0.4),
+                    color: Colors.white.withValues(alpha: 0.4),
                   ),
                 ),
               ],
@@ -2027,9 +2026,9 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                     : _saveFeedbackToSupabase,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1B8A74),
-                  disabledBackgroundColor: const Color(0xFF1B8A74).withOpacity(0.3),
+                  disabledBackgroundColor: const Color(0xFF1B8A74).withValues(alpha: 0.3),
                   foregroundColor: Colors.white,
-                  disabledForegroundColor: Colors.white.withOpacity(0.3),
+                  disabledForegroundColor: Colors.white.withValues(alpha: 0.3),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24),
                   ),
@@ -2087,7 +2086,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
               style: GoogleFonts.poppins(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.white : Colors.white.withOpacity(0.8),
+                color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.8),
               ),
             ),
             const Spacer(),
@@ -2297,7 +2296,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.2),
+                color: Colors.black.withValues(alpha: 0.2),
                 blurRadius: 15,
                 offset: const Offset(0, 8),
               ),
@@ -2326,7 +2325,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                       Container(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [Colors.transparent, Colors.black.withOpacity(0.5)],
+                            colors: [Colors.transparent, Colors.black.withValues(alpha: 0.5)],
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                           ),
@@ -2339,7 +2338,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.65),
+                            color: Colors.black.withValues(alpha: 0.65),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
@@ -2371,7 +2370,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF28AF52).withOpacity(0.4),
+                                color: const Color(0xFF28AF52).withValues(alpha: 0.4),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               ),
@@ -2403,7 +2402,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                       video['description'],
                       style: GoogleFonts.poppins(
                         fontSize: 13,
-                        color: Colors.white.withOpacity(0.7),
+                        color: Colors.white.withValues(alpha: 0.7),
                         height: 1.45,
                       ),
                     ),
@@ -2449,7 +2448,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                         ),
                       ),
                       Container(
-                        color: Colors.black.withOpacity(0.15),
+                        color: Colors.black.withValues(alpha: 0.15),
                       ),
                       // Duration label
                       Positioned(
@@ -2458,7 +2457,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.7),
+                            color: Colors.black.withValues(alpha: 0.7),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -2498,7 +2497,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.poppins(
                         fontSize: 11.5,
-                        color: Colors.white.withOpacity(0.6),
+                        color: Colors.white.withValues(alpha: 0.6),
                         height: 1.35,
                       ),
                     ),
@@ -2560,7 +2559,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
 
   Widget _buildVideoPlayerOverlay() {
     return Container(
-      color: Colors.black.withOpacity(0.9),
+      color: Colors.black.withValues(alpha: 0.9),
       width: double.infinity,
       height: double.infinity,
       alignment: Alignment.center,
@@ -2577,7 +2576,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                     onPressed: _closeVideoPlayer,
                     icon: const Icon(Icons.close_rounded, color: Colors.white, size: 28),
                     style: IconButton.styleFrom(
-                      backgroundColor: Colors.white.withOpacity(0.1),
+                      backgroundColor: Colors.white.withValues(alpha: 0.1),
                     ),
                   ),
                 ],
@@ -2614,7 +2613,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                                 width: 64,
                                 height: 64,
                                 decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.6),
+                                  color: Colors.black.withValues(alpha: 0.6),
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 36),
@@ -2701,7 +2700,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
               border: Border.all(color: const Color(0xFF88D49E), width: 3.5),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withValues(alpha: 0.04),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),

@@ -9,6 +9,7 @@ import '../features/home/pages/module2_page.dart';
 import '../features/home/pages/module3_page.dart';
 import '../features/home/pages/module4_page.dart';
 import '../features/home/pages/module5_page.dart';
+import '../features/home/pages/module6_page.dart';
 import '../features/settings/pages/settings_page.dart';
 import '../features/emotions/pages/emotions_calendar_page.dart';
 import '../features/emotions/pages/meditation_page.dart';
@@ -21,6 +22,8 @@ import '../features/home/pages/breathing_page.dart';
 import '../features/home/pages/box_breathing_page.dart';
 import '../features/home/pages/yoga_routine_page.dart';
 import '../features/admin/pages/admin_dashboard_page.dart';
+import '../features/organizer/pages/organizer_page.dart';
+import '../features/organizer/pages/organizer_onboarding_page.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/welcome',
@@ -70,6 +73,10 @@ final appRouter = GoRouter(
       builder: (context, state) => const Module5Page(),
     ),
     GoRoute(
+      path: '/module6',
+      builder: (context, state) => const Module6Page(),
+    ),
+    GoRoute(
       path: '/emotions',
       builder: (context, state) => const EmotionsCalendarPage(),
     ),
@@ -116,5 +123,14 @@ final appRouter = GoRouter(
       path: '/admin/dashboard',
       builder: (context, state) => const AdminDashboardPage(),
     ),
+    GoRoute(
+      path: '/organizer',
+      builder: (context, state) => const OrganizerPage(),
+    ),
+    GoRoute(
+      path: '/organizer/onboarding',
+      builder: (context, state) => const OrganizerOnboardingPage(),
+    ),
   ],
 );
+
