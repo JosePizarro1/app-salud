@@ -77,7 +77,10 @@ class _Module3PageState extends State<Module3Page> {
                 _buildMenuButton(
                   index: 1,
                   imagePath: 'assets/images/Brespiracion.png',
-                  onTap: () => _triggerScale(1),
+                  onTap: () async {
+                    await _triggerScale(1);
+                    if (context.mounted) context.push('/breathing');
+                  },
                 ),
                 
                 const SizedBox(width: 10),

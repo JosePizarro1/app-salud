@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../widgets/module_header.dart';
 
 class Module6Page extends StatefulWidget {
@@ -45,10 +46,12 @@ class _Module6PageState extends State<Module6Page> {
               children: [
                 _buildMenuButton(
                   index: 0,
-                  imagePath: 'assets/images/Modulo6/boton1 modoulo lecciones.png',
+                  imagePath: 'assets/images/Modulo6/boton1 modoulo lecciones_actividad_fisica.png',
                   onTap: () async {
                     await _triggerScale(0);
-                    // Action for button 1 (lessons)
+                    if (context.mounted) {
+                      context.push('/physical_activity');
+                    }
                   },
                 ),
                 const SizedBox(width: 8),
