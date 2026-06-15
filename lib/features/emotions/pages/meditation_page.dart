@@ -938,22 +938,29 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
   @override
   Widget build(BuildContext context) {
     final bool isNotificationActive = _isDayNotificationEnabled || _isNightNotificationEnabled;
+    final bool isSelectionView = !_showRecommendations && !_isSessionActive && !_isSessionFinished;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAFBFF),
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Background gradient
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFFF9F6F0), Color(0xFFFFFDF9)],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+          // Dynamic Background
+          if (isSelectionView)
+            Image.asset(
+              'assets/images/fondo_modulo3.PNG',
+              fit: BoxFit.cover,
+            )
+          else
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFFF9F6F0), Color(0xFFFFFDF9)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
               ),
             ),
-          ),
 
           // Core views
           SafeArea(

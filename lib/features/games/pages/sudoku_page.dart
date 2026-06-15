@@ -97,16 +97,21 @@ class _SudokuPageState extends State<SudokuPage> {
 
   @override
   Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+    final screenWidth = mediaQuery.size.width;
+    final screenHeight = mediaQuery.size.height;
+    
+    // Responsive sizing to prevent overflow on tablets/small screens
+    final double gridWidth = screenWidth < 500 ? (screenWidth - 50) : 400.0;
+    final double topSpacing = screenHeight < 750 ? 60.0 : 100.0;
+    final double bottomSpacing = screenHeight < 750 ? 63.0 : 152.0;
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppColors.bgLight,
-              AppColors.surfaceLight,
-            ],
+          image: DecorationImage(
+            image: AssetImage('assets/images/fondo_sudoku.png'),
+            fit: BoxFit.cover,
           ),
         ),
         child: Stack(
@@ -117,7 +122,7 @@ class _SudokuPageState extends State<SudokuPage> {
             SafeArea(
               child: Column(
                 children: [
-                  const SizedBox(height: 100), // Bajado un poco más como pidió el usuario
+                  SizedBox(height: topSpacing),
                   FadeInDown(
                     child: Text(
                       "Sudoku 4x4",
@@ -128,7 +133,7 @@ class _SudokuPageState extends State<SudokuPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 15), // Spacing aumentado
+                  const SizedBox(height: 15),
                   FadeInDown(
                     delay: const Duration(milliseconds: 200),
                     child: Text(
@@ -142,39 +147,41 @@ class _SudokuPageState extends State<SudokuPage> {
                   ),
                   const Spacer(),
                   
-                  // Grilla Sudoku
+                  // Grilla Sudoku responsive
                   FadeIn(
                     delay: const Duration(milliseconds: 400),
-                    child: AspectRatio(
-                      aspectRatio: 1,
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 25),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.9),
-                          borderRadius: BorderRadius.circular(30),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.secondary.withValues(alpha: 0.1),
-                              blurRadius: 30,
-                              offset: const Offset(0, 15),
+                    child: SizedBox(
+                      width: gridWidth,
+                      child: AspectRatio(
+                        aspectRatio: 1,
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.9),
+                            borderRadius: BorderRadius.circular(30),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.secondary.withValues(alpha: 0.1),
+                                blurRadius: 30,
+                                offset: const Offset(0, 15),
+                              ),
+                            ],
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: GridView.builder(
+                              physics: const NeverScrollableScrollPhysics(),
+                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 4,
+                              ),
+                              itemCount: 16,
+                              itemBuilder: (context, index) {
+                                int r = index ~/ 4;
+                                int c = index % 4;
+                                return _buildCell(r, c);
+                              },
                             ),
-                          ],
-                          border: Border.all(color: Colors.white, width: 2),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: GridView.builder(
-                            physics: const NeverScrollableScrollPhysics(),
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 4,
-                            ),
-                            itemCount: 16,
-                            itemBuilder: (context, index) {
-                              int r = index ~/ 4;
-                              int c = index % 4;
-                              return _buildCell(r, c);
-                            },
                           ),
                         ),
                       ),
@@ -185,7 +192,7 @@ class _SudokuPageState extends State<SudokuPage> {
 
                   // Teclado Numérico
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 30),
+                    padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 20),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
@@ -212,7 +219,7 @@ class _SudokuPageState extends State<SudokuPage> {
                     ),
                   ),
                   
-                  const SizedBox(height: 120), // Subido aún más como pidió el usuario
+                  SizedBox(height: bottomSpacing),
                 ],
               ),
             ),
