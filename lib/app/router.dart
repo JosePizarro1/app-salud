@@ -25,6 +25,9 @@ import '../features/home/pages/yoga_routine_page.dart';
 import '../features/admin/pages/admin_dashboard_page.dart';
 import '../features/organizer/pages/organizer_page.dart';
 import '../features/organizer/pages/organizer_onboarding_page.dart';
+import '../features/home/pages/playlist_page.dart';
+import '../features/home/pages/alarm_page.dart';
+
 
 final appRouter = GoRouter(
   initialLocation: '/welcome',
@@ -135,6 +138,14 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/organizer/onboarding',
       builder: (context, state) => const OrganizerOnboardingPage(),
+    ),
+    GoRoute(
+      path: '/playlist',
+      builder: (context, state) => const PlaylistPage(),
+    ),
+    GoRoute(
+      path: '/alarm',
+      builder: (context, state) => const AlarmPage(),
     ),
   ],
 );
