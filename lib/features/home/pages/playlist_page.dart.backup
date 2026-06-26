@@ -2,7 +2,6 @@
 
 import 'dart:async';
 import 'dart:math';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -224,23 +223,17 @@ class _PlaylistPageState extends State<PlaylistPage> {
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/images/fondo_alarm.png'),
+            image: AssetImage('assets/images/fondo_playlist.png'),
             fit: BoxFit.cover,
           ),
         ),
-        child: Container(
-          color: Colors.black.withOpacity(0.3),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              transitionBuilder: (child, animation) => FadeTransition(
-                opacity: animation,
-                child: child,
-              ),
-              child: _showPlayer ? _buildPlayerView() : _buildListView(),
-            ),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          transitionBuilder: (child, animation) => FadeTransition(
+            opacity: animation,
+            child: child,
           ),
+          child: _showPlayer ? _buildPlayerView() : _buildListView(),
         ),
       ),
     );
@@ -297,7 +290,7 @@ class _PlaylistPageState extends State<PlaylistPage> {
                     height: 44,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.12),
+                      color: Colors.white.withOpacity(0.06),
                     ),
                     child: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 18),
                   ),
@@ -407,12 +400,12 @@ class _PlaylistPageState extends State<PlaylistPage> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.12),
+                            color: Colors.white.withOpacity(0.03),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
                               color: isSelected
-                                  ? const Color(0xFF9083ED).withOpacity(0.3)
-                                  : Colors.white.withOpacity(0.15),
+                                  ? const Color(0xFF9083ED).withOpacity(0.2)
+                                  : Colors.white.withOpacity(0.04),
                               width: 1.0,
                             ),
                           ),
@@ -578,7 +571,7 @@ class _PlaylistPageState extends State<PlaylistPage> {
                     height: 44,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.12),
+                      color: Colors.white.withOpacity(0.06),
                     ),
                     child: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 18),
                   ),

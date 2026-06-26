@@ -27,6 +27,7 @@ import '../features/organizer/pages/organizer_page.dart';
 import '../features/organizer/pages/organizer_onboarding_page.dart';
 import '../features/home/pages/playlist_page.dart';
 import '../features/home/pages/alarm_page.dart';
+import '../features/home/pages/rest_timer_page.dart';
 
 
 final appRouter = GoRouter(
@@ -146,6 +147,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/alarm',
       builder: (context, state) => const AlarmPage(),
+    ),
+    GoRoute(
+      path: '/rest_timer',
+      builder: (context, state) => const RestTimerPage(),
     ),
   ],
 );
