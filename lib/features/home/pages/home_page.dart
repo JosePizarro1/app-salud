@@ -31,6 +31,12 @@ class _HomePageState extends State<HomePage> {
     precacheImage(const AssetImage('assets/images/modulo4.png'), context);
     precacheImage(const AssetImage('assets/images/modulo5.png'), context);
     precacheImage(const AssetImage('assets/images/modulo6.png'), context);
+    precacheImage(const AssetImage('assets/images/Home_botones/mod_lecciones.png'), context);
+    precacheImage(const AssetImage('assets/images/Home_botones/mod_suenoydescanso.png'), context);
+    precacheImage(const AssetImage('assets/images/Home_botones/mod_meditacion.png'), context);
+    precacheImage(const AssetImage('assets/images/Home_botones/mod_juegos.png'), context);
+    precacheImage(const AssetImage('assets/images/Home_botones/mod_horario.png'), context);
+    precacheImage(const AssetImage('assets/images/Home_botones/mod_bienestarfisico.png'), context);
   }
 
   @override
@@ -80,12 +86,130 @@ class _HomePageState extends State<HomePage> {
           // ── Header (Configuración y Emergencia) ──
           const ModuleHeader(),
 
+          // ── IMÁGENES ESTÁTICAS DE LA HABITACIÓN ──
+
           // ── Modulo 1 (Mesa) ──
           Positioned(
             left: MediaQuery.of(context).size.width * 0,
             bottom: MediaQuery.of(context).size.height * 0.24,
             child: FadeIn(
               delay: const Duration(milliseconds: 500),
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.375,
+                height: MediaQuery.of(context).size.height * 0.25,
+                decoration: const BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage('assets/images/modulo1.png'),
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // ── Modulo 2 (Cama) ──
+          Positioned(
+            left: MediaQuery.of(context).size.width * 0.6,
+            bottom: MediaQuery.of(context).size.height * 0.35,
+            child: FadeIn(
+              delay: const Duration(milliseconds: 600),
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.4134375,
+                height: MediaQuery.of(context).size.height * 0.275625,
+                decoration: const BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage('assets/images/modulo2.png'),
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // ── Modulo 3 (Meditación) ──
+          Positioned(
+            left: MediaQuery.of(context).size.width * 0.02,
+            bottom: MediaQuery.of(context).size.height * 0.39,
+            child: FadeIn(
+              delay: const Duration(milliseconds: 700),
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.45375,
+                height: MediaQuery.of(context).size.height * 0.3025,
+                decoration: const BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage('assets/images/modulo3.png'),
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // ── Modulo 4 (Juegos) ──
+          Positioned(
+            left: MediaQuery.of(context).size.width * 0.04,
+            bottom: MediaQuery.of(context).size.height * 0.048,
+            child: FadeIn(
+              delay: const Duration(milliseconds: 800),
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.4125,
+                height: MediaQuery.of(context).size.height * 0.275,
+                decoration: const BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage('assets/images/modulo4.png'),
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // ── Módulo 5 (Horario / Agenda) ──
+          Positioned(
+            left: MediaQuery.of(context).size.width * 0.65,
+            bottom: MediaQuery.of(context).size.height * 0.23,
+            child: FadeIn(
+              delay: const Duration(milliseconds: 900),
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.375,
+                height: MediaQuery.of(context).size.height * 0.25,
+                decoration: const BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage('assets/images/modulo5.png'),
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // ── Módulo 6 (Bienestar Físico) ──
+          Positioned(
+            left: MediaQuery.of(context).size.width * 0.55,
+            bottom: MediaQuery.of(context).size.height * 0.039,
+            child: FadeIn(
+              delay: const Duration(milliseconds: 1000),
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.4125,
+                height: MediaQuery.of(context).size.height * 0.275,
+                decoration: const BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage('assets/images/modulo6.png'),
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // ── BOTONES INTERACTIVOS SOBREPUESTOS ──
+
+          // ── Botón Módulo 1 (Lecciones) ──
+          Positioned(
+            left: MediaQuery.of(context).size.width * 0.02,
+            bottom: MediaQuery.of(context).size.height * 0.35,
+            child: FadeIn(
+              delay: const Duration(milliseconds: 550),
               child: AnimatedScale(
                 scale: _moduleScales[0] ? 1.4 : 1.0,
                 duration: const Duration(milliseconds: 200),
@@ -95,15 +219,12 @@ class _HomePageState extends State<HomePage> {
                     await _triggerScale(0);
                     if (context.mounted) context.push('/module1');
                   },
-                 borderRadius: BorderRadius.circular(15),
-                  child: Container(
-                    width: MediaQuery.of(context).size.width * 0.375,
-                    height: MediaQuery.of(context).size.height * 0.25,
-                    decoration: const BoxDecoration(
-                      image: DecorationImage(
-                        image: AssetImage('assets/images/modulo1.png'),
-                        fit: BoxFit.contain,
-                      ),
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.34,
+                    height: MediaQuery.of(context).size.height * 0.08,
+                    child: Image.asset(
+                      'assets/images/Home_botones/mod_juegos.png',
+                      fit: BoxFit.contain,
                     ),
                   ),
                 ),
@@ -111,29 +232,27 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
 
-          // ── Modulo 2 ──
+          // ── Botón Módulo 2 (Sueño y Descanso) ──
           Positioned(
-            left: MediaQuery.of(context).size.width * 0.6,
-            bottom: MediaQuery.of(context).size.height * 0.35,
+            left: MediaQuery.of(context).size.width * 0.06,
+            bottom: MediaQuery.of(context).size.height * 0.18,
             child: FadeIn(
-              delay: const Duration(milliseconds: 600),
+              delay: const Duration(milliseconds: 650),
               child: AnimatedScale(
-                scale: _moduleScales[1] ? 1.4 : 1.0,
+                scale: _moduleScales[3] ? 1.4 : 1.0,
                 duration: const Duration(milliseconds: 200),
                 curve: Curves.easeInOut,
                 child: InkWell(
                   onTap: () async {
-                    await _triggerScale(1);
-                    if (context.mounted) context.push('/module2');
+                    await _triggerScale(3);
+                    if (context.mounted) context.push('/module4');
                   },
-                  child: Container(
-                    width: MediaQuery.of(context).size.width * 0.4134375,
-                    height: MediaQuery.of(context).size.height * 0.275625,
-                    decoration: const BoxDecoration(
-                      image: DecorationImage(
-                        image: AssetImage('assets/images/modulo2.png'),
-                        fit: BoxFit.contain,
-                      ),
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.34,
+                    height: MediaQuery.of(context).size.height * 0.08,
+                    child: Image.asset(
+                      'assets/images/Home_botones/mod_suenoydescanso.png',
+                      fit: BoxFit.contain,
                     ),
                   ),
                 ),
@@ -141,12 +260,12 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
 
-          // ── Modulo 3 ──
+          // ── Botón Módulo 3 (Meditación) ──
           Positioned(
-            left: MediaQuery.of(context).size.width * 0.02,
-            bottom: MediaQuery.of(context).size.height * 0.39,
+            left: MediaQuery.of(context).size.width * 0.15,
+            bottom: MediaQuery.of(context).size.height * 0.54,
             child: FadeIn(
-              delay: const Duration(milliseconds: 700),
+              delay: const Duration(milliseconds: 750),
               child: AnimatedScale(
                 scale: _moduleScales[2] ? 1.4 : 1.0,
                 duration: const Duration(milliseconds: 200),
@@ -156,14 +275,12 @@ class _HomePageState extends State<HomePage> {
                     await _triggerScale(2);
                     if (context.mounted) context.push('/module3');
                   },
-                  child: Container(
-                    width: MediaQuery.of(context).size.width * 0.45375,
-                    height: MediaQuery.of(context).size.height * 0.3025,
-                    decoration: const BoxDecoration(
-                      image: DecorationImage(
-                        image: AssetImage('assets/images/modulo3.png'),
-                        fit: BoxFit.contain,
-                      ),
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.34,
+                    height: MediaQuery.of(context).size.height * 0.08,
+                    child: Image.asset(
+                      'assets/images/Home_botones/mod_meditacion.png',
+                      fit: BoxFit.contain,
                     ),
                   ),
                 ),
@@ -171,29 +288,27 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
 
-          // ── Modulo 4 ──
+          // ── Botón Módulo 4 (Juegos) ──
           Positioned(
-            left: MediaQuery.of(context).size.width * 0.04,
-            bottom: MediaQuery.of(context).size.height * 0.048,
+            left: MediaQuery.of(context).size.width * 0.68,
+            bottom: MediaQuery.of(context).size.height * 0.49,
             child: FadeIn(
-              delay: const Duration(milliseconds: 800),
+              delay: const Duration(milliseconds: 850),
               child: AnimatedScale(
-                scale: _moduleScales[3] ? 1.4 : 1.0,
+                scale: _moduleScales[1] ? 1.4 : 1.0,
                 duration: const Duration(milliseconds: 200),
-                curve: Curves.easeInOut, 
+                curve: Curves.easeInOut,
                 child: InkWell(
                   onTap: () async {
-                    await _triggerScale(3);
-                    if (context.mounted) context.push('/module4');
+                    await _triggerScale(1);
+                    if (context.mounted) context.push('/module2');
                   },
-                  child: Container(
-                    width: MediaQuery.of(context).size.width * 0.4125,
-                    height: MediaQuery.of(context).size.height * 0.275,
-                    decoration: const BoxDecoration(
-                      image: DecorationImage(
-                        image: AssetImage('assets/images/modulo4.png'),
-                        fit: BoxFit.contain,
-                      ),
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.34,
+                    height: MediaQuery.of(context).size.height * 0.08,
+                    child: Image.asset(
+                      'assets/images/Home_botones/mod_bienestarfisico.png',
+                      fit: BoxFit.contain,
                     ),
                   ),
                 ),
@@ -201,12 +316,12 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
 
-          // ── Modulo 5 ──
+          // ── Botón Módulo 5 (Horario) ──
           Positioned(
-            left: MediaQuery.of(context).size.width * 0.65,
-            bottom: MediaQuery.of(context).size.height * 0.23,
+            left: MediaQuery.of(context).size.width * 0.63,
+            bottom: MediaQuery.of(context).size.height * 0.36,
             child: FadeIn(
-              delay: const Duration(milliseconds: 900),
+              delay: const Duration(milliseconds: 950),
               child: AnimatedScale(
                 scale: _moduleScales[4] ? 1.4 : 1.0,
                 duration: const Duration(milliseconds: 200),
@@ -216,14 +331,12 @@ class _HomePageState extends State<HomePage> {
                     await _triggerScale(4);
                     if (context.mounted) context.push('/module5');
                   },
-                  child: Container(
-                    width: MediaQuery.of(context).size.width * 0.375,
-                    height: MediaQuery.of(context).size.height * 0.25,
-                    decoration: const BoxDecoration(
-                      image: DecorationImage(
-                        image: AssetImage('assets/images/modulo5.png'),
-                        fit: BoxFit.contain,
-                      ),
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.34,
+                    height: MediaQuery.of(context).size.height * 0.08,
+                    child: Image.asset(
+                      'assets/images/Home_botones/mod_horario.png',
+                      fit: BoxFit.contain,
                     ),
                   ),
                 ),
@@ -231,12 +344,12 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
 
-          // ── Modulo 6 ──
+          // ── Botón Módulo 6 (Bienestar Físico) ──
           Positioned(
-            left: MediaQuery.of(context).size.width * 0.55,
-            bottom: MediaQuery.of(context).size.height * 0.039,
+            left: MediaQuery.of(context).size.width * 0.61,
+            bottom: MediaQuery.of(context).size.height * 0.18,
             child: FadeIn(
-              delay: const Duration(milliseconds: 1000),
+              delay: const Duration(milliseconds: 1050),
               child: AnimatedScale(
                 scale: _moduleScales[5] ? 1.4 : 1.0,
                 duration: const Duration(milliseconds: 200),
@@ -246,20 +359,20 @@ class _HomePageState extends State<HomePage> {
                     await _triggerScale(5);
                     if (context.mounted) context.push('/module6');
                   },
-                  child: Container(
-                    width: MediaQuery.of(context).size.width * 0.4125,
-                    height: MediaQuery.of(context).size.height * 0.275,
-                    decoration: const BoxDecoration(
-                      image: DecorationImage(
-                        image: AssetImage('assets/images/modulo6.png'),
-                        fit: BoxFit.contain,
-                      ),
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.34,
+                    height: MediaQuery.of(context).size.height * 0.08,
+                    child: Image.asset(
+                      'assets/images/Home_botones/mod_lecciones.png',
+                      fit: BoxFit.contain,
                     ),
                   ),
                 ),
               ),
             ),
           ),
+
+
 
         ],
       ),

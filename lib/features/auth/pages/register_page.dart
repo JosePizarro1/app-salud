@@ -181,128 +181,132 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
             ),
           ),
 
-          // ── Form section (bottom) ──
           Positioned(
             bottom: 37 + MediaQuery.of(context).viewInsets.bottom,
             left: 0,
             right: 0,
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 30),
-              child: Column(
-                children: [
-                  const SizedBox(height: 12),
+              child: Center(
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 400),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 12),
 
-                  // 👤 Name Input (Peach)
-                  FadeInUp(
-                    delay: const Duration(milliseconds: 100),
-                    child: _VitaliInput(
-                      controller: nameCtrl,
-                      hint: "Nombre completo",
-                      icon: Icons.person_outline_rounded,
-                      color: Colors.white,
-                      borderColor: AppColors.primary.withValues(alpha: 0.3),
-                      isDark: isDark,
-                    ),
-                  ),
-
-                  const SizedBox(height: 6),
-
-                  // 📧 Email Input (Mint)
-                  FadeInUp(
-                    delay: const Duration(milliseconds: 200),
-                    child: _VitaliInput(
-                      controller: emailCtrl,
-                      hint: "Usuario",
-                      icon: Icons.alternate_email_rounded,
-                      color: Colors.white,
-                      borderColor: AppColors.accent,
-                      isDark: isDark,
-                    ),
-                  ),
-
-                  const SizedBox(height: 6),
-
-                  // 🔒 Pass Input (Lavender)
-                  FadeInUp(
-                    delay: const Duration(milliseconds: 300),
-                    child: _VitaliInput(
-                      controller: codeCtrl,
-                      hint: "Contraseña (Mín. 6 caracteres)",
-                      icon: Icons.lock_outline_rounded,
-                      isObscure: _obscureCode,
-                      color: Colors.white,
-                      borderColor: AppColors.primary.withValues(alpha: 0.3),
-                      isDark: isDark,
-                      suffix: IconButton(
-                        icon: Icon(
-                          _obscureCode ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                          size: 20,
-                          color: isDark ? Colors.white54 : Colors.black45,
-                        ),
-                        onPressed: () => setState(() => _obscureCode = !_obscureCode),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // 🚀 Register Button
-                  FadeInUp(
-                    delay: const Duration(milliseconds: 400),
-                    child: isLoading 
-                      ? const CircularProgressIndicator()
-                      : _VitaliButton(
-                          text: "Crear Cuenta",
-                          onPressed: _register,
-                          color: AppColors.primary,
-                        ),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  // 📝 Login link
-                  FadeInUp(
-                    delay: const Duration(milliseconds: 500),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "¿Ya tienes una cuenta? ",
-                          style: TextStyle(
-                            color: isDark ? Colors.white54 : Colors.black45,
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () => context.pop(),
-                          child: const Text(
-                            "Inicia Sesión",
-                            style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  // 📜 Terms & Conditions
-                  FadeInUp(
-                    delay: const Duration(milliseconds: 600),
-                    child: GestureDetector(
-                      onTap: _showTermsAndConditions,
-                      child: Text(
-                        "Al registrarte, aceptas nuestros\nTérminos, Condiciones y Uso de Datos",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: isDark ? Colors.white38 : Colors.black38,
+                      // 👤 Name Input (Peach)
+                      FadeInUp(
+                        delay: const Duration(milliseconds: 100),
+                        child: _VitaliInput(
+                          controller: nameCtrl,
+                          hint: "Nombre completo",
+                          icon: Icons.person_outline_rounded,
+                          color: Colors.white,
+                          borderColor: AppColors.primary.withValues(alpha: 0.3),
+                          isDark: isDark,
                         ),
                       ),
-                    ),
-                  ),
 
-                  const SizedBox(height: 20),
-                ],
+                      const SizedBox(height: 6),
+
+                      // 📧 Email Input (Mint)
+                      FadeInUp(
+                        delay: const Duration(milliseconds: 200),
+                        child: _VitaliInput(
+                          controller: emailCtrl,
+                          hint: "Usuario",
+                          icon: Icons.alternate_email_rounded,
+                          color: Colors.white,
+                          borderColor: AppColors.accent,
+                          isDark: isDark,
+                        ),
+                      ),
+
+                      const SizedBox(height: 6),
+
+                      // 🔒 Pass Input (Lavender)
+                      FadeInUp(
+                        delay: const Duration(milliseconds: 300),
+                        child: _VitaliInput(
+                          controller: codeCtrl,
+                          hint: "Contraseña (Mín. 6 caracteres)",
+                          icon: Icons.lock_outline_rounded,
+                          isObscure: _obscureCode,
+                          color: Colors.white,
+                          borderColor: AppColors.primary.withValues(alpha: 0.3),
+                          isDark: isDark,
+                          suffix: IconButton(
+                            icon: Icon(
+                              _obscureCode ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                              size: 20,
+                              color: isDark ? Colors.white54 : Colors.black45,
+                            ),
+                            onPressed: () => setState(() => _obscureCode = !_obscureCode),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // 🚀 Register Button
+                      FadeInUp(
+                        delay: const Duration(milliseconds: 400),
+                        child: isLoading 
+                          ? const CircularProgressIndicator()
+                          : _VitaliButton(
+                              text: "Crear Cuenta",
+                              onPressed: _register,
+                              color: AppColors.primary,
+                            ),
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      // 📝 Login link
+                      FadeInUp(
+                        delay: const Duration(milliseconds: 500),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              "¿Ya tienes una cuenta? ",
+                              style: TextStyle(
+                                color: isDark ? Colors.white54 : Colors.black45,
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () => context.pop(),
+                              child: const Text(
+                                "Inicia Sesión",
+                                style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      // 📜 Terms & Conditions
+                      FadeInUp(
+                        delay: const Duration(milliseconds: 600),
+                        child: GestureDetector(
+                          onTap: _showTermsAndConditions,
+                          child: Text(
+                            "Al registrarte, aceptas nuestros\nTérminos, Condiciones y Uso de Datos",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: isDark ? Colors.white38 : Colors.black38,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),

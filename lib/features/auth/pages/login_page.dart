@@ -101,95 +101,99 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
             },
           ),
 
-          // ── Form section (bottom) ──
           Positioned(
             bottom: 37 + MediaQuery.of(context).viewInsets.bottom,
             left: 0,
             right: 0,
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 30),
-              child: Column(
-                children: [
-                  const SizedBox(height: 20),
+              child: Center(
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 400),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 20),
 
-                  // 📧 User Input (Mint)
-                  FadeInUp(
-                    delay: const Duration(milliseconds: 200),
-                    child: _VitaliInput(
-                      controller: emailCtrl,
-                      hint: "Usuario institucional",
-                      icon: Icons.alternate_email_rounded,
-                      color: Colors.white,
-                      borderColor: AppColors.accent,
-                      isDark: isDark,
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // 🔒 Pass Input (Lavender)
-                  FadeInUp(
-                    delay: const Duration(milliseconds: 300),
-                    child: _VitaliInput(
-                      controller: passCtrl,
-                      hint: "Contraseña",
-                      icon: Icons.lock_outline_rounded,
-                      isObscure: _obscurePass,
-                      color: Colors.white,
-                      borderColor: AppColors.primary.withValues(alpha: 0.3),
-                      isDark: isDark,
-                      suffix: IconButton(
-                        icon: Icon(
-                          _obscurePass ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                          size: 20,
-                          color: isDark ? Colors.white54 : Colors.black45,
+                      // 📧 User Input (Mint)
+                      FadeInUp(
+                        delay: const Duration(milliseconds: 200),
+                        child: _VitaliInput(
+                          controller: emailCtrl,
+                          hint: "Usuario institucional",
+                          icon: Icons.alternate_email_rounded,
+                          color: Colors.white,
+                          borderColor: AppColors.accent,
+                          isDark: isDark,
                         ),
-                        onPressed: () => setState(() => _obscurePass = !_obscurePass),
                       ),
-                    ),
-                  ),
 
-                  const SizedBox(height: 28),
+                      const SizedBox(height: 16),
 
-                  // 🚀 Login Button
-                  FadeInUp(
-                    delay: const Duration(milliseconds: 400),
-                    child: isLoading 
-                      ? const CircularProgressIndicator()
-                      : _VitaliButton(
-                          text: "Iniciar Sesión",
-                          onPressed: _login,
-                          color: AppColors.primary,
-                        ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // 📝 Register link
-                  FadeInUp(
-                    delay: const Duration(milliseconds: 500),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "¿No tienes una cuenta? ",
-                          style: TextStyle(
-                            color: isDark ? Colors.white54 : Colors.black45,
+                      // 🔒 Pass Input (Lavender)
+                      FadeInUp(
+                        delay: const Duration(milliseconds: 300),
+                        child: _VitaliInput(
+                          controller: passCtrl,
+                          hint: "Contraseña",
+                          icon: Icons.lock_outline_rounded,
+                          isObscure: _obscurePass,
+                          color: Colors.white,
+                          borderColor: AppColors.primary.withValues(alpha: 0.3),
+                          isDark: isDark,
+                          suffix: IconButton(
+                            icon: Icon(
+                              _obscurePass ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                              size: 20,
+                              color: isDark ? Colors.white54 : Colors.black45,
+                            ),
+                            onPressed: () => setState(() => _obscurePass = !_obscurePass),
                           ),
                         ),
-                        GestureDetector(
-                          onTap: () => context.push('/register'),
-                          child: const Text(
-                            "Regístrate",
-                            style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                      ),
 
-                  const SizedBox(height: 40),
-                ],
+                      const SizedBox(height: 28),
+
+                      // 🚀 Login Button
+                      FadeInUp(
+                        delay: const Duration(milliseconds: 400),
+                        child: isLoading 
+                          ? const CircularProgressIndicator()
+                          : _VitaliButton(
+                              text: "Iniciar Sesión",
+                              onPressed: _login,
+                              color: AppColors.primary,
+                            ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // 📝 Register link
+                      FadeInUp(
+                        delay: const Duration(milliseconds: 500),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              "¿No tienes una cuenta? ",
+                              style: TextStyle(
+                                color: isDark ? Colors.white54 : Colors.black45,
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () => context.push('/register'),
+                              child: const Text(
+                                "Regístrate",
+                                style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 40),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),

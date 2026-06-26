@@ -38,6 +38,7 @@ class _PhysicalActivityPageState extends State<PhysicalActivityPage> {
       'borderColor': const Color(0xFF9083ED), // Purple border from AppColors.secondary
       'textColor': const Color(0xFF4F3A8A),
       'badgeBg': const Color(0xFF9083ED),
+      'revealedIcon': Icons.accessibility_new_rounded,
     },
     {
       'number': '2',
@@ -49,6 +50,7 @@ class _PhysicalActivityPageState extends State<PhysicalActivityPage> {
       'borderColor': const Color(0xFF4CAF50), // Green border
       'textColor': const Color(0xFF1E523A),
       'badgeBg': const Color(0xFF2E7D32),
+      'revealedIcon': Icons.bolt_rounded,
     },
     {
       'number': '3',
@@ -60,6 +62,7 @@ class _PhysicalActivityPageState extends State<PhysicalActivityPage> {
       'borderColor': const Color(0xFFFBBF24), // Warning Yellow from AppColors.warning
       'textColor': const Color(0xFF7A5C00),
       'badgeBg': const Color(0xFFFFA000),
+      'revealedIcon': Icons.sports_gymnastics_rounded,
     },
     {
       'number': '4',
@@ -72,6 +75,7 @@ class _PhysicalActivityPageState extends State<PhysicalActivityPage> {
       'borderColor': const Color(0xFFFF8A71), // Primary Coral from AppColors.primary
       'textColor': const Color(0xFF9E2A3B),
       'badgeBg': const Color(0xFFFF8A71),
+      'revealedIcon': Icons.trending_up_rounded,
     },
   ];
 
@@ -341,14 +345,28 @@ class _PhysicalActivityPageState extends State<PhysicalActivityPage> {
                       constraints: const BoxConstraints(minHeight: 32),
                       alignment: Alignment.center,
                       child: isOpen
-                          ? Text(
-                              card['desc'] as String,
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.outfit(
-                                fontSize: 15.5,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black87,
-                                height: 1.45,
+                          ? ZoomIn(
+                              duration: const Duration(milliseconds: 350),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    card['revealedIcon'] as IconData,
+                                    size: 32,
+                                    color: card['borderColor'] as Color,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    card['desc'] as String,
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 19.0, // Larger letter size
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.black87,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ],
                               ),
                             )
                           : Row(
@@ -802,7 +820,7 @@ class _PhysicalActivityPageState extends State<PhysicalActivityPage> {
             // List of the 6 benefits buttons
             ...List.generate(6, (index) {
               return Container(
-                margin: const EdgeInsets.only(bottom: 3),
+                margin: EdgeInsets.zero,
                 child: AnimatedScale(
                   scale: _benefitScales[index] ? 1.08 : 1.0,
                   duration: const Duration(milliseconds: 150),
@@ -812,23 +830,27 @@ class _PhysicalActivityPageState extends State<PhysicalActivityPage> {
                       if (!mounted) return;
                       _showBenefitDetail(context, index);
                     },
-                    child: Image.asset(
-                      'assets/images/Modulo6/beneficio${index + 1}.png',
-                      width: double.infinity,
-                      height: 82,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        height: 82,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF1EEFB),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.black12),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          'Beneficio ${index + 1}',
-                          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+                    child: SizedBox(
+                      height: 64,
+                      child: ClipRect(
+                        child: Image.asset(
+                          'assets/images/Modulo6/beneficio${index + 1}.png',
+                          width: double.infinity,
+                          fit: BoxFit.fitWidth,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            height: 64,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1EEFB),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: Colors.black12),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              'Beneficio ${index + 1}',
+                              style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+                            ),
+                          ),
                         ),
                       ),
                     ),
