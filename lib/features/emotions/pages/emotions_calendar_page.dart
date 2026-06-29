@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:animate_do/animate_do.dart';
 import 'dart:async';
@@ -209,17 +210,20 @@ class _EmotionsCalendarPageState extends State<EmotionsCalendarPage> {
       onTap: () => FocusScope.of(context).unfocus(),
       behavior: HitTestBehavior.translucent,
       child: Scaffold(
-        body: AnimatedContainer(
-        duration: const Duration(milliseconds: 500),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [bgTop, bgBottom],
+        body: Container(
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/images/fondo_sudoku.png'),
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
-        child: Stack(
-          children: [
+          child: ClipRect(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 4.0, sigmaY: 4.0),
+              child: Container(
+                color: Colors.white.withOpacity(0.4),
+                child: Stack(
+                  children: [
             SafeArea(
               child: Padding(
                 padding: const EdgeInsets.only(top: 130),
@@ -427,6 +431,9 @@ class _EmotionsCalendarPageState extends State<EmotionsCalendarPage> {
           ],
         ),
       ),
+    ),
+  ),
+),
     ),
   );
   }

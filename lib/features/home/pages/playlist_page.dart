@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../app/theme/app_colors.dart';
+import 'package:go_router/go_router.dart';
 
 class PlaylistPage extends StatefulWidget {
   const PlaylistPage({super.key});
@@ -291,13 +292,19 @@ class _PlaylistPageState extends State<PlaylistPage> {
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
+                  onTap: () {
+                    if (Navigator.of(context).canPop()) {
+                      Navigator.of(context).pop();
+                    } else {
+                      context.go('/sleep_care');
+                    }
+                  },
                   child: Container(
                     width: 44,
                     height: 44,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.12),
+                      color: Color(0xFF282B42),
                     ),
                     child: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 18),
                   ),
@@ -407,12 +414,12 @@ class _PlaylistPageState extends State<PlaylistPage> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.12),
+                            color: const Color(0xFF1E2235),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
                               color: isSelected
-                                  ? const Color(0xFF9083ED).withOpacity(0.3)
-                                  : Colors.white.withOpacity(0.15),
+                                  ? const Color(0xFF9083ED)
+                                  : const Color(0xFF2E334D),
                               width: 1.0,
                             ),
                           ),
@@ -576,9 +583,9 @@ class _PlaylistPageState extends State<PlaylistPage> {
                   child: Container(
                     width: 44,
                     height: 44,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.12),
+                      color: Color(0xFF282B42),
                     ),
                     child: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 18),
                   ),

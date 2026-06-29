@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../services/notification_service.dart';
 import '../../organizer/services/organizer_task_storage.dart';
+import 'package:go_router/go_router.dart';
 
 class AlarmPage extends StatefulWidget {
   const AlarmPage({super.key});
@@ -429,13 +430,19 @@ class _AlarmPageState extends State<AlarmPage> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     GestureDetector(
-                      onTap: () => Navigator.of(context).pop(),
+                      onTap: () {
+                        if (Navigator.of(context).canPop()) {
+                          Navigator.of(context).pop();
+                        } else {
+                          context.go('/sleep_care');
+                        }
+                      },
                       child: Container(
                         width: 44,
                         height: 44,
-                        decoration: BoxDecoration(
+                        decoration: const BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.white.withOpacity(0.06),
+                          color: Color(0xFF282B42),
                         ),
                         child: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 18),
                       ),
@@ -522,10 +529,10 @@ class _AlarmPageState extends State<AlarmPage> {
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.12),
+                          color: const Color(0xFF1E2235),
                           borderRadius: BorderRadius.circular(24),
                           border: Border.all(
-                            color: Colors.white.withOpacity(0.15),
+                            color: const Color(0xFF2E334D),
                           ),
                         ),
                         child: Column(
@@ -539,10 +546,10 @@ class _AlarmPageState extends State<AlarmPage> {
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.12),
+                                        color: const Color(0xFF151829),
                                         borderRadius: BorderRadius.circular(16),
                                         border: Border.all(
-                                          color: Colors.white.withOpacity(0.15),
+                                          color: const Color(0xFF23273B),
                                         ),
                                       ),
                                       child: Column(
@@ -583,10 +590,10 @@ class _AlarmPageState extends State<AlarmPage> {
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.12),
+                                        color: const Color(0xFF151829),
                                         borderRadius: BorderRadius.circular(16),
                                         border: Border.all(
-                                          color: Colors.white.withOpacity(0.15),
+                                          color: const Color(0xFF23273B),
                                         ),
                                       ),
                                       child: Column(
@@ -687,9 +694,9 @@ class _AlarmPageState extends State<AlarmPage> {
                             onTap: _pickRestTime,
                             child: Container(
                               padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
+                              decoration: const BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: AppColors.accent.withOpacity(0.12),
+                                color: Color(0xFF282B42),
                               ),
                               child: const Icon(Icons.add_rounded, color: AppColors.accent, size: 22),
                             ),
@@ -704,10 +711,10 @@ class _AlarmPageState extends State<AlarmPage> {
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.12),
+                            color: const Color(0xFF1E2235),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.15),
+                              color: const Color(0xFF2E334D),
                             ),
                           ),
                           child: Column(
@@ -738,12 +745,12 @@ class _AlarmPageState extends State<AlarmPage> {
                             return Container(
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.12),
+                                color: const Color(0xFF1E2235),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
                                   color: isActive
-                                      ? AppColors.secondary.withOpacity(0.3)
-                                      : Colors.white.withOpacity(0.15),
+                                      ? AppColors.secondary.withOpacity(0.6)
+                                      : const Color(0xFF2E334D),
                                 ),
                               ),
                               child: Row(

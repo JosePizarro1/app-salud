@@ -6,6 +6,7 @@ import '../../../app/theme/app_colors.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart';
 import '../../../services/notification_service.dart';
+import 'package:go_router/go_router.dart';
 
 class NightRoutinePage extends StatefulWidget {
   const NightRoutinePage({super.key});
@@ -368,13 +369,19 @@ class _NightRoutinePageState extends State<NightRoutinePage> {
                     child: Row(
                       children: [
                         GestureDetector(
-                          onTap: () => Navigator.of(context).pop(),
+                          onTap: () {
+                            if (Navigator.of(context).canPop()) {
+                              Navigator.of(context).pop();
+                            } else {
+                              context.go('/sleep_care');
+                            }
+                          },
                           child: Container(
                             width: 44,
                             height: 44,
-                            decoration: BoxDecoration(
+                            decoration: const BoxDecoration(
                               shape: BoxShape.circle,
-                              color: Colors.white.withOpacity(0.12),
+                              color: Color(0xFF282B42),
                             ),
                             child: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 18),
                           ),
@@ -469,7 +476,7 @@ class _NightRoutinePageState extends State<NightRoutinePage> {
                                         borderRadius: BorderRadius.circular(8),
                                         child: Container(
                                           height: 34,
-                                          color: Colors.white.withOpacity(0.06), // Track
+                                          color: const Color(0xFF151829), // Track
                                           child: Row(
                                             children: List.generate(12, (hourIndex) {
                                               final isSelected = _selectedHours[dayIndex]!.contains(hourIndex);
@@ -499,8 +506,8 @@ class _NightRoutinePageState extends State<NightRoutinePage> {
                                                   child: Container(
                                                     margin: const EdgeInsets.symmetric(vertical: 3, horizontal: 0.5),
                                                     decoration: BoxDecoration(
-                                                      color: isSelected ? AppColors.secondary : Colors.transparent,
-                                                      borderRadius: borderRadius,
+                                                      color: isSelected ? AppColors.secondary : const Color(0xFF1E2235),
+                                                      borderRadius: isSelected ? borderRadius : BorderRadius.circular(4),
                                                     ),
                                                   ),
                                                 ),

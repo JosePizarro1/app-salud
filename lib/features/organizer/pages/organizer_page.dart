@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:go_router/go_router.dart';
@@ -851,10 +852,21 @@ class _OrganizerPageState extends State<OrganizerPage> {
     final countP4 = tasksByDim[4]!.length;
 
     return Scaffold(
-      backgroundColor: backgroundColor,
-      body: Stack(
-        children: [
-          SafeArea(
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/fondo_sudoku.png'),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 4.0, sigmaY: 4.0),
+            child: Container(
+              color: Colors.white.withOpacity(0.4),
+              child: Stack(
+                children: [
+                  SafeArea(
             child: Padding(
               padding: const EdgeInsets.only(top: 130),
               child: _isLoading
@@ -1062,6 +1074,10 @@ class _OrganizerPageState extends State<OrganizerPage> {
           ),
         ],
       ),
+    ),
+  ),
+),
+),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddTaskSheet,
         backgroundColor: AppColors.secondary,

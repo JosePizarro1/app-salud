@@ -107,7 +107,13 @@ class _SleepCarePageState extends State<SleepCarePage> {
                       child: Row(
                         children: [
                           GestureDetector(
-                            onTap: () => Navigator.of(context).pop(),
+                            onTap: () {
+                              if (Navigator.of(context).canPop()) {
+                                Navigator.of(context).pop();
+                              } else {
+                                context.go('/module4');
+                              }
+                            },
                             child: Container(
                               width: 44,
                               height: 44,
