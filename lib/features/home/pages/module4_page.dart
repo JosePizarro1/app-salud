@@ -22,79 +22,58 @@ class Module4Page extends StatelessWidget {
           // Shared Header with Home Button
           const ModuleHeader(showHome: true),
 
-          // Contenedor para los dos botones de navegación
+          // Contenedor para los botones de navegación
           Positioned(
-            bottom: MediaQuery.of(context).size.height * 0.15,
+            bottom: MediaQuery.of(context).size.height * 0.08,
             left: 0,
             right: 0,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  // Botón de Playlist
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.secondary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        elevation: 2,
-                      ),
-                      onPressed: () => context.push('/playlist'),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.playlist_play_rounded),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Playlist',
-                            style: GoogleFonts.outfit(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                  _buildImageButton(
+                    context,
+                    'assets/images/modulo4_botones/boton1_modulosuenio_lectura_sueno.png',
+                    '/sleep_care',
                   ),
-                  const SizedBox(width: 16),
-                  // Botón de Alarma
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        elevation: 2,
-                      ),
-                      onPressed: () => context.push('/alarm'),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.alarm_rounded),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Alarma',
-                            style: GoogleFonts.outfit(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                  _buildImageButton(
+                    context,
+                    'assets/images/modulo4_botones/boton2_modulosuenio_rutina_nocturna.png',
+                    '/night_routine',
+                  ),
+                  _buildImageButton(
+                    context,
+                    'assets/images/modulo4_botones/boton3_modulosuenio_alarma.png',
+                    '/alarm',
+                  ),
+                  _buildImageButton(
+                    context,
+                    'assets/images/modulo4_botones/boton4_modulosuenio_playlist.png',
+                    '/playlist',
                   ),
                 ],
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildImageButton(BuildContext context, String imagePath, String route) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+        child: InkWell(
+          onTap: () {
+            context.push(route);
+          },
+          child: Image.asset(
+            imagePath,
+            fit: BoxFit.contain,
+          ),
+        ),
       ),
     );
   }

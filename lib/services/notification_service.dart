@@ -101,6 +101,21 @@ class NotificationService {
         seconds: 1800, // 30 minutes
         isRestReminder: true,
       );
+    } else if (response.actionId == 'iniciar_sueno') {
+      try {
+        appRouter.push('/alarm');
+      } catch (e) {
+        debugPrint('❌ [NotificationService] Error al navegar a alarm: $e');
+      }
+    } else if (response.actionId == 'snooze_sueno') {
+      showDelayedNotification(
+        id: 8888, // Unique ID for sleep snooze
+        title: 'Es hora de dormir',
+        body: 'Te recordamos que ya es hora de tu rutina nocturna.',
+        seconds: 1800, // 30 minutes
+        isRestReminder: false,
+        isSleepReminder: true, // We'll add this param
+      );
     } else {
       // User tapped the notification itself
       try {
@@ -251,6 +266,80 @@ class NotificationService {
     }
   }
 
+  Future<void> scheduleNightRoutineNotification({
+    required int id,
+    required String title,
+    required String body,
+    required int hour,
+    required int minute,
+  }) async {
+    if (kIsWeb) return;
+    await init();
+
+    try {
+      final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+      tz.TZDateTime scheduledDate = tz.TZDateTime(
+        tz.local,
+        now.year,
+        now.month,
+        now.day,
+        hour,
+        minute,
+      );
+
+      if (scheduledDate.isBefore(now)) {
+        scheduledDate = scheduledDate.add(const Duration(days: 1));
+      }
+
+      debugPrint('📅 [NotificationService] Programando rutina nocturna - ID: $id, Hora: $hour:$minute');
+
+      const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+        'night_routine',
+        'Rutina Nocturna',
+        channelDescription: 'Recordatorios de hora de dormir',
+        importance: Importance.max,
+        priority: Priority.high,
+        actions: [
+          AndroidNotificationAction(
+            'iniciar_sueno',
+            'INICIAR HORARIO DE SUEÑO',
+            showsUserInterface: true,
+          ),
+          AndroidNotificationAction(
+            'snooze_sueno',
+            'RECUÉRDAMELO MÁS TARDE',
+          ),
+        ],
+      );
+
+      const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      );
+
+      const NotificationDetails platformDetails = NotificationDetails(
+        android: androidDetails,
+        iOS: iosDetails,
+      );
+
+      await _notificationsPlugin.zonedSchedule(
+        id,
+        title,
+        body,
+        scheduledDate,
+        platformDetails,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        matchDateTimeComponents: DateTimeComponents.time,
+      );
+      debugPrint('✅ [NotificationService] Rutina nocturna programada exitosamente!');
+    } catch (e) {
+      debugPrint('❌ [NotificationService] Error al programar rutina nocturna: $e');
+    }
+  }
+
   Future<void> cancelNotification(int id) async {
     if (kIsWeb) return;
     try {
@@ -327,6 +416,7 @@ class NotificationService {
     required String body,
     required int seconds,
     bool isRestReminder = false,
+    bool isSleepReminder = false,
   }) async {
     if (kIsWeb) return;
     await init();
@@ -357,7 +447,19 @@ class NotificationService {
                   'RECUÉRDAMELO MÁS TARDE',
                 ),
               ]
-            : null,
+            : (isSleepReminder
+                ? const [
+                    AndroidNotificationAction(
+                      'iniciar_sueno',
+                      'INICIAR HORARIO DE SUEÑO',
+                      showsUserInterface: true,
+                    ),
+                    AndroidNotificationAction(
+                      'snooze_sueno',
+                      'RECUÉRDAMELO MÁS TARDE',
+                    ),
+                  ]
+                : null),
       );
 
       final DarwinNotificationDetails iosDetails = DarwinNotificationDetails(

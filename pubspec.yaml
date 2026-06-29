@@ -63,6 +63,7 @@ dev_dependencies:
 flutter:
   assets:
     - assets/images/
+    - assets/images/sleep_care/
     - assets/images/Modulo6/
     - assets/images/ModuloYoga/
     - assets/images/ModuloYoga/iloveimg-compressed (1)/
@@ -71,6 +72,7 @@ flutter:
     - assets/images/modulo_respiracion/
     - assets/images/pausa_activa/
     - assets/images/Home_botones/
+    - assets/images/modulo4_botones/
     - assets/audio/
     - assets/audio/playlist/
     - "assets/audio/AUDIOS DE MEDITACIÓN GUIADA/AUDIOS 01 MINUTO/"

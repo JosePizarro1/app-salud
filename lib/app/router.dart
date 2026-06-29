@@ -28,7 +28,9 @@ import '../features/organizer/pages/organizer_onboarding_page.dart';
 import '../features/home/pages/playlist_page.dart';
 import '../features/home/pages/alarm_page.dart';
 import '../features/home/pages/rest_timer_page.dart';
-
+import '../features/home/pages/night_routine_page.dart';
+import '../features/home/pages/sleep_care_page.dart';
+import '../features/home/pages/sleep_care_reader_page.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/welcome',
@@ -76,6 +78,21 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/module5',
       builder: (context, state) => const Module5Page(),
+    ),
+    GoRoute(
+      path: '/night_routine',
+      builder: (context, state) => const NightRoutinePage(),
+    ),
+    GoRoute(
+      path: '/sleep_care',
+      builder: (context, state) => const SleepCarePage(),
+    ),
+    GoRoute(
+      path: '/sleep_care/reader',
+      builder: (context, state) {
+        final initialPage = state.extra as int? ?? 0;
+        return SleepCareReaderPage(initialPage: initialPage);
+      },
     ),
     GoRoute(
       path: '/module6',
