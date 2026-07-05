@@ -60,7 +60,9 @@ class _Module6PageState extends State<Module6Page> {
                   imagePath: 'assets/images/Modulo6/boton2 modulo leccion.png',
                   onTap: () async {
                     await _triggerScale(1);
-                    // Action for button 2
+                    if (context.mounted) {
+                      context.push('/healthy_eating');
+                    }
                   },
                 ),
                 const SizedBox(width: 8),
@@ -78,7 +80,10 @@ class _Module6PageState extends State<Module6Page> {
                   imagePath: 'assets/images/Modulo6/boton 4 modulo leccion.png',
                   onTap: () async {
                     await _triggerScale(3);
-                    // Action for button 4
+                    // Action for button 4 - Conociendo el Estrés
+                    if (context.mounted) {
+                      context.push('/knowing_stress');
+                    }
                   },
                 ),
               ],

@@ -11,6 +11,8 @@ import '../features/home/pages/module4_page.dart';
 import '../features/home/pages/module5_page.dart';
 import '../features/home/pages/module6_page.dart';
 import '../features/home/pages/physical_activity_page.dart';
+import '../features/home/pages/healthy_eating_page.dart';
+import '../features/home/pages/knowing_stress_page.dart';
 import '../features/settings/pages/settings_page.dart';
 import '../features/emotions/pages/emotions_calendar_page.dart';
 import '../features/emotions/pages/meditation_page.dart';
@@ -101,6 +103,14 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/physical_activity',
       builder: (context, state) => const PhysicalActivityPage(),
+    ),
+    GoRoute(
+      path: '/healthy_eating',
+      builder: (context, state) => const HealthyEatingPage(),
+    ),
+    GoRoute(
+      path: '/knowing_stress',
+      builder: (context, state) => const KnowingStressPage(),
     ),
     GoRoute(
       path: '/emotions',

@@ -96,17 +96,23 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                 child: Image.asset(
                   'assets/images/login_fondo.png',
                   fit: BoxFit.cover,
+                  alignment: Alignment.topCenter,
                 ),
               );
             },
           ),
 
           Positioned(
-            bottom: 37 + MediaQuery.of(context).viewInsets.bottom,
+            top: MediaQuery.of(context).size.height * 0.60,
+            bottom: 0,
             left: 0,
             right: 0,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 30),
+              padding: EdgeInsets.only(
+                left: 30,
+                right: 30,
+                bottom: 37 + MediaQuery.of(context).viewInsets.bottom,
+              ),
               child: Center(
                 child: Container(
                   constraints: const BoxConstraints(maxWidth: 400),

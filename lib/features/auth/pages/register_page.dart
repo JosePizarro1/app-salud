@@ -92,18 +92,42 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
             ? AppColors.surfaceDark 
             : Colors.white,
         title: Text(
-          "Términos y Condiciones",
-          style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+          "Términos, Condiciones y\nUso de Datos",
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16),
         ),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _termItem("Uso de Datos", "Recopilamos tu nombre y correo para identificarte en la plataforma."),
-              _termItem("Monitoreo de Módulos", "Registramos a qué módulos accedes para mejorar nuestro contenido y servicios universitarios."),
-              _termItem("Privacidad", "Tus datos son procesados de forma segura y no se comparten con terceros externos."),
-              _termItem("Carácter Informativo", "Esta app es una herramienta de apoyo y no sustituye el consejo médico profesional."),
+              _termItem(
+                "Naturaleza del Proyecto",
+                "Vitali es una aplicación desarrollada por el Semillero de Investigación de la Universidad Nacional Jorge Basadre Grohmann (UNJBG), con fines exclusivamente educativos y de investigación académica. No tiene fines comerciales ni monetarios.",
+              ),
+              _termItem(
+                "Datos Recopilados",
+                "La aplicación recopila: nombre, correo institucional, respuestas a cuestionarios de bienestar, registros del calendario emocional y progreso en los módulos educativos.",
+              ),
+              _termItem(
+                "Tratamiento de Datos Sensibles",
+                "Los datos relacionados con tu bienestar emocional y respuestas a cuestionarios se consideran datos sensibles. Estos son almacenados de forma anónima mediante un identificador interno, sin vincular directamente tu identidad personal en los análisis de investigación.",
+              ),
+              _termItem(
+                "Finalidad",
+                "La información recopilada será utilizada únicamente para análisis académico dentro del proyecto de investigación. No se comparte ni vende a terceros bajo ninguna circunstancia.",
+              ),
+              _termItem(
+                "Derecho de Eliminación",
+                "Puedes solicitar la eliminación total de tu cuenta y todos los datos asociados en cualquier momento, contactando al equipo de investigación.",
+              ),
+              _termItem(
+                "Carácter Informativo",
+                "Vitali es una herramienta de apoyo al bienestar universitario. No sustituye diagnósticos, tratamientos ni el consejo de profesionales de la salud.",
+              ),
+              _termItem(
+                "Consentimiento",
+                "Al registrarte y utilizar la aplicación, manifiestas tu consentimiento libre e informado para la recopilación y uso de tus datos conforme a estos términos.",
+              ),
             ],
           ),
         ),
@@ -153,6 +177,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                 child: Image.asset(
                   'assets/images/register_fondo.png',
                   fit: BoxFit.cover,
+                  alignment: Alignment.topCenter,
                 ),
               );
             },
@@ -182,11 +207,16 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
           ),
 
           Positioned(
-            bottom: 37 + MediaQuery.of(context).viewInsets.bottom,
+            top: MediaQuery.of(context).size.height * 0.60,
+            bottom: 0,
             left: 0,
             right: 0,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 30),
+              padding: EdgeInsets.only(
+                left: 30,
+                right: 30,
+                bottom: 37 + MediaQuery.of(context).viewInsets.bottom,
+              ),
               child: Center(
                 child: Container(
                   constraints: const BoxConstraints(maxWidth: 400),
