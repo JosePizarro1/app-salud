@@ -71,7 +71,9 @@ class _Module6PageState extends State<Module6Page> {
                   imagePath: 'assets/images/Modulo6/boton3 modulo leccion.png',
                   onTap: () async {
                     await _triggerScale(2);
-                    // Action for button 3
+                    if (context.mounted) {
+                      context.push('/study_techniques');
+                    }
                   },
                 ),
                 const SizedBox(width: 8),

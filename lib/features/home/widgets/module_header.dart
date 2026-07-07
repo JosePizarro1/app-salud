@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:async';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class ModuleHeader extends StatefulWidget {
   final bool showHome;
@@ -31,6 +33,77 @@ class _ModuleHeaderState extends State<ModuleHeader> {
   void dispose() {
     _pulseSubscription.cancel();
     super.dispose();
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
+          ),
+          backgroundColor: Colors.white,
+          title: Text(
+            'Cerrar sesión',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.outfit(
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF2D3142),
+            ),
+          ),
+          content: Text(
+            '¿Estás seguro de que deseas cerrar sesión?',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.outfit(
+              color: Colors.black87,
+              fontSize: 16,
+            ),
+          ),
+          actionsAlignment: MainAxisAlignment.spaceEvenly,
+          actionsPadding: const EdgeInsets.only(bottom: 20, left: 10, right: 10),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text(
+                'Cancelar',
+                style: GoogleFonts.outfit(
+                  color: Colors.grey,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await Supabase.instance.client.auth.signOut();
+                if (context.mounted) {
+                  context.go('/login');
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFF8A71),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              child: Text(
+                'Cerrar sesión',
+                style: GoogleFonts.outfit(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _triggerConfig() async {
@@ -73,7 +146,7 @@ class _ModuleHeaderState extends State<ModuleHeader> {
             child: GestureDetector(
               onTap: () {
                 _triggerConfig();
-                context.push('/settings');
+                _showLogoutDialog(context);
               },
               child: SizedBox(
                 width: MediaQuery.of(context).size.width * 0.12,

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:animate_do/animate_do.dart';
 import '../widgets/module_header.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../widgets/home_tutorial_overlay.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -13,10 +15,28 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   // Estado de escalado para cada módulo (0: Mesa/Modulo1, 1: Mod2, 2: Mod3, etc.)
   final List<bool> _moduleScales = List.generate(6, (_) => false);
+  bool _showTutorial = false;
 
   @override
   void initState() {
     super.initState();
+    _checkTutorialStatus();
+  }
+
+  Future<void> _checkTutorialStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hasShown = prefs.getBool('home_tutorial_shown') ?? false;
+    if (!hasShown && mounted) {
+      setState(() => _showTutorial = true);
+    }
+  }
+
+  Future<void> _completeTutorial() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('home_tutorial_shown', true);
+    if (mounted) {
+      setState(() => _showTutorial = false);
+    }
   }
 
   @override
@@ -374,6 +394,11 @@ class _HomePageState extends State<HomePage> {
 
 
 
+          // ── Tutorial Overlay (First run only) ──
+          if (_showTutorial)
+            HomeTutorialOverlay(
+              onFinish: _completeTutorial,
+            ),
         ],
       ),
     );
