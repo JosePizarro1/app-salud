@@ -351,6 +351,18 @@ class _PostureDetailDialogState extends State<_PostureDetailDialog> with SingleT
     _animationController.forward();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Pre-cache all step images to avoid flickering when swiping pages
+    for (final step in widget.steps) {
+      final imgPath = step['image'];
+      if (imgPath != null) {
+        precacheImage(AssetImage(imgPath), context);
+      }
+    }
+  }
+
   void _handleAutoNext() {
     if (_currentStep < widget.steps.length - 1) {
       _pageController.nextPage(
@@ -639,10 +651,9 @@ class _BenefitsDialogState extends State<_BenefitsDialog> {
 
   Future<void> _playSound() async {
     try {
-      await _audioPlayer.play(
-        AssetSource('audio/success_cheerful.mp3'),
-        volume: 0.7,
-      );
+      await _audioPlayer.setSource(AssetSource('audio/success_cheerful.mp3'));
+      await _audioPlayer.setVolume(0.7);
+      await _audioPlayer.resume();
     } catch (_) {}
   }
 

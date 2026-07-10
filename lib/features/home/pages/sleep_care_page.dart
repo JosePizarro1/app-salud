@@ -84,17 +84,17 @@ class _SleepCarePageState extends State<SleepCarePage> {
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color(0xFF0F172A), // Slate 900
-              Color(0xFF0A0E1A), // Dark navy
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+          image: DecorationImage(
+            image: AssetImage('assets/images/fondo_alarm.png'),
+            fit: BoxFit.cover,
           ),
         ),
-        child: SafeArea(
-          top: true,
+        child: Container(
+          color: Colors.black.withValues(alpha: 0.3),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
+            child: SafeArea(
+              top: true,
           child: Column(
             children: [
               const SizedBox(height: 45), // Margen superior respetado para celulares
@@ -119,7 +119,7 @@ class _SleepCarePageState extends State<SleepCarePage> {
                               height: 44,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: Colors.white.withOpacity(0.12),
+                                color: Colors.white.withValues(alpha: 0.12),
                               ),
                               child: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 18),
                             ),
@@ -167,7 +167,7 @@ class _SleepCarePageState extends State<SleepCarePage> {
                                         height: 54,
                                         child: CircularProgressIndicator(
                                           value: _progressPercentage / 100,
-                                          backgroundColor: Colors.white.withOpacity(0.1),
+                                          backgroundColor: Colors.white.withValues(alpha: 0.1),
                                           valueColor: const AlwaysStoppedAnimation<Color>(AppColors.secondary),
                                           strokeWidth: 5,
                                         ),
@@ -202,7 +202,7 @@ class _SleepCarePageState extends State<SleepCarePage> {
                                               : 'Excelente trabajo, ¡sigue así!',
                                           style: GoogleFonts.outfit(
                                             fontSize: 13,
-                                            color: Colors.white.withOpacity(0.6),
+                                            color: Colors.white.withValues(alpha: 0.6),
                                           ),
                                         ),
                                       ],
@@ -222,7 +222,7 @@ class _SleepCarePageState extends State<SleepCarePage> {
                               style: GoogleFonts.outfit(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.white.withOpacity(0.8),
+                                color: Colors.white.withValues(alpha: 0.8),
                               ),
                             ),
                           ),
@@ -235,7 +235,6 @@ class _SleepCarePageState extends State<SleepCarePage> {
                             itemCount: _chapters.length,
                             itemBuilder: (context, index) {
                               final chapter = _chapters[index];
-                              final isCompleted = _completedChapters.contains(index);
 
                               return FadeInLeft(
                                 duration: const Duration(milliseconds: 400),
@@ -283,7 +282,7 @@ class _SleepCarePageState extends State<SleepCarePage> {
                                             style: GoogleFonts.outfit(
                                               fontSize: 14,
                                               fontWeight: FontWeight.w600,
-                                              color: Colors.white.withOpacity(0.9),
+                                              color: Colors.white.withValues(alpha: 0.9),
                                             ),
                                           ),
                                         ),
@@ -291,7 +290,7 @@ class _SleepCarePageState extends State<SleepCarePage> {
                                         // Right Arrow
                                         Icon(
                                           Icons.arrow_forward_ios_rounded,
-                                          color: Colors.white.withOpacity(0.4),
+                                          color: Colors.white.withValues(alpha: 0.4),
                                           size: 14,
                                         ),
                                       ],
@@ -315,7 +314,7 @@ class _SleepCarePageState extends State<SleepCarePage> {
                               decoration: BoxDecoration(
                                 color: const Color(0xFF131927), // Fondo sólido
                                 borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: AppColors.secondary.withOpacity(0.2)),
+                                border: Border.all(color: AppColors.secondary.withValues(alpha: 0.2)),
                               ),
                               child: Row(
                                 children: [
@@ -346,7 +345,7 @@ class _SleepCarePageState extends State<SleepCarePage> {
                                           'Cada pequeño cambio mejora tu descanso.',
                                           style: GoogleFonts.outfit(
                                             fontSize: 13,
-                                            color: Colors.white.withOpacity(0.7),
+                                            color: Colors.white.withValues(alpha: 0.7),
                                           ),
                                         ),
                                       ],
@@ -365,6 +364,8 @@ class _SleepCarePageState extends State<SleepCarePage> {
               ),
             ),
           ),
-        );
-      }
-    }
+        ),
+      ),
+    );
+  }
+}

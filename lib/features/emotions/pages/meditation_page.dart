@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -946,18 +947,31 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
         fit: StackFit.expand,
         children: [
           // Dynamic Background
-          if (isSelectionView)
+          if (isSelectionView || _isSelectingAudio) ...[
             Image.asset(
               'assets/images/fondo_modulo3.PNG',
               fit: BoxFit.cover,
-            )
-          else
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFFF9F6F0), Color(0xFFFFFDF9)],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
+            ),
+            if (_isSelectingAudio)
+              Positioned.fill(
+                child: ClipRect(
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
+                    child: Container(
+                      color: Colors.white.withValues(alpha: 0.25),
+                    ),
+                  ),
+                ),
+              ),
+          ] else
+            Positioned.fill(
+              child: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFFF9F6F0), Color(0xFFFFFDF9)],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
                 ),
               ),
             ),
@@ -1442,6 +1456,12 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                   [const Color(0xFFE8A0C8), const Color(0xFFE56BB5)],
                   [const Color(0xFFFFCC80), const Color(0xFFFF9800)],
                 ];
+                final bgColors = [
+                  const Color(0xFFEBF7EE), // Solid Light Green
+                  const Color(0xFFEEF2FC), // Solid Light Blue
+                  const Color(0xFFFDF0F8), // Solid Light Pink
+                  const Color(0xFFFFF7EB), // Solid Light Orange/Cream
+                ];
                 final icons = ['🌸', '🌿', '🌙', '✨'];
 
                 return Padding(
@@ -1456,22 +1476,15 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              colors[i][0].withValues(alpha: 0.15),
-                              colors[i][1].withValues(alpha: 0.08),
-                            ],
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                          ),
+                          color: bgColors[i],
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: colors[i][0].withValues(alpha: 0.4),
-                            width: 2,
+                            color: colors[i][1],
+                            width: 2.5,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: colors[i][0].withValues(alpha: 0.12),
+                              color: colors[i][0].withValues(alpha: 0.15),
                               blurRadius: 15,
                               offset: const Offset(0, 6),
                             ),

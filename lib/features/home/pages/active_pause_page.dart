@@ -72,103 +72,146 @@ class ActivePausePage extends StatelessWidget {
                       ],
                     ),
                   ),
-                ],
-              ),
+                ]              ),
             ),
           ),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
+      body: Stack(
+        fit: StackFit.expand,
         children: [
-          _buildExerciseCard(
-            context: context,
-            number: 1,
-            title: 'Marcha activa',
-            description: 'Camina por tu escuela/casa o donde estés, balanceando los brazos.',
-            time: '1 minuto',
-            durationSeconds: 60,
-            imagePath: 'assets/images/pausa_activa/image1.png',
-            color: const Color(0xFF81C784), // Green
-          ),
-          _buildExerciseCard(
-            context: context,
-            number: 2,
-            title: 'Estiramiento del cuello',
-            description: 'Inclina suavemente la cabeza hacia adelante y hacia atrás.',
-            time: '20 segundos',
-            durationSeconds: 20,
-            imagePath: 'assets/images/pausa_activa/image2.png',
-            color: const Color(0xFF64B5F6), // Blue
-          ),
-          _buildExerciseCard(
-            context: context,
-            number: 3,
-            title: 'Rotación de hombros',
-            description: 'Haz círculos con ambos hombros hacia adelante y atrás.',
-            time: '20 segundos',
-            durationSeconds: 20,
-            imagePath: 'assets/images/pausa_activa/image3.png',
-            color: const Color(0xFFFFD54F), // Yellow
-          ),
-          _buildExerciseCard(
-            context: context,
-            number: 4,
-            title: 'Estiramiento de brazos y espalda',
-            description: 'Entrelaza los dedos y empuja los brazos al frente mientras se encorva ligeramente la espalda.',
-            time: '20 segundos',
-            durationSeconds: 20,
-            imagePath: 'assets/images/pausa_activa/image4.png',
-            color: const Color(0xFFBA68C8), // Purple
-          ),
-          _buildExerciseCard(
-            context: context,
-            number: 5,
-            title: 'Estiramiento lateral',
-            description: 'Eleva un brazo y flexiona el tronco hacia el lado contrario. Alterna ambos lados.',
-            time: '20 segundos',
-            durationSeconds: 20,
-            imagePath: 'assets/images/pausa_activa/image5.png',
-            color: const Color(0xFF4DB6AC), // Teal
-          ),
-          _buildExerciseCard(
-            context: context,
-            number: 6,
-            title: 'Respiración profunda',
-            description: 'Inhala por nariz y exhala lentamente por boca.',
-            time: '30 segundos',
-            durationSeconds: 30,
-            imagePath: 'assets/images/pausa_activa/image6.png',
-            color: const Color(0xFF64B5F6), // Blue
-          ),
-          
-          const SizedBox(height: 20),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFEBF7EE),
-              borderRadius: BorderRadius.circular(16),
+          // Background decorations (to prevent it from being too white)
+          Positioned(
+            bottom: -30,
+            left: -30,
+            child: RotationTransition(
+              turns: const AlwaysStoppedAnimation(45 / 360),
+              child: Icon(
+                Icons.spa_rounded,
+                size: 180,
+                color: const Color(0xFF28AF52).withValues(alpha: 0.10),
+              ),
             ),
-            child: Row(
-              children: [
-                const Icon(Icons.star_rounded, color: Color(0xFF28AF52)),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    '¡Pequeñas pausas, grandes cambios!\nTu cuerpo y mente te lo agradecerán.',
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: const Color(0xFF1B5E20),
-                      fontWeight: FontWeight.w500,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
+          ),
+          Positioned(
+            top: 60,
+            right: -40,
+            child: RotationTransition(
+              turns: const AlwaysStoppedAnimation(-20 / 360),
+              child: Icon(
+                Icons.directions_run_rounded,
+                size: 160,
+                color: const Color(0xFF28AF52).withValues(alpha: 0.10),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 280,
+            left: -40,
+            child: RotationTransition(
+              turns: const AlwaysStoppedAnimation(15 / 360),
+              child: Icon(
+                Icons.fitness_center_rounded,
+                size: 150,
+                color: const Color(0xFF28AF52).withValues(alpha: 0.10),
+              ),
+            ),
+          ),
+
+          ListView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.all(16.0),
+            children: [
+              _buildExerciseCard(
+                context: context,
+                number: 1,
+                title: 'Marcha activa',
+                description: 'Camina por tu escuela/casa o donde estés, balanceando los brazos.',
+                time: '1 minuto',
+                durationSeconds: 60,
+                imagePath: 'assets/images/pausa_activa/image1.png',
+                color: const Color(0xFF81C784), // Green
+              ),
+              _buildExerciseCard(
+                context: context,
+                number: 2,
+                title: 'Estiramiento del cuello',
+                description: 'Inclina suavemente la cabeza hacia adelante y hacia atrás.',
+                time: '20 segundos',
+                durationSeconds: 20,
+                imagePath: 'assets/images/pausa_activa/image2.png',
+                color: const Color(0xFF64B5F6), // Blue
+              ),
+              _buildExerciseCard(
+                context: context,
+                number: 3,
+                title: 'Rotación de hombros',
+                description: 'Haz círculos con ambos hombros hacia adelante y atrás.',
+                time: '20 segundos',
+                durationSeconds: 20,
+                imagePath: 'assets/images/pausa_activa/image3.png',
+                color: const Color(0xFFFFD54F), // Yellow
+              ),
+              _buildExerciseCard(
+                context: context,
+                number: 4,
+                title: 'Estiramiento de brazos y espalda',
+                description: 'Entrelaza los dedos y empuja los brazos al frente mientras se encorva ligeramente la espalda.',
+                time: '20 segundos',
+                durationSeconds: 20,
+                imagePath: 'assets/images/pausa_activa/image4.png',
+                color: const Color(0xFFBA68C8), // Purple
+              ),
+              _buildExerciseCard(
+                context: context,
+                number: 5,
+                title: 'Estiramiento lateral',
+                description: 'Eleva un brazo y flexiona el tronco hacia el lado contrario. Alterna ambos lados.',
+                time: '20 segundos',
+                durationSeconds: 20,
+                imagePath: 'assets/images/pausa_activa/image5.png',
+                color: const Color(0xFF4DB6AC), // Teal
+              ),
+              _buildExerciseCard(
+                context: context,
+                number: 6,
+                title: 'Respiración profunda',
+                description: 'Inhala por nariz y exhala lentamente por boca.',
+                time: '30 segundos',
+                durationSeconds: 30,
+                imagePath: 'assets/images/pausa_activa/image6.png',
+                color: const Color(0xFF64B5F6), // Blue
+              ),
+              
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEBF7EE),
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                const Icon(Icons.favorite_outline_rounded, color: Color(0xFF28AF52)),
-              ],
-            ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.star_rounded, color: Color(0xFF28AF52)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        '¡Pequeñas pausas, grandes cambios!\nTu cuerpo y mente te lo agradecerán.',
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: const Color(0xFF1B5E20),
+                          fontWeight: FontWeight.w500,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    const Icon(Icons.favorite_outline_rounded, color: Color(0xFF28AF52)),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
           ),
-          const SizedBox(height: 20),
         ],
       ),
     );

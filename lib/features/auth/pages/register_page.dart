@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/widgets/vitali_dialog.dart';
 
@@ -18,15 +19,17 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMixin {
   final nameCtrl = TextEditingController();
   final emailCtrl = _DomainTextEditingController(domain: "@unjbg.edu.pe");
-  final codeCtrl = TextEditingController();
+  final passCtrl = TextEditingController();
+  final _audioPlayer = AudioPlayer();
   bool isLoading = false;
-  bool _obscureCode = true;
+  bool _obscurePass = true;
 
   @override
   void dispose() {
     nameCtrl.dispose();
     emailCtrl.dispose();
-    codeCtrl.dispose();
+    passCtrl.dispose();
+    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -34,7 +37,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
     HapticFeedback.mediumImpact();
     FocusScope.of(context).unfocus();
 
-    if (nameCtrl.text.isEmpty || emailCtrl.text.isEmpty || codeCtrl.text.isEmpty) {
+    if (nameCtrl.text.isEmpty || emailCtrl.text.isEmpty || passCtrl.text.isEmpty) {
       VitaliDialog.show(
         context,
         title: "Campos incompletos",
@@ -52,15 +55,19 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
 
       final authResponse = await Supabase.instance.client.auth.signUp(
         email: fullEmail,
-        password: codeCtrl.text.trim(),
+        password: passCtrl.text.trim(),
         data: {
           'full_name': nameCtrl.text.trim(),
-          'student_code': codeCtrl.text.trim(),
         },
       );
 
       if (authResponse.user != null) {
         if (mounted) {
+          try {
+            await _audioPlayer.play(AssetSource('audio/success_cheerful.mp3'));
+          } catch (soundError) {
+            debugPrint('Error playing success sound: $soundError');
+          }
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('¡Registro exitoso!'),
@@ -70,12 +77,20 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
           context.go('/home');
         }
       }
-    } on AuthException catch (_) {
+    } on AuthException catch (e) {
       if (mounted) {
         VitaliDialog.show(
           context,
           title: "Aviso de Registro",
-          message: "No pudimos completar el registro. Por favor, verifica tus datos e intenta de nuevo.",
+          message: "No pudimos completar el registro: ${e.message}",
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        VitaliDialog.show(
+          context,
+          title: "Error Inesperado",
+          message: "Ocurrió un error inesperado al intentar registrarte: $e",
         );
       }
     } finally {
@@ -234,6 +249,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                           color: Colors.white,
                           borderColor: AppColors.primary.withValues(alpha: 0.3),
                           isDark: isDark,
+                          enabled: !isLoading,
                         ),
                       ),
 
@@ -249,6 +265,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                           color: Colors.white,
                           borderColor: AppColors.accent,
                           isDark: isDark,
+                          enabled: !isLoading,
                         ),
                       ),
 
@@ -258,20 +275,21 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                       FadeInUp(
                         delay: const Duration(milliseconds: 300),
                         child: _VitaliInput(
-                          controller: codeCtrl,
+                          controller: passCtrl,
                           hint: "Contraseña (Mín. 6 caracteres)",
                           icon: Icons.lock_outline_rounded,
-                          isObscure: _obscureCode,
+                          isObscure: _obscurePass,
                           color: Colors.white,
                           borderColor: AppColors.primary.withValues(alpha: 0.3),
                           isDark: isDark,
+                          enabled: !isLoading,
                           suffix: IconButton(
                             icon: Icon(
-                              _obscureCode ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                              _obscurePass ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                               size: 20,
                               color: isDark ? Colors.white54 : Colors.black45,
                             ),
-                            onPressed: () => setState(() => _obscureCode = !_obscureCode),
+                            onPressed: isLoading ? null : () => setState(() => _obscurePass = !_obscurePass),
                           ),
                         ),
                       ),
@@ -281,13 +299,11 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                       // 🚀 Register Button
                       FadeInUp(
                         delay: const Duration(milliseconds: 400),
-                        child: isLoading 
-                          ? const CircularProgressIndicator()
-                          : _VitaliButton(
-                              text: "Crear Cuenta",
-                              onPressed: _register,
-                              color: AppColors.primary,
-                            ),
+                        child: _VitaliButton(
+                          text: "Crear Cuenta",
+                          onPressed: isLoading ? () {} : _register,
+                          color: isLoading ? AppColors.primary.withValues(alpha: 0.5) : AppColors.primary,
+                        ),
                       ),
 
                       const SizedBox(height: 8),
@@ -305,7 +321,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                               ),
                             ),
                             GestureDetector(
-                              onTap: () => context.pop(),
+                              onTap: isLoading ? null : () => context.pop(),
                               child: const Text(
                                 "Inicia Sesión",
                                 style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary),
@@ -321,7 +337,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                       FadeInUp(
                         delay: const Duration(milliseconds: 600),
                         child: GestureDetector(
-                          onTap: _showTermsAndConditions,
+                          onTap: isLoading ? null : _showTermsAndConditions,
                           child: Text(
                             "Al registrarte, aceptas nuestros\nTérminos, Condiciones y Uso de Datos",
                             textAlign: TextAlign.center,
@@ -340,6 +356,20 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
               ),
             ),
           ),
+          if (isLoading)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withValues(alpha: 0.25),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -356,6 +386,7 @@ class _VitaliInput extends StatelessWidget {
   final bool isObscure;
   final Widget? suffix;
   final bool isDark;
+  final bool enabled;
 
   const _VitaliInput({
     required this.controller,
@@ -366,6 +397,7 @@ class _VitaliInput extends StatelessWidget {
     this.isObscure = false,
     this.suffix,
     required this.isDark,
+    this.enabled = true,
   });
 
   @override
@@ -379,6 +411,7 @@ class _VitaliInput extends StatelessWidget {
       child: TextField(
         controller: controller,
         obscureText: isObscure,
+        enabled: enabled,
         style: TextStyle(color: isDark ? Colors.white : Colors.black87),
         decoration: InputDecoration(
           hintText: hint,

@@ -130,6 +130,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                           color: Colors.white,
                           borderColor: AppColors.accent,
                           isDark: isDark,
+                          enabled: !isLoading,
                         ),
                       ),
 
@@ -146,13 +147,14 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                           color: Colors.white,
                           borderColor: AppColors.primary.withValues(alpha: 0.3),
                           isDark: isDark,
+                          enabled: !isLoading,
                           suffix: IconButton(
                             icon: Icon(
                               _obscurePass ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                               size: 20,
                               color: isDark ? Colors.white54 : Colors.black45,
                             ),
-                            onPressed: () => setState(() => _obscurePass = !_obscurePass),
+                            onPressed: isLoading ? null : () => setState(() => _obscurePass = !_obscurePass),
                           ),
                         ),
                       ),
@@ -162,13 +164,11 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                       // 🚀 Login Button
                       FadeInUp(
                         delay: const Duration(milliseconds: 400),
-                        child: isLoading 
-                          ? const CircularProgressIndicator()
-                          : _VitaliButton(
-                              text: "Iniciar Sesión",
-                              onPressed: _login,
-                              color: AppColors.primary,
-                            ),
+                        child: _VitaliButton(
+                          text: "Iniciar Sesión",
+                          onPressed: isLoading ? () {} : _login,
+                          color: isLoading ? AppColors.primary.withValues(alpha: 0.5) : AppColors.primary,
+                        ),
                       ),
 
                       const SizedBox(height: 16),
@@ -186,7 +186,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                               ),
                             ),
                             GestureDetector(
-                              onTap: () => context.push('/register'),
+                              onTap: isLoading ? null : () => context.push('/register'),
                               child: const Text(
                                 "Regístrate",
                                 style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary),
@@ -203,6 +203,20 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
               ),
             ),
           ),
+          if (isLoading)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withValues(alpha: 0.25),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -218,6 +232,7 @@ class _VitaliInput extends StatelessWidget {
   final bool isObscure;
   final Widget? suffix;
   final bool isDark;
+  final bool enabled;
 
   const _VitaliInput({
     required this.controller,
@@ -228,6 +243,7 @@ class _VitaliInput extends StatelessWidget {
     this.isObscure = false,
     this.suffix,
     required this.isDark,
+    this.enabled = true,
   });
 
   @override
@@ -241,6 +257,7 @@ class _VitaliInput extends StatelessWidget {
       child: TextField(
         controller: controller,
         obscureText: isObscure,
+        enabled: enabled,
         style: TextStyle(color: isDark ? Colors.white : Colors.black87),
         decoration: InputDecoration(
           hintText: hint,

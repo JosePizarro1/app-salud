@@ -41,6 +41,7 @@ class _ActivePauseTimerPageState extends State<ActivePauseTimerPage>
   bool _isRunning = false;
   bool _showCelebration = false;
   bool _celebrationVisible = false; // Controls the fade animation
+  bool _hasPlayedOnce = false;
 
   // Audio
   final AudioPlayer _audioPlayer = AudioPlayer();
@@ -135,6 +136,7 @@ class _ActivePauseTimerPageState extends State<ActivePauseTimerPage>
         _isRunning = false;
         _showCelebration = false;
         _celebrationVisible = false;
+        _hasPlayedOnce = false;
       });
       // Re-prepare audio for next round
       _prepareAudio();
@@ -146,6 +148,10 @@ class _ActivePauseTimerPageState extends State<ActivePauseTimerPage>
     });
 
     if (_isRunning) {
+      if (!_hasPlayedOnce) {
+        _playSuccessSound();
+        _hasPlayedOnce = true;
+      }
       _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
         if (_remainingSeconds > 0) {
           setState(() {
@@ -174,9 +180,9 @@ class _ActivePauseTimerPageState extends State<ActivePauseTimerPage>
     bool isComplete = _remainingSeconds <= 0;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF9FAFC),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         toolbarHeight: 110,
         leading: Padding(
@@ -201,6 +207,31 @@ class _ActivePauseTimerPageState extends State<ActivePauseTimerPage>
       ),
       body: Stack(
         children: [
+          // Background decorations (to prevent it from being too white)
+          Positioned(
+            bottom: -30,
+            left: -30,
+            child: RotationTransition(
+              turns: const AlwaysStoppedAnimation(45 / 360),
+              child: Icon(
+                Icons.spa_rounded,
+                size: 180,
+                color: widget.exercise.color.withValues(alpha: 0.10),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 20,
+            right: -40,
+            child: RotationTransition(
+              turns: const AlwaysStoppedAnimation(-20 / 360),
+              child: Icon(
+                Icons.directions_run_rounded,
+                size: 160,
+                color: widget.exercise.color.withValues(alpha: 0.10),
+              ),
+            ),
+          ),
           // ── Main Content ──
           SafeArea(
             child: Center(
