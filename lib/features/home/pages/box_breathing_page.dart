@@ -407,7 +407,7 @@ class _BoxBreathingPageState extends State<BoxBreathingPage> with TickerProvider
         SizedBox(
           height: screenHeight * 0.22,
           child: Image.asset(
-            'assets/images/Video.gif',
+            'assets/images/Video.webp',
             fit: BoxFit.contain,
           ),
         ),

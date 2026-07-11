@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../widgets/module_header.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/home_tutorial_overlay.dart';
@@ -17,6 +19,10 @@ class _HomePageState extends State<HomePage> {
   // Estado de escalado para cada módulo (0: Mesa/Modulo1, 1: Mod2, 2: Mod3, etc.)
   final List<bool> _moduleScales = List.generate(6, (_) => false);
   bool _showTutorial = false;
+  bool _isPlayingTiti = false;
+  Timer? _titiTimer;
+  bool _isDebugMode = false;
+  final AudioPlayer _dragAudioPlayer = AudioPlayer();
 
   List<Offset>? _modulePositions;
   int? _activeDragIndex;
@@ -59,26 +65,37 @@ class _HomePageState extends State<HomePage> {
         Offset(0.55 * size.width, 0.039 * size.height), // Mod 6
       ];
     }
-    // Precache heavy images on first build for instant rendering
-    precacheImage(const AssetImage('assets/images/fondotiti.jpg'), context);
-    precacheImage(const AssetImage('assets/images/Video.gif'), context);
-    precacheImage(const AssetImage('assets/images/modulo1.png'), context);
-    precacheImage(const AssetImage('assets/images/modulo2.png'), context);
-    precacheImage(const AssetImage('assets/images/modulo3.png'), context);
-    precacheImage(const AssetImage('assets/images/modulo4.png'), context);
-    precacheImage(const AssetImage('assets/images/modulo5.png'), context);
-    precacheImage(const AssetImage('assets/images/modulo6.png'), context);
-    precacheImage(const AssetImage('assets/images/Home_botones/mod_lecciones.png'), context);
-    precacheImage(const AssetImage('assets/images/Home_botones/mod_suenoydescanso.png'), context);
-    precacheImage(const AssetImage('assets/images/Home_botones/mod_meditacion.png'), context);
-    precacheImage(const AssetImage('assets/images/Home_botones/mod_juegos.png'), context);
-    precacheImage(const AssetImage('assets/images/Home_botones/mod_horario.png'), context);
-    precacheImage(const AssetImage('assets/images/Home_botones/mod_bienestarfisico.png'), context);
+    // Precache optimized WebP images
+    precacheImage(const AssetImage('assets/images/fondotiti.webp'), context);
+    precacheImage(const AssetImage('assets/images/Video.webp'), context);
+    precacheImage(const AssetImage('assets/images/Video_static.webp'), context);
+    precacheImage(const AssetImage('assets/images/modulo1.webp'), context);
+    precacheImage(const AssetImage('assets/images/modulo2.webp'), context);
+    precacheImage(const AssetImage('assets/images/modulo3.webp'), context);
+    precacheImage(const AssetImage('assets/images/modulo4.webp'), context);
+    precacheImage(const AssetImage('assets/images/modulo5.webp'), context);
+    precacheImage(const AssetImage('assets/images/modulo6.webp'), context);
+    precacheImage(const AssetImage('assets/images/Home_botones/mod_lecciones.webp'), context);
+    precacheImage(const AssetImage('assets/images/Home_botones/mod_suenoydescanso.webp'), context);
+    precacheImage(const AssetImage('assets/images/Home_botones/mod_meditacion.webp'), context);
+    precacheImage(const AssetImage('assets/images/Home_botones/mod_juegos.webp'), context);
+    precacheImage(const AssetImage('assets/images/Home_botones/mod_horario.webp'), context);
+    precacheImage(const AssetImage('assets/images/Home_botones/mod_bienestarfisico.webp'), context);
   }
 
   @override
   void dispose() {
+    _titiTimer?.cancel();
+    _dragAudioPlayer.dispose();
     super.dispose();
+  }
+
+  Future<void> _playDragEndSound() async {
+    try {
+      await _dragAudioPlayer.play(AssetSource('audio/sonido_cuando dejan de arratrar.wav'));
+    } catch (e) {
+      debugPrint('Error playing drag end sound: $e');
+    }
   }
 
   Future<void> _triggerScale(int index) async {
@@ -92,8 +109,8 @@ class _HomePageState extends State<HomePage> {
     await Future.delayed(const Duration(milliseconds: 150));
   }
 
-  Widget _buildGroupedModule(int index, double screenWidth, double screenHeight) {
-    if (_modulePositions == null) return const SizedBox.shrink();
+  Iterable<Widget> _buildModuleWidgets(int index, double screenWidth, double screenHeight) {
+    if (_modulePositions == null) return const [];
     final pos = _modulePositions![index];
 
     // Define relative positions
@@ -111,8 +128,8 @@ class _HomePageState extends State<HomePage> {
 
     switch (index) {
       case 0: // Modulo 1 (Mesa)
-        furnAsset = 'assets/images/modulo1.png';
-        btnAsset = 'assets/images/Home_botones/mod_juegos.png';
+        furnAsset = 'assets/images/modulo1.webp';
+        btnAsset = 'assets/images/Home_botones/mod_juegos.webp';
         route = '/module1';
         scaleIndex = 0;
         furnWidth = screenWidth * 0.375;
@@ -121,8 +138,8 @@ class _HomePageState extends State<HomePage> {
         btnBottom = 0.11 * screenHeight;
         break;
       case 1: // Modulo 2 (Cama)
-        furnAsset = 'assets/images/modulo2.png';
-        btnAsset = 'assets/images/Home_botones/mod_bienestarfisico.png';
+        furnAsset = 'assets/images/modulo2.webp';
+        btnAsset = 'assets/images/Home_botones/mod_bienestarfisico.webp';
         route = '/module2';
         scaleIndex = 1;
         furnWidth = screenWidth * 0.4134375;
@@ -131,8 +148,8 @@ class _HomePageState extends State<HomePage> {
         btnBottom = 0.14 * screenHeight;
         break;
       case 2: // Modulo 3 (Meditación)
-        furnAsset = 'assets/images/modulo3.png';
-        btnAsset = 'assets/images/Home_botones/mod_meditacion.png';
+        furnAsset = 'assets/images/modulo3.webp';
+        btnAsset = 'assets/images/Home_botones/mod_meditacion.webp';
         route = '/module3';
         scaleIndex = 2;
         furnWidth = screenWidth * 0.45375;
@@ -141,8 +158,8 @@ class _HomePageState extends State<HomePage> {
         btnBottom = 0.15 * screenHeight;
         break;
       case 3: // Modulo 4 (Juegos)
-        furnAsset = 'assets/images/modulo4.png';
-        btnAsset = 'assets/images/Home_botones/mod_suenoydescanso.png';
+        furnAsset = 'assets/images/modulo4.webp';
+        btnAsset = 'assets/images/Home_botones/mod_suenoydescanso.webp';
         route = '/module4';
         scaleIndex = 3;
         furnWidth = screenWidth * 0.4125;
@@ -151,8 +168,8 @@ class _HomePageState extends State<HomePage> {
         btnBottom = 0.132 * screenHeight;
         break;
       case 4: // Modulo 5 (Horario)
-        furnAsset = 'assets/images/modulo5.png';
-        btnAsset = 'assets/images/Home_botones/mod_horario.png';
+        furnAsset = 'assets/images/modulo5.webp';
+        btnAsset = 'assets/images/Home_botones/mod_horario.webp';
         route = '/module5';
         scaleIndex = 4;
         furnWidth = screenWidth * 0.375;
@@ -161,8 +178,8 @@ class _HomePageState extends State<HomePage> {
         btnBottom = 0.13 * screenHeight;
         break;
       case 5: // Modulo 6 (Bienestar Físico)
-        furnAsset = 'assets/images/modulo6.png';
-        btnAsset = 'assets/images/Home_botones/mod_lecciones.png';
+        furnAsset = 'assets/images/modulo6.webp';
+        btnAsset = 'assets/images/Home_botones/mod_lecciones.webp';
         route = '/module6';
         scaleIndex = 5;
         furnWidth = screenWidth * 0.4125;
@@ -201,80 +218,114 @@ class _HomePageState extends State<HomePage> {
             _activeDragIndex = null;
           });
           HapticFeedback.mediumImpact();
+          _playDragEndSound();
         },
         child: child,
       );
     }
 
-    return Positioned(
-      left: pos.dx,
-      bottom: pos.dy,
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 150),
-        opacity: isDraggingThis ? 0.7 : 1.0,
-        child: AnimatedScale(
+    return [
+      // 1. El Mueble
+      Positioned(
+        key: ValueKey('furn_$index'),
+        left: pos.dx + (btnLeft < 0 ? -btnLeft : 0),
+        bottom: pos.dy,
+        child: AnimatedOpacity(
           duration: const Duration(milliseconds: 150),
-          scale: isDraggingThis ? 1.08 : 1.0,
-          child: Container(
-            width: furnWidth + (btnLeft > 0 ? btnLeft : -btnLeft) + 50,
-            height: furnHeight + btnBottom + 50,
-            color: Colors.transparent,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Positioned(
-                  left: btnLeft < 0 ? -btnLeft : 0,
-                  bottom: 0,
-                  child: wrapWithDrag(
-                    FadeIn(
-                      delay: Duration(milliseconds: 500 + index * 100),
-                      child: Container(
-                        width: furnWidth,
-                        height: furnHeight,
-                        decoration: BoxDecoration(
-                          image: DecorationImage(
-                            image: AssetImage(furnAsset),
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                      ),
+          opacity: isDraggingThis ? 0.7 : 1.0,
+          child: AnimatedScale(
+            duration: const Duration(milliseconds: 150),
+            scale: isDraggingThis ? 1.08 : 1.0,
+            child: FadeIn(
+              delay: Duration(milliseconds: 500 + index * 100),
+              child: SizedBox(
+                width: furnWidth,
+                height: furnHeight,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // Imagen del mueble en su tamaño original completo
+                    Image.asset(
+                      furnAsset,
+                      width: furnWidth,
+                      height: furnHeight,
+                      fit: BoxFit.contain,
                     ),
-                  ),
-                ),
-                Positioned(
-                  left: btnLeft < 0 ? 0 : btnLeft,
-                  bottom: btnBottom,
-                  child: wrapWithDrag(
-                    FadeIn(
-                      delay: Duration(milliseconds: 550 + index * 100),
-                      child: AnimatedScale(
-                        scale: _moduleScales[scaleIndex] ? 1.4 : 1.0,
-                        duration: const Duration(milliseconds: 200),
-                        curve: Curves.easeInOut,
-                        child: InkWell(
-                          onTap: isDraggingThis ? null : () async {
-                            await _triggerScale(scaleIndex);
-                            if (context.mounted) context.push(route);
-                          },
-                          child: SizedBox(
-                            width: btnWidth,
-                            height: btnHeight,
-                            child: Image.asset(
-                              btnAsset,
-                              fit: BoxFit.contain,
+                    // Área activa para seleccionar y arrastrar (40% del tamaño visual y de forma ovalada)
+                    Positioned(
+                      width: furnWidth * 0.40,
+                      height: furnHeight * 0.40,
+                      child: ClipOval(
+                        child: wrapWithDrag(
+                          Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(1000),
+                              border: _isDebugMode ? Border.all(color: Colors.red, width: 2) : null,
+                              color: _isDebugMode ? Colors.red.withOpacity(0.2) : Colors.transparent,
                             ),
                           ),
                         ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
       ),
-    );
+
+      // 2. El Botón
+      Positioned(
+        key: ValueKey('btn_$index'),
+        left: pos.dx + (btnLeft < 0 ? 0 : btnLeft),
+        bottom: pos.dy + btnBottom,
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 150),
+          opacity: isDraggingThis ? 0.7 : 1.0,
+          child: AnimatedScale(
+            duration: const Duration(milliseconds: 150),
+            scale: isDraggingThis ? 1.08 : 1.0,
+            child: FadeIn(
+              delay: Duration(milliseconds: 550 + index * 100),
+              child: AnimatedScale(
+                scale: _moduleScales[scaleIndex] ? 1.4 : 1.0,
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeInOut,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: isDraggingThis ? null : () async {
+                    debugPrint("Tapped button for Module ${index + 1} ($route) - Pre-scale trigger");
+                    await _triggerScale(scaleIndex);
+                    debugPrint("Navigating to module route: $route");
+                    if (context.mounted) context.push(route);
+                  },
+                  child: SizedBox(
+                    width: btnHeight,
+                    height: btnHeight,
+                    child: Stack(
+                      children: [
+                        Image.asset(
+                          btnAsset,
+                          fit: BoxFit.contain,
+                        ),
+                        if (_isDebugMode)
+                          Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.blue, width: 1.5),
+                              color: Colors.blue.withOpacity(0.3),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ];
   }
 
   @override
@@ -285,7 +336,7 @@ class _HomePageState extends State<HomePage> {
         children: [
           // ── Background image (100%) ──
           Image.asset(
-            'assets/images/fondotiti.jpg',
+            'assets/images/fondotiti.webp',
             fit: BoxFit.cover,
           ),
 
@@ -294,12 +345,28 @@ class _HomePageState extends State<HomePage> {
             left: MediaQuery.of(context).size.width * 0.28, // 1% más a la izquierda
             top: MediaQuery.of(context).size.height * 0.42, // 4% más arriba
             child: FadeIn(
-              child: SizedBox(
-                width: MediaQuery.of(context).size.width * 0.45875, // 37.5% * 1.25
-                height: MediaQuery.of(context).size.height * 0.45875, // 37.5% * 1.25
-                child: Image.asset(
-                  'assets/images/Video.gif',
-                  fit: BoxFit.contain,
+              child: GestureDetector(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  setState(() {
+                    _isPlayingTiti = true;
+                  });
+                  _titiTimer?.cancel();
+                  _titiTimer = Timer(const Duration(seconds: 4), () {
+                    if (mounted) {
+                      setState(() {
+                        _isPlayingTiti = false;
+                      });
+                    }
+                  });
+                },
+                child: SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.45875, // 37.5% * 1.25
+                  height: MediaQuery.of(context).size.height * 0.45875, // 37.5% * 1.25
+                  child: Image.asset(
+                    _isPlayingTiti ? 'assets/images/Video.webp' : 'assets/images/Video_static.webp',
+                    fit: BoxFit.contain,
+                  ),
                 ),
               ),
             ),
@@ -308,18 +375,63 @@ class _HomePageState extends State<HomePage> {
           // ── Header (Configuración y Emergencia) ──
           const ModuleHeader(),
 
-          // ── ELEMENTOS DE MÓDULOS AGRUPADOS Y MÓVILES (MUEBLES + BOTONES DE ARRIBITA) ──
+          // ── Debug Mode Toggle Button ──
+          Positioned(
+            left: MediaQuery.of(context).size.width * 0.22,
+            top: MediaQuery.of(context).size.height * 0.10,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  setState(() {
+                    _isDebugMode = !_isDebugMode;
+                  });
+                },
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: _isDebugMode ? Colors.redAccent.withOpacity(0.9) : Colors.black45,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.white24),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _isDebugMode ? Icons.bug_report : Icons.bug_report_outlined,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _isDebugMode ? 'DEBUG: ON' : 'DEBUG',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // ── ELEMENTOS DE MÓDULOS AGRUPADOS Y MÓVILES ORDENADOS POR PROFUNDIDAD (2.5D) ──
           if (_modulePositions != null)
-            ...List.generate(
-              6,
-              (index) => _buildGroupedModule(
+            ...() {
+              final indices = List.generate(6, (i) => i);
+              // Ordenamos de mayor Y a menor Y (fondo a primer plano)
+              indices.sort((a, b) => _modulePositions![b].dy.compareTo(_modulePositions![a].dy));
+              return indices.expand((index) => _buildModuleWidgets(
                 index,
                 MediaQuery.of(context).size.width,
                 MediaQuery.of(context).size.height,
-              ),
-            ),
-
-
+              ));
+            }(),
 
           // ── Tutorial Overlay (First run only) ──
           if (_showTutorial)

@@ -94,7 +94,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
               return ImageFiltered(
                 imageFilter: ImageFilter.blur(sigmaX: blurValue, sigmaY: blurValue),
                 child: Image.asset(
-                  'assets/images/login_fondo.png',
+                  'assets/images/login_fondo.webp',
                   fit: BoxFit.cover,
                   alignment: Alignment.topCenter,
                 ),

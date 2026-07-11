@@ -43,7 +43,7 @@ class _Module2PageState extends State<Module2Page> {
                 width: MediaQuery.of(context).size.width * 0.673,
                 height: MediaQuery.of(context).size.height * 0.673,
                 child: Image.asset(
-                  'assets/images/Video.gif',
+                  'assets/images/Video.webp',
                   fit: BoxFit.contain,
                 ),
               ),

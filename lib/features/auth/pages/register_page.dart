@@ -190,7 +190,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
               return ImageFiltered(
                 imageFilter: ImageFilter.blur(sigmaX: blurValue, sigmaY: blurValue),
                 child: Image.asset(
-                  'assets/images/register_fondo.png',
+                  'assets/images/register_fondo.webp',
                   fit: BoxFit.cover,
                   alignment: Alignment.topCenter,
                 ),

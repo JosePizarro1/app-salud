@@ -32,7 +32,7 @@ class _PhysicalActivityPageState extends State<PhysicalActivityPage> {
       'number': '1',
       'title': '¿Qué es?',
       'desc': 'Es cualquier movimiento que hace tu cuerpo.',
-      'iconPath': 'assets/images/Modulo6/???.png',
+      'iconPath': 'assets/images/Modulo6/question.png',
       'isAsset': true,
       'bgColor': const Color(0xFFF3F0FF), // Soft lavender background
       'borderColor': const Color(0xFF9083ED), // Purple border from AppColors.secondary
