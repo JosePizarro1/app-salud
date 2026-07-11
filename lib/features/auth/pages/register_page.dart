@@ -175,6 +175,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
     return Scaffold(
+      backgroundColor: const Color(0xFFFAF6F0),
       resizeToAvoidBottomInset: false,
       body: Stack(
         fit: StackFit.expand,
@@ -193,6 +194,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                   'assets/images/register_fondo.webp',
                   fit: BoxFit.cover,
                   alignment: Alignment.topCenter,
+                  gaplessPlayback: true,
                 ),
               );
             },

@@ -174,13 +174,15 @@ class _BoxBreathingPageState extends State<BoxBreathingPage> with TickerProvider
     final screenHeight = mediaQuery.size.height;
 
     return Scaffold(
+      backgroundColor: const Color(0xFFFAF6F0),
       body: Stack(
         fit: StackFit.expand,
         children: [
           // Fondo de pantalla del módulo 2
           Image.asset(
-            'assets/images/fondo_modulo2.PNG',
+            'assets/images/fondo_modulo2.webp',
             fit: BoxFit.cover,
+            gaplessPlayback: true,
           ),
 
           // Tarjeta central (coordenada exacta igual que relax_page.dart)
@@ -415,7 +417,7 @@ class _BoxBreathingPageState extends State<BoxBreathingPage> with TickerProvider
 
         // Botón Back para regresar (guiándose de breathing_page.dart)
         _ActionButton(
-          imagePath: 'assets/images/boton_back.png',
+          imagePath: 'assets/images/boton_back.webp',
           baseScale: 1.15,
           onTap: () {
             context.pop();

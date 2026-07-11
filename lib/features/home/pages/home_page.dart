@@ -7,6 +7,7 @@ import 'package:audioplayers/audioplayers.dart';
 import '../widgets/module_header.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/home_tutorial_overlay.dart';
+import '../../../app/services/background_music_manager.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -22,8 +23,14 @@ class _HomePageState extends State<HomePage> {
   bool _isPlayingTiti = false;
   Timer? _titiTimer;
   bool _isDebugMode = false;
-  final AudioPlayer _dragAudioPlayer = AudioPlayer();
+  final AudioPlayer _dragAudioPlayer = AudioPlayer()
+    ..setAudioContext(AudioContext(
+      android: AudioContextAndroid(
+        audioFocus: AndroidAudioFocus.none,
+      ),
+    ));
 
+  bool _isImagesPrecached = false;
   List<Offset>? _modulePositions;
   int? _activeDragIndex;
   Offset _dragStartOffset = Offset.zero;
@@ -33,6 +40,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _checkTutorialStatus();
+    BackgroundMusicManager().init();
   }
 
   Future<void> _checkTutorialStatus() async {
@@ -65,22 +73,32 @@ class _HomePageState extends State<HomePage> {
         Offset(0.55 * size.width, 0.039 * size.height), // Mod 6
       ];
     }
-    // Precache optimized WebP images
-    precacheImage(const AssetImage('assets/images/fondotiti.webp'), context);
-    precacheImage(const AssetImage('assets/images/Video.webp'), context);
-    precacheImage(const AssetImage('assets/images/Video_static.webp'), context);
-    precacheImage(const AssetImage('assets/images/modulo1.webp'), context);
-    precacheImage(const AssetImage('assets/images/modulo2.webp'), context);
-    precacheImage(const AssetImage('assets/images/modulo3.webp'), context);
-    precacheImage(const AssetImage('assets/images/modulo4.webp'), context);
-    precacheImage(const AssetImage('assets/images/modulo5.webp'), context);
-    precacheImage(const AssetImage('assets/images/modulo6.webp'), context);
-    precacheImage(const AssetImage('assets/images/Home_botones/mod_lecciones.webp'), context);
-    precacheImage(const AssetImage('assets/images/Home_botones/mod_suenoydescanso.webp'), context);
-    precacheImage(const AssetImage('assets/images/Home_botones/mod_meditacion.webp'), context);
-    precacheImage(const AssetImage('assets/images/Home_botones/mod_juegos.webp'), context);
-    precacheImage(const AssetImage('assets/images/Home_botones/mod_horario.webp'), context);
-    precacheImage(const AssetImage('assets/images/Home_botones/mod_bienestarfisico.webp'), context);
+    
+    // Only run precache once to save CPU cycles on page rebuilds
+    if (!_isImagesPrecached) {
+      _isImagesPrecached = true;
+      precacheImage(const AssetImage('assets/images/fondotiti.webp'), context);
+      precacheImage(const AssetImage('assets/images/Video.webp'), context);
+      precacheImage(const AssetImage('assets/images/Video_static.webp'), context);
+      precacheImage(const AssetImage('assets/images/modulo1.webp'), context);
+      precacheImage(const AssetImage('assets/images/modulo2.webp'), context);
+      precacheImage(const AssetImage('assets/images/modulo3.webp'), context);
+      precacheImage(const AssetImage('assets/images/modulo4.webp'), context);
+      precacheImage(const AssetImage('assets/images/modulo5.webp'), context);
+      precacheImage(const AssetImage('assets/images/modulo6.webp'), context);
+      precacheImage(const AssetImage('assets/images/Home_botones/mod_lecciones.webp'), context);
+      precacheImage(const AssetImage('assets/images/Home_botones/mod_suenoydescanso.webp'), context);
+      precacheImage(const AssetImage('assets/images/Home_botones/mod_meditacion.webp'), context);
+      precacheImage(const AssetImage('assets/images/Home_botones/mod_juegos.webp'), context);
+      precacheImage(const AssetImage('assets/images/Home_botones/mod_horario.webp'), context);
+      precacheImage(const AssetImage('assets/images/Home_botones/mod_bienestarfisico.webp'), context);
+      precacheImage(const AssetImage('assets/images/fondo_modulo1_juegos.webp'), context);
+      precacheImage(const AssetImage('assets/images/fondo_modulo2.webp'), context);
+      precacheImage(const AssetImage('assets/images/fondo_modulo3.webp'), context);
+      precacheImage(const AssetImage('assets/images/fondo_modulo4_sueno_titi.webp'), context);
+      precacheImage(const AssetImage('assets/images/fondo_modulo5_calendario.webp'), context);
+      precacheImage(const AssetImage('assets/images/fondo_modulo6.webp'), context);
+    }
   }
 
   @override
@@ -96,6 +114,20 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       debugPrint('Error playing drag end sound: $e');
     }
+  }
+
+  void _playTitiAnimation() {
+    setState(() {
+      _isPlayingTiti = true;
+    });
+    _titiTimer?.cancel();
+    _titiTimer = Timer(const Duration(seconds: 4), () {
+      if (mounted) {
+        setState(() {
+          _isPlayingTiti = false;
+        });
+      }
+    });
   }
 
   Future<void> _triggerScale(int index) async {
@@ -219,6 +251,7 @@ class _HomePageState extends State<HomePage> {
           });
           HapticFeedback.mediumImpact();
           _playDragEndSound();
+          _playTitiAnimation();
         },
         child: child,
       );
@@ -330,6 +363,10 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final screenWidth = size.width;
+    final screenHeight = size.height;
+
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
@@ -342,30 +379,32 @@ class _HomePageState extends State<HomePage> {
 
           // ── GIF Character (Responsive %) ──
           Positioned(
-            left: MediaQuery.of(context).size.width * 0.28, // 1% más a la izquierda
-            top: MediaQuery.of(context).size.height * 0.42, // 4% más arriba
+            left: screenWidth * 0.28, // 1% más a la izquierda
+            top: screenHeight * 0.42, // 4% más arriba
             child: FadeIn(
               child: GestureDetector(
                 onTap: () {
                   HapticFeedback.lightImpact();
-                  setState(() {
-                    _isPlayingTiti = true;
-                  });
-                  _titiTimer?.cancel();
-                  _titiTimer = Timer(const Duration(seconds: 4), () {
-                    if (mounted) {
-                      setState(() {
-                        _isPlayingTiti = false;
-                      });
-                    }
-                  });
+                  _playTitiAnimation();
                 },
                 child: SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.45875, // 37.5% * 1.25
-                  height: MediaQuery.of(context).size.height * 0.45875, // 37.5% * 1.25
-                  child: Image.asset(
-                    _isPlayingTiti ? 'assets/images/Video.webp' : 'assets/images/Video_static.webp',
-                    fit: BoxFit.contain,
+                  width: screenWidth * 0.45875, // 37.5% * 1.25
+                  height: screenHeight * 0.45875, // 37.5% * 1.25
+                  child: IndexedStack(
+                    index: _isPlayingTiti ? 0 : 1,
+                    alignment: Alignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/images/Video.webp',
+                        fit: BoxFit.contain,
+                        gaplessPlayback: true,
+                      ),
+                      Image.asset(
+                        'assets/images/Video_static.webp',
+                        fit: BoxFit.contain,
+                        gaplessPlayback: true,
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -377,8 +416,8 @@ class _HomePageState extends State<HomePage> {
 
           // ── Debug Mode Toggle Button ──
           Positioned(
-            left: MediaQuery.of(context).size.width * 0.22,
-            top: MediaQuery.of(context).size.height * 0.10,
+            left: screenWidth * 0.22,
+            top: screenHeight * 0.10,
             child: Material(
               color: Colors.transparent,
               child: InkWell(
@@ -423,13 +462,13 @@ class _HomePageState extends State<HomePage> {
           // ── ELEMENTOS DE MÓDULOS AGRUPADOS Y MÓVILES ORDENADOS POR PROFUNDIDAD (2.5D) ──
           if (_modulePositions != null)
             ...() {
-              final indices = List.generate(6, (i) => i);
+              final indices = <int>[0, 1, 2, 3, 4, 5];
               // Ordenamos de mayor Y a menor Y (fondo a primer plano)
               indices.sort((a, b) => _modulePositions![b].dy.compareTo(_modulePositions![a].dy));
               return indices.expand((index) => _buildModuleWidgets(
                 index,
-                MediaQuery.of(context).size.width,
-                MediaQuery.of(context).size.height,
+                screenWidth,
+                screenHeight,
               ));
             }(),
 

@@ -25,13 +25,15 @@ class _Module3PageState extends State<Module3Page> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFFAF6F0),
       body: Stack(
         fit: StackFit.expand,
         children: [
           // Background
           Image.asset(
-            'assets/images/fondo_modulo3.PNG',
+            'assets/images/fondo_modulo3.webp',
             fit: BoxFit.cover,
+            gaplessPlayback: true,
           ),
 
           // ── GIF Character (Escalado y posicionado) ──

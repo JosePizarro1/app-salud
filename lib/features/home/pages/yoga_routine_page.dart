@@ -7,14 +7,33 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:dotlottie_flutter/dotlottie_flutter.dart';
 import '../../../app/theme/app_colors.dart';
 import '../widgets/module_header.dart';
+import '../../../app/services/background_music_manager.dart';
+import '../services/yoga_storage_service.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
-class YogaRoutinePage extends StatelessWidget {
+class YogaRoutinePage extends StatefulWidget {
   const YogaRoutinePage({super.key});
+
+  @override
+  State<YogaRoutinePage> createState() => _YogaRoutinePageState();
+}
+
+class _YogaRoutinePageState extends State<YogaRoutinePage> {
+  final AudioPlayer _yogaAudioPlayer = AudioPlayer()
+    ..setAudioContext(AudioContext(
+      android: AudioContextAndroid(
+        audioFocus: AndroidAudioFocus.none,
+      ),
+    ));
+
+  bool _hasPlayed = false;
+
+  late final StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
 
   static const List<Map<String, dynamic>> _postures = [
     {
       'title': 'Postura del Niño',
-      'image': 'assets/images/ModuloYoga/postura 1 yoga.png',
+      'image': 'assets/images/ModuloYoga/postura_1_yoga.webp',
       'description': 'Arrodíllate en el suelo, siéntate sobre tus talones y dobla el torso hacia adelante, extendiendo los brazos al frente. Apoya la frente en el suelo y respira profundamente para liberar tensión en la espalda.',
       'benefits': [
         'Alivia la ansiedad y la depresión.',
@@ -24,7 +43,7 @@ class YogaRoutinePage extends StatelessWidget {
     },
     {
       'title': 'Postura de Zancada Alta',
-      'image': 'assets/images/ModuloYoga/postura 2 yoga.png',
+      'image': 'assets/images/ModuloYoga/postura_2_yoga.webp',
       'description': 'Da un gran paso hacia atrás con un pie, mantén la pierna trasera estirada y la rodilla delantera doblada a 90 grados. Eleva los brazos hacia el cielo, abre el pecho y siente la fuerza en tus piernas.',
       'benefits': [
         'Fortalece las piernas y rodillas.',
@@ -34,7 +53,7 @@ class YogaRoutinePage extends StatelessWidget {
     },
     {
       'title': 'Postura de la Mariposa',
-      'image': 'assets/images/ModuloYoga/postura 3 yoga.png',
+      'image': 'assets/images/ModuloYoga/postura_3_yoga.webp',
       'description': 'Siéntate con la espalda recta, junta las plantas de tus pies y deja que las rodillas caigan suavemente hacia los lados. Sujeta tus pies con las manos y realiza movimientos suaves para estirar las caderas.',
       'benefits': [
         'Abre y relaja las caderas.',
@@ -44,7 +63,7 @@ class YogaRoutinePage extends StatelessWidget {
     },
     {
       'title': 'Postura de la Montaña',
-      'image': 'assets/images/ModuloYoga/postura 4 yoga.png',
+      'image': 'assets/images/ModuloYoga/postura_4_yoga.webp',
       'description': 'Párate derecho con los pies juntos, los brazos a los lados del cuerpo y el peso distribuido uniformemente. Activa tu abdomen, alinea tu columna y respira con calma, sintiendo estabilidad y firmeza.',
       'benefits': [
         'Mejora tu postura corporal.',
@@ -54,7 +73,7 @@ class YogaRoutinePage extends StatelessWidget {
     },
     {
       'title': 'Postura de Piernas a la Pared',
-      'image': 'assets/images/ModuloYoga/postura 5 yoga.png',
+      'image': 'assets/images/ModuloYoga/postura_5_yoga.webp',
       'description': 'Acuéstate sobre tu espalda y eleva las piernas apoyándolas verticalmente contra la pared. Mantén tus brazos relajados a los lados y disfruta de esta postura restaurativa que mejora la circulación.',
       'benefits': [
         'Aumenta el flujo sanguíneo al cerebro.',
@@ -64,8 +83,8 @@ class YogaRoutinePage extends StatelessWidget {
     },
     {
       'title': 'Postura Parada de Hombros',
-      'image': 'assets/images/ModuloYoga/postura 6 yoga.png',
-      'description': 'Acuéstate boca arriba, eleva las piernas y la cadera apoyando las manos en la espalda baja para soporte. Mantén el peso en los hombros (no en el cuello) y respira con cuidado para calmar la mente.',
+      'image': 'assets/images/ModuloYoga/postura_6_yoga.webp',
+      'description': 'Acuéstate boca arriba, eleva las piernas y la cadera apoyándolas con las manos en la espalda baja para soporte. Mantén el peso en los hombros (no en el cuello) y respira con cuidado para calmar la mente.',
       'benefits': [
         'Mejora la claridad mental.',
         'Estabiliza tus emociones.',
@@ -76,45 +95,99 @@ class YogaRoutinePage extends StatelessWidget {
 
   static const Map<int, List<Map<String, String>>> _postureSteps = {
     0: [
-      {'image': 'assets/images/ModuloYoga/pasos/postura_1_paso_1.png', 'text': 'Paso 1: Arrodíllate sobre la colchoneta con los pies juntos y siéntate sobre tus talones.'},
-      {'image': 'assets/images/ModuloYoga/pasos/postura_1_paso_2.png', 'text': 'Paso 2: Mantén la espalda recta y coloca las manos suavemente sobre tus rodillas.'},
-      {'image': 'assets/images/ModuloYoga/pasos/postura_1_paso_3.png', 'text': 'Paso 3: Exhala y desliza el torso hacia adelante, extendiendo los brazos al frente sobre el suelo.'},
-      {'image': 'assets/images/ModuloYoga/pasos/postura_1_paso_4.png', 'text': 'Paso 4: Apoya la frente en la colchoneta y relaja completamente los hombros y la espalda.'},
+      {'image': 'assets/images/ModuloYoga/pasos/postura_1_paso_1.webp', 'text': 'Paso 1: Arrodíllate sobre la colchoneta con los pies juntos y siéntate sobre tus talones.'},
+      {'image': 'assets/images/ModuloYoga/pasos/postura_1_paso_2.webp', 'text': 'Paso 2: Mantén la espalda recta y coloca las manos suavemente sobre tus rodillas.'},
+      {'image': 'assets/images/ModuloYoga/pasos/postura_1_paso_3.webp', 'text': 'Paso 3: Exhala y desliza el torso hacia adelante, extendiendo los brazos al frente sobre el suelo.'},
+      {'image': 'assets/images/ModuloYoga/pasos/postura_1_paso_4.webp', 'text': 'Paso 4: Apoya la frente en la colchoneta y relaja completamente los hombros y la espalda.'},
     ],
     1: [
-      {'image': 'assets/images/ModuloYoga/pasos/postura_2_paso_1.png', 'text': 'Paso 1: Comienza de pie en el centro de tu colchoneta con el cuerpo erguido.'},
-      {'image': 'assets/images/ModuloYoga/pasos/postura_2_paso_2.png', 'text': 'Paso 2: Da un paso largo hacia atrás con tu pie izquierdo, manteniendo el talón elevado.'},
-      {'image': 'assets/images/ModuloYoga/pasos/postura_2_paso_3.png', 'text': 'Paso 3: Flexiona tu rodilla delantera derecha a 90 grados, asegurando que no pase de la punta del pie.'},
-      {'image': 'assets/images/ModuloYoga/pasos/postura_2_paso_4.png', 'text': 'Paso 4: Eleva los brazos estirados hacia el cielo con las palmas mirándose y abre tu pecho.'},
+      {'image': 'assets/images/ModuloYoga/pasos/postura_2_paso_1.webp', 'text': 'Paso 1: Comienza de pie en el centro de tu colchoneta con el cuerpo erguido.'},
+      {'image': 'assets/images/ModuloYoga/pasos/postura_2_paso_2.webp', 'text': 'Paso 2: Da un paso largo hacia atrás con tu pie izquierdo, manteniendo el talón elevado.'},
+      {'image': 'assets/images/ModuloYoga/pasos/postura_2_paso_3.webp', 'text': 'Paso 3: Flexiona tu rodilla delantera derecha a 90 grados, asegurando que no pase de la punta del pie.'},
+      {'image': 'assets/images/ModuloYoga/pasos/postura_2_paso_4.webp', 'text': 'Paso 4: Eleva los brazos estirados hacia el cielo con las palmas mirándose y abre tu pecho.'},
     ],
     2: [
-      {'image': 'assets/images/ModuloYoga/pasos/postura_3_paso_1.png', 'text': 'Paso 1: Siéntate en el suelo con las piernas extendidas al frente y la espalda erguida.'},
-      {'image': 'assets/images/ModuloYoga/pasos/postura_3_paso_2.png', 'text': 'Paso 2: Flexiona ambas rodillas, junta las plantas de tus pies y llévalos cerca de tu pelvis.'},
-      {'image': 'assets/images/ModuloYoga/pasos/postura_3_paso_3.png', 'text': 'Paso 3: Sujeta firmemente tus pies o tobillos con ambas manos mientras mantienes los hombros relajados.'},
-      {'image': 'assets/images/ModuloYoga/pasos/postura_3_paso_4.png', 'text': 'Paso 4: Presiona suavemente las rodillas hacia el suelo e inclina el torso al frente desde la cadera.'},
+      {'image': 'assets/images/ModuloYoga/pasos/postura_3_paso_1.webp', 'text': 'Paso 1: Siéntate en el suelo con las piernas extendidas al frente and la espalda erguida.'},
+      {'image': 'assets/images/ModuloYoga/pasos/postura_3_paso_2.webp', 'text': 'Paso 2: Flexiona ambas rodillas, junta las plantas de tus pies y llévalos cerca de tu pelvis.'},
+      {'image': 'assets/images/ModuloYoga/pasos/postura_3_paso_3.webp', 'text': 'Paso 3: Sujeta firmemente tus pies o tobillos con ambas manos mientras mantienes los hombros relajados.'},
+      {'image': 'assets/images/ModuloYoga/pasos/postura_3_paso_4.webp', 'text': 'Paso 4: Presiona suavemente las rodillas hacia el suelo e inclina el torso al frente desde la cadera.'},
     ],
     3: [
-      {'image': 'assets/images/ModuloYoga/pasos/postura_4_paso_1.png', 'text': 'Paso 1: Párate derecho con los pies juntos, activando los muslos y el abdomen.'},
-      {'image': 'assets/images/ModuloYoga/pasos/postura_4_paso_2.png', 'text': 'Paso 2: Lleva las palmas de tus manos juntas al centro del pecho en posición de oración.'},
-      {'image': 'assets/images/ModuloYoga/pasos/postura_4_paso_3.png', 'text': 'Paso 3: Estira tus brazos hacia arriba por encima de la cabeza, manteniendo los hombros relajados.'},
-      {'image': 'assets/images/ModuloYoga/pasos/postura_4_paso_4.png', 'text': 'Paso 4: Entrelaza los dedos y empuja con las palmas hacia arriba, alarga todo tu cuerpo.'},
+      {'image': 'assets/images/ModuloYoga/pasos/postura_4_paso_1.webp', 'text': 'Paso 1: Párate derecho con los pies juntos, activando los muslos y el abdomen.'},
+      {'image': 'assets/images/ModuloYoga/pasos/postura_4_paso_2.webp', 'text': 'Paso 2: Lleva las palmas de tus manos juntas al centro del pecho en posición de oración.'},
+      {'image': 'assets/images/ModuloYoga/pasos/postura_4_paso_3.webp', 'text': 'Paso 3: Estira tus brazos hacia arriba por encima de la cabeza, manteniendo los hombros relajados.'},
+      {'image': 'assets/images/ModuloYoga/pasos/postura_4_paso_4.webp', 'text': 'Paso 4: Entrelaza los dedos y empuja con las palmas hacia arriba, alarga todo tu cuerpo.'},
     ],
     4: [
-      {'image': 'assets/images/ModuloYoga/pasos/postura_5_paso_1.png', 'text': 'Paso 1: Coloca tu colchoneta perpendicular a la pared y siéntate de lado muy cerca de ella.'},
-      {'image': 'assets/images/ModuloYoga/pasos/postura_5_paso_2.png', 'text': 'Paso 2: Recuesta tu espalda sobre el suelo y gira tu cuerpo para elevar las piernas apoyándolas en la pared.'},
-      {'image': 'assets/images/ModuloYoga/pasos/postura_5_paso_3.png', 'text': 'Paso 3: Asegura que tus glúteos queden lo más cerca posible de la base de la pared.'},
-      {'image': 'assets/images/ModuloYoga/pasos/postura_5_paso_4.png', 'text': 'Paso 4: Extiende tus brazos a los lados con las palmas hacia arriba y respira con tranquilidad.'},
+      {'image': 'assets/images/ModuloYoga/pasos/postura_5_paso_1.webp', 'text': 'Paso 1: Coloca tu colchoneta perpendicular a la pared y siéntate de lado muy cerca de ella.'},
+      {'image': 'assets/images/ModuloYoga/pasos/postura_5_paso_2.webp', 'text': 'Paso 2: Recuesta tu espalda sobre el suelo y gira tu cuerpo para elevar las piernas apoyándolas en la pared.'},
+      {'image': 'assets/images/ModuloYoga/pasos/postura_5_paso_3.webp', 'text': 'Paso 3: Asegura que tus glúteos queden lo más cerca posible de la base de la pared.'},
+      {'image': 'assets/images/ModuloYoga/pasos/postura_5_paso_4.webp', 'text': 'Paso 4: Extiende tus brazos a los lados con las palmas hacia arriba y respira con tranquilidad.'},
     ],
     5: [
-      {'image': 'assets/images/ModuloYoga/pasos/postura_6_paso_1.png', 'text': 'Paso 1: Acuéstate boca arriba sobre la colchoneta con los brazos extendidos a los lados del cuerpo.'},
-      {'image': 'assets/images/ModuloYoga/pasos/postura_6_paso_2.png', 'text': 'Paso 2: Dobla tus rodillas acercando los talones a la cadera con los pies apoyados en el suelo.'},
-      {'image': 'assets/images/ModuloYoga/pasos/postura_6_paso_3.png', 'text': 'Paso 3: Impulsa tus caderas y piernas hacia arriba apoyando tus manos firmemente en la espalda baja.'},
-      {'image': 'assets/images/ModuloYoga/pasos/postura_6_paso_4.png', 'text': 'Paso 4: Sigue presionando las palmas de las manos contra la espalda; siente cómo tu cuerpo se estira y se vuelve recto.'},
-      {'image': 'assets/images/ModuloYoga/pasos/postura_6_paso_5.png', 'text': 'Paso 5: Respira profundamente varias veces antes de soltar suavemente la postura.'},
+      {'image': 'assets/images/ModuloYoga/pasos/postura_6_paso_1.webp', 'text': 'Paso 1: Acuéstate boca arriba sobre la colchoneta con los brazos extendidos a los lados del cuerpo.'},
+      {'image': 'assets/images/ModuloYoga/pasos/postura_6_paso_2.webp', 'text': 'Paso 2: Dobla tus rodillas acercando los talones a la cadera con los pies apoyados en el suelo.'},
+      {'image': 'assets/images/ModuloYoga/pasos/postura_6_paso_3.webp', 'text': 'Paso 3: Impulsa tus caderas y piernas hacia arriba apoyando tus manos firmemente en la espalda baja.'},
+      {'image': 'assets/images/ModuloYoga/pasos/postura_6_paso_4.webp', 'text': 'Paso 4: Sigue presionando las palmas de las manos contra la espalda; siente cómo tu cuerpo se estira y se vuelve recto.'},
+      {'image': 'assets/images/ModuloYoga/pasos/postura_6_paso_5.webp', 'text': 'Paso 5: Respira profundamente varias veces antes de soltar suavemente la postura.'},
     ],
   };
 
+  @override
+  void initState() {
+    super.initState();
+    // 1. Temporarily suspend general background music without changing user preference
+    BackgroundMusicManager().suspendMusic();
+
+    // 2. Configure player
+    _yogaAudioPlayer.setReleaseMode(ReleaseMode.loop);
+
+    // 3. Start audio if enabled in preferences
+    _handleSoundToggle();
+
+    // 4. Listen to sound updates
+    BackgroundMusicManager().isPlayingNotifier.addListener(_handleSoundToggle);
+
+    // 5. Listen to internet connection updates to sync dynamically
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> results) {
+      final hasConnection = results.any((result) => result != ConnectivityResult.none);
+      if (hasConnection) {
+        YogaStorageService.syncPendingData();
+      }
+    });
+
+    // 6. Trigger initial background sync
+    YogaStorageService.syncPendingData();
+  }
+
+  @override
+  void dispose() {
+    BackgroundMusicManager().isPlayingNotifier.removeListener(_handleSoundToggle);
+    _connectivitySubscription.cancel();
+    _yogaAudioPlayer.dispose();
+    // Restore background music when leaving the page
+    BackgroundMusicManager().unsuspendMusic();
+    super.dispose();
+  }
+
+  void _handleSoundToggle() {
+    final isPlaying = BackgroundMusicManager().isPlaying;
+    if (isPlaying) {
+      if (!_hasPlayed) {
+        _yogaAudioPlayer.play(AssetSource('audio/audio_yoga.mp3'));
+        _hasPlayed = true;
+      } else {
+        _yogaAudioPlayer.resume();
+      }
+    } else {
+      _yogaAudioPlayer.pause();
+    }
+  }
+
   void _showPostureDetail(BuildContext context, Map<String, dynamic> posture) async {
+    // Record yoga practice on click (offline-first)
+    await YogaStorageService.recordPractice();
+    
     final index = _postures.indexOf(posture);
     final steps = _postureSteps[index] ?? [];
     
@@ -152,13 +225,15 @@ class YogaRoutinePage extends StatelessWidget {
     final ScrollController scrollController = ScrollController();
 
     return Scaffold(
+      backgroundColor: const Color(0xFFFAF6F0),
       body: Stack(
         fit: StackFit.expand,
         children: [
           // Background
           Image.asset(
-            'assets/images/fondo_modulo2.PNG',
+            'assets/images/fondo_modulo2.webp',
             fit: BoxFit.cover,
+            gaplessPlayback: true,
           ),
 
           // Central Card
@@ -261,8 +336,8 @@ class YogaRoutinePage extends StatelessWidget {
             ),
           ),
 
-          // Header with Home & Emergency Buttons
-          const ModuleHeader(showHome: true),
+          // Header with Home, Back & Emergency Buttons
+          const ModuleHeader(showHome: true, showBack: true),
         ],
       ),
     );

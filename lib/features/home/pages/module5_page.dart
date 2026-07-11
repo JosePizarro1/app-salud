@@ -26,13 +26,15 @@ class _Module5PageState extends State<Module5Page> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFFAF6F0),
       body: Stack(
         fit: StackFit.expand,
         children: [
           // Background
           Image.asset(
-            'assets/images/fondo modulo5calendario.png',
+            'assets/images/fondo_modulo5_calendario.webp',
             fit: BoxFit.cover,
+            gaplessPlayback: true,
           ),
 
           // Shared Header with Home Button

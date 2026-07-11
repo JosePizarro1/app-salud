@@ -24,13 +24,15 @@ class _Module1PageState extends State<Module1Page> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFFAF6F0),
       body: Stack(
         fit: StackFit.expand,
         children: [
           // Background
           Image.asset(
-            'assets/images/fondo modulo1 juegos.png',
+            'assets/images/fondo_modulo1_juegos.webp',
             fit: BoxFit.cover,
+            gaplessPlayback: true,
           ),
 
           // Shared Header with Home Button

@@ -32,6 +32,14 @@ class _WelcomeSplashPageState extends State<WelcomeSplashPage> with SingleTicker
     _checkSession();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Precache auth background assets during splash screen
+    precacheImage(const AssetImage('assets/images/login_fondo.webp'), context);
+    precacheImage(const AssetImage('assets/images/register_fondo.webp'), context);
+  }
+
   void _checkSession() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final session = Supabase.instance.client.auth.currentSession;
@@ -63,7 +71,7 @@ class _WelcomeSplashPageState extends State<WelcomeSplashPage> with SingleTicker
         children: [
           // ── Background image ──
           Image.asset(
-            'assets/images/welcome_slash.png',
+            'assets/images/welcome_slash.webp',
             fit: BoxFit.cover,
           ),
 

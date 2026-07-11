@@ -79,6 +79,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
     return Scaffold(
+      backgroundColor: const Color(0xFFFAF6F0),
       resizeToAvoidBottomInset: false,
       body: Stack(
         fit: StackFit.expand,
@@ -97,6 +98,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                   'assets/images/login_fondo.webp',
                   fit: BoxFit.cover,
                   alignment: Alignment.topCenter,
+                  gaplessPlayback: true,
                 ),
               );
             },

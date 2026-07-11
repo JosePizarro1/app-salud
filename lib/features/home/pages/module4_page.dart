@@ -10,13 +10,15 @@ class Module4Page extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF0F172A),
       body: Stack(
         fit: StackFit.expand,
         children: [
           // Background
           Image.asset(
-            'assets/images/fondo modulo4 sueño titi.png',
+            'assets/images/fondo_modulo4_sueno_titi.webp',
             fit: BoxFit.cover,
+            gaplessPlayback: true,
           ),
 
           // Shared Header with Home Button

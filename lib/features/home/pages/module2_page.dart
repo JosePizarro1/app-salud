@@ -12,6 +12,7 @@ class Module2Page extends StatefulWidget {
 
 class _Module2PageState extends State<Module2Page> {
   // Estado de escala para los 2 botones
+  bool _isPrecached = false;
   final List<bool> _buttonScales = [false, false];
 
   Future<void> _triggerScale(int index) async {
@@ -23,15 +24,35 @@ class _Module2PageState extends State<Module2Page> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isPrecached) {
+      _isPrecached = true;
+      // Precache assets for the sub-pages of Bienestar Físico (Yoga and Relax)
+      precacheImage(const AssetImage('assets/images/ModuloYoga/boton_relajacion_profunda.webp'), context);
+      precacheImage(const AssetImage('assets/images/ModuloYoga/boton_respiracion_equilibrada.webp'), context);
+      precacheImage(const AssetImage('assets/images/ModuloYoga/titi_modulo_yoga.webp'), context);
+      precacheImage(const AssetImage('assets/images/ModuloYoga/postura_1_yoga.webp'), context);
+      precacheImage(const AssetImage('assets/images/ModuloYoga/postura_2_yoga.webp'), context);
+      precacheImage(const AssetImage('assets/images/ModuloYoga/postura_3_yoga.webp'), context);
+      precacheImage(const AssetImage('assets/images/ModuloYoga/postura_4_yoga.webp'), context);
+      precacheImage(const AssetImage('assets/images/ModuloYoga/postura_5_yoga.webp'), context);
+      precacheImage(const AssetImage('assets/images/ModuloYoga/postura_6_yoga.webp'), context);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFFAF6F0),
       body: Stack(
         fit: StackFit.expand,
         children: [
           // Background
           Image.asset(
-            'assets/images/fondo_modulo2.PNG',
+            'assets/images/fondo_modulo2.webp',
             fit: BoxFit.cover,
+            gaplessPlayback: true,
           ),
 
           // ── GIF Character (Mismas dimensiones del Módulo 3) ──
@@ -64,7 +85,7 @@ class _Module2PageState extends State<Module2Page> {
                 // Botón Ejercicios (boton_ejer)
                 _buildMenuButton(
                   index: 0,
-                  imagePath: 'assets/images/ModuloYoga/boton_ejer.png',
+                  imagePath: 'assets/images/ModuloYoga/boton_ejer.webp',
                   onTap: () async {
                     await _triggerScale(0);
                     if (!context.mounted) return;
@@ -77,7 +98,7 @@ class _Module2PageState extends State<Module2Page> {
                 // Botón Nube (boton_nube)
                 _buildMenuButton(
                   index: 1,
-                  imagePath: 'assets/images/ModuloYoga/boton_nube.png',
+                  imagePath: 'assets/images/ModuloYoga/boton_nube.webp',
                   onTap: () async {
                     await _triggerScale(1);
                     if (!context.mounted) return;

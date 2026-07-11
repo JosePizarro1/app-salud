@@ -16,13 +16,15 @@ class RelaxPage extends StatelessWidget {
     final screenHeight = mediaQuery.size.height;
 
     return Scaffold(
+      backgroundColor: const Color(0xFFFAF6F0),
       body: Stack(
         fit: StackFit.expand,
         children: [
           // Background
           Image.asset(
-            'assets/images/fondo_modulo2.PNG',
+            'assets/images/fondo_modulo2.webp',
             fit: BoxFit.cover,
+            gaplessPlayback: true,
           ),
 
           // Central Card (respecting safe areas and header spaces, wrapping content dynamically)
@@ -91,7 +93,7 @@ class RelaxPage extends StatelessWidget {
                       children: [
                         // Botón de "Relajación profunda 4-7-8"
                         _ActionButton(
-                          imagePath: 'assets/images/ModuloYoga/boton_relajacionprofunda.png',
+                          imagePath: 'assets/images/ModuloYoga/boton_relajacion_profunda.webp',
                           baseScale: 1.27, // Increased scale (total 1.27)
                           onTap: () {
                             context.push('/breathing');
@@ -101,7 +103,7 @@ class RelaxPage extends StatelessWidget {
                         const SizedBox(height: 8),
                         // Botón de "Respiración equilibrada"
                         _ActionButton(
-                          imagePath: 'assets/images/ModuloYoga/boton_respiración equilibrada.png',
+                          imagePath: 'assets/images/ModuloYoga/boton_respiracion_equilibrada.webp',
                           baseScale: 1.37, // Increased scale (total 1.37)
                           onTap: () {
                             context.push('/box_breathing');
@@ -117,7 +119,7 @@ class RelaxPage extends StatelessWidget {
                       height: screenHeight * 0.22,
                       alignment: Alignment.bottomCenter,
                       child: Image.asset(
-                        'assets/images/ModuloYoga/titi_modulo_yoga.gif',
+                        'assets/images/ModuloYoga/titi_modulo_yoga.webp',
                         fit: BoxFit.contain,
                       ),
                     ),
@@ -127,8 +129,8 @@ class RelaxPage extends StatelessWidget {
             ),
           ),
 
-          // Header with Home & Emergency Buttons
-          const ModuleHeader(showHome: true),
+          // Header with Home, Back & Emergency Buttons
+          const ModuleHeader(showHome: true, showBack: true),
         ],
       ),
     );
