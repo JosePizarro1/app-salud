@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../widgets/module_header.dart';
+import '../../../app/services/sfx_manager.dart';
 
 class Module1Page extends StatefulWidget {
   const Module1Page({super.key});
@@ -47,7 +48,7 @@ class _Module1PageState extends State<Module1Page> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _buildMenuButton(
-                  imagePath: 'assets/images/Bsudoku.png',
+                  imagePath: 'assets/images/Bsudoku.webp',
                   onTap: () async {
                     await _triggerScale();
                     if (context.mounted) context.push('/sudoku');
@@ -70,7 +71,10 @@ class _Module1PageState extends State<Module1Page> {
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeInOut,
       child: GestureDetector(
-        onTap: onTap,
+        onTap: () {
+          SfxManager().playClick();
+          onTap();
+        },
         child: SizedBox(
           width: MediaQuery.of(context).size.width * 0.3,
           height: MediaQuery.of(context).size.height * 0.15,

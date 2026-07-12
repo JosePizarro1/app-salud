@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../features/auth/pages/welcome_splash_page.dart';
 import '../features/auth/pages/login_page.dart';
@@ -34,6 +35,25 @@ import '../features/home/pages/rest_timer_page.dart';
 import '../features/home/pages/night_routine_page.dart';
 import '../features/home/pages/sleep_care_page.dart';
 import '../features/home/pages/sleep_care_reader_page.dart';
+import '../features/home/pages/forum_page.dart';
+
+CustomTransitionPage<T> _buildFadePage<T>({
+  required GoRouterState state,
+  required Widget child,
+}) {
+  return CustomTransitionPage<T>(
+    key: state.pageKey,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 200),
+    reverseTransitionDuration: const Duration(milliseconds: 150),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      return FadeTransition(
+        opacity: CurveTween(curve: Curves.easeInOut).animate(animation),
+        child: child,
+      );
+    },
+  );
+}
 
 final appRouter = GoRouter(
   initialLocation: '/welcome',
@@ -52,137 +72,147 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/home',
-      builder: (context, state) => const HomePage(),
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const HomePage()),
     ),
     GoRoute(
       path: '/settings',
-      builder: (context, state) => const SettingsPage(),
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const SettingsPage()),
     ),
     GoRoute(
       path: '/emergency',
-      builder: (context, state) => const EmergencyPage(),
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const EmergencyPage()),
     ),
     GoRoute(
       path: '/module1',
-      builder: (context, state) => const Module1Page(),
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const Module1Page()),
     ),
     GoRoute(
       path: '/module2',
-      builder: (context, state) => const Module2Page(),
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const Module2Page()),
     ),
     GoRoute(
       path: '/module3',
-      builder: (context, state) => const Module3Page(),
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const Module3Page()),
     ),
     GoRoute(
       path: '/module4',
-      builder: (context, state) => const Module4Page(),
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const Module4Page()),
     ),
     GoRoute(
       path: '/module5',
-      builder: (context, state) => const Module5Page(),
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const Module5Page()),
     ),
     GoRoute(
       path: '/night_routine',
-      builder: (context, state) => const NightRoutinePage(),
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const NightRoutinePage()),
     ),
     GoRoute(
       path: '/sleep_care',
-      builder: (context, state) => const SleepCarePage(),
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const SleepCarePage()),
     ),
     GoRoute(
       path: '/sleep_care/reader',
-      builder: (context, state) {
+      pageBuilder: (context, state) {
         final initialPage = state.extra as int? ?? 0;
-        return SleepCareReaderPage(initialPage: initialPage);
+        return _buildFadePage(
+          state: state,
+          child: SleepCareReaderPage(initialPage: initialPage),
+        );
       },
     ),
     GoRoute(
       path: '/module6',
-      builder: (context, state) => const Module6Page(),
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const Module6Page()),
     ),
     GoRoute(
       path: '/physical_activity',
-      builder: (context, state) => const PhysicalActivityPage(),
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const PhysicalActivityPage()),
     ),
     GoRoute(
       path: '/healthy_eating',
-      builder: (context, state) => const HealthyEatingPage(),
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const HealthyEatingPage()),
     ),
     GoRoute(
       path: '/knowing_stress',
-      builder: (context, state) => const KnowingStressPage(),
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const KnowingStressPage()),
     ),
     GoRoute(
       path: '/study_techniques',
-      builder: (context, state) => const StudyTechniquesPage(),
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const StudyTechniquesPage()),
     ),
     GoRoute(
       path: '/emotions',
-      builder: (context, state) => const EmotionsCalendarPage(),
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const EmotionsCalendarPage()),
     ),
     GoRoute(
       path: '/meditation',
-      builder: (context, state) => const MeditationPage(),
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const MeditationPage()),
     ),
     GoRoute(
       path: '/sudoku',
-      builder: (context, state) => const SudokuPage(),
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const SudokuPage()),
     ),
     GoRoute(
       path: '/titi_chat',
-      builder: (context, state) => const TitiChatPage(),
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const TitiChatPage()),
     ),
     GoRoute(
       path: '/active_pause',
-      builder: (context, state) => const ActivePausePage(),
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const ActivePausePage()),
     ),
     GoRoute(
       path: '/active_pause_timer',
-      builder: (context, state) {
+      pageBuilder: (context, state) {
         final exercise = state.extra as ActivePauseExercise;
-        return ActivePauseTimerPage(exercise: exercise);
+        return _buildFadePage(
+          state: state,
+          child: ActivePauseTimerPage(exercise: exercise),
+        );
       },
     ),
     GoRoute(
       path: '/relax',
-      builder: (context, state) => const RelaxPage(),
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const RelaxPage()),
     ),
     GoRoute(
       path: '/breathing',
-      builder: (context, state) => const BreathingPage(),
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const BreathingPage()),
     ),
     GoRoute(
       path: '/box_breathing',
-      builder: (context, state) => const BoxBreathingPage(),
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const BoxBreathingPage()),
     ),
     GoRoute(
       path: '/yoga',
-      builder: (context, state) => const YogaRoutinePage(),
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const YogaRoutinePage()),
     ),
     GoRoute(
       path: '/admin/dashboard',
-      builder: (context, state) => const AdminDashboardPage(),
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const AdminDashboardPage()),
     ),
     GoRoute(
       path: '/organizer',
-      builder: (context, state) => const OrganizerPage(),
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const OrganizerPage()),
     ),
     GoRoute(
       path: '/organizer/onboarding',
-      builder: (context, state) => const OrganizerOnboardingPage(),
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const OrganizerOnboardingPage()),
     ),
     GoRoute(
       path: '/playlist',
-      builder: (context, state) => const PlaylistPage(),
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const PlaylistPage()),
     ),
     GoRoute(
       path: '/alarm',
-      builder: (context, state) => const AlarmPage(),
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const AlarmPage()),
     ),
     GoRoute(
       path: '/rest_timer',
-      builder: (context, state) => const RestTimerPage(),
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const RestTimerPage()),
+    ),
+    GoRoute(
+      path: '/forum',
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const ForumPage()),
     ),
   ],
 );

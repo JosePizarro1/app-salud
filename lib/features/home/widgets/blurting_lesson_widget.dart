@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:animate_do/animate_do.dart';
-import 'package:audioplayers/audioplayers.dart';
+import '../../../app/services/sfx_manager.dart';
 
 class BlurtingLessonWidget extends StatefulWidget {
   final VoidCallback onBackToMenu;
@@ -18,27 +18,10 @@ class BlurtingLessonWidget extends StatefulWidget {
 
 class _BlurtingLessonWidgetState extends State<BlurtingLessonWidget> {
   int _currentStep = 0; // 0: Intro, 1: Step 1, 2: Step 2, 3: Step 3, 4: Why works, 5: Completed
-  final AudioPlayer _audioPlayer = AudioPlayer();
-
   // Completed screen staggered animation state
   bool _showCompletedItem1 = false;
   bool _showCompletedItem2 = false;
   bool _showCompletedItem3 = false;
-
-  @override
-  void dispose() {
-    _audioPlayer.dispose();
-    super.dispose();
-  }
-
-  Future<void> _playSound(String path) async {
-    try {
-      await _audioPlayer.stop();
-      await _audioPlayer.play(AssetSource(path));
-    } catch (e) {
-      debugPrint('Error playing sound: $e');
-    }
-  }
 
   void _changeStep(int newStep) {
     setState(() {
@@ -53,7 +36,7 @@ class _BlurtingLessonWidgetState extends State<BlurtingLessonWidget> {
 
     // Play sound on Step 1, 2, 3 and Why works
     if (newStep == 1 || newStep == 2 || newStep == 3) {
-      _playSound('audio/success_cheerful.mp3');
+      SfxManager().playSuccess();
     }
 
     // Start staggered sequence on Completed view
@@ -109,19 +92,9 @@ class _BlurtingLessonWidgetState extends State<BlurtingLessonWidget> {
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Top Progress Bar for subviews (Shifted slightly down from module header)
+        // Body Content (under parent page's ModuleHeader)
         Positioned(
-          top: screenHeight * 0.11,
-          left: 0,
-          right: 0,
-          child: Center(
-            child: _buildTopProgressBar(),
-          ),
-        ),
-
-        // Body Content
-        Positioned(
-          top: screenHeight * 0.14,
+          top: screenHeight * 0.13,
           bottom: screenHeight * 0.12,
           left: 0,
           right: 0,
@@ -183,7 +156,7 @@ class _BlurtingLessonWidgetState extends State<BlurtingLessonWidget> {
     return SingleChildScrollView(
       key: const ValueKey('BlurtingIntroView'),
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.only(left: 24, right: 24, top: 20),
       child: Column(
         children: [
           // Title "MÉTODO BLURTING"
@@ -208,6 +181,10 @@ class _BlurtingLessonWidgetState extends State<BlurtingLessonWidget> {
             ),
           ),
           const SizedBox(height: 25),
+
+          // ── Progress Bar (debajo del título)
+          Center(child: _buildTopProgressBar()),
+          const SizedBox(height: 16),
 
           // Subtitle "¿Qué es?"
           FadeInUp(
@@ -285,7 +262,7 @@ class _BlurtingLessonWidgetState extends State<BlurtingLessonWidget> {
             duration: const Duration(milliseconds: 700),
             delay: const Duration(milliseconds: 400),
             child: Image.asset(
-              'assets/images/healthy_eating/images/titi patita.png',
+              'assets/images/healthy_eating/images/titi patita.webp',
               height: 165,
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) => const SizedBox(),
@@ -306,24 +283,9 @@ class _BlurtingLessonWidgetState extends State<BlurtingLessonWidget> {
     return SingleChildScrollView(
       key: ValueKey('BlurtingStep$stepNumber'),
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.only(left: 24, right: 24, top: 20),
       child: Column(
         children: [
-          // Técnicas de Estudio Header Sub
-          FadeInDown(
-            duration: const Duration(milliseconds: 500),
-            child: Text(
-              'TÉCNICAS DE ESTUDIO',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.outfit(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF4CAF50),
-                letterSpacing: 1.5,
-              ),
-            ),
-          ),
-          const SizedBox(height: 2),
           // Title "MÉTODO BLURTING"
           FadeInDown(
             duration: const Duration(milliseconds: 600),
@@ -346,6 +308,10 @@ class _BlurtingLessonWidgetState extends State<BlurtingLessonWidget> {
             ),
           ),
           const SizedBox(height: 25),
+
+          // ── Progress Bar (debajo del título)
+          Center(child: _buildTopProgressBar()),
+          const SizedBox(height: 16),
 
           // Step Number Image (1, 2, 3)
           BounceInDown(
@@ -415,7 +381,7 @@ class _BlurtingLessonWidgetState extends State<BlurtingLessonWidget> {
               height: 175,
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) => Image.asset(
-                'assets/images/healthy_eating/images/titi patita.png',
+                'assets/images/healthy_eating/images/titi patita.webp',
                 height: 175,
                 fit: BoxFit.contain,
               ),
@@ -430,24 +396,9 @@ class _BlurtingLessonWidgetState extends State<BlurtingLessonWidget> {
     return SingleChildScrollView(
       key: const ValueKey('BlurtingWhyWorksView'),
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.only(left: 24, right: 24, top: 20),
       child: Column(
         children: [
-          // Técnicas de Estudio Header Sub
-          FadeInDown(
-            duration: const Duration(milliseconds: 500),
-            child: Text(
-              'TÉCNICAS DE ESTUDIO',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.outfit(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF4CAF50),
-                letterSpacing: 1.5,
-              ),
-            ),
-          ),
-          const SizedBox(height: 2),
           // Title "MÉTODO BLURTING"
           FadeInDown(
             duration: const Duration(milliseconds: 600),
@@ -470,6 +421,10 @@ class _BlurtingLessonWidgetState extends State<BlurtingLessonWidget> {
             ),
           ),
           const SizedBox(height: 25),
+
+          // ── Progress Bar (debajo del título)
+          Center(child: _buildTopProgressBar()),
+          const SizedBox(height: 16),
 
           // Subtitle "¿Por qué funciona?"
           FadeInUp(
@@ -547,7 +502,7 @@ class _BlurtingLessonWidgetState extends State<BlurtingLessonWidget> {
             duration: const Duration(milliseconds: 700),
             delay: const Duration(milliseconds: 400),
             child: Image.asset(
-              'assets/images/healthy_eating/images/titi patita.png',
+              'assets/images/healthy_eating/images/titi patita.webp',
               height: 165,
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) => const SizedBox(),
@@ -562,24 +517,9 @@ class _BlurtingLessonWidgetState extends State<BlurtingLessonWidget> {
     return SingleChildScrollView(
       key: const ValueKey('BlurtingCompletedView'),
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.only(left: 24, right: 24, top: 20),
       child: Column(
         children: [
-          // Title "TÉCNICAS DE ESTUDIO"
-          FadeInDown(
-            duration: const Duration(milliseconds: 500),
-            child: Text(
-              'TÉCNICAS DE ESTUDIO',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.outfit(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF4CAF50),
-                letterSpacing: 1.5,
-              ),
-            ),
-          ),
-          const SizedBox(height: 2),
           // Title "MÉTODO BLURTING"
           FadeInDown(
             duration: const Duration(milliseconds: 550),
@@ -602,6 +542,10 @@ class _BlurtingLessonWidgetState extends State<BlurtingLessonWidget> {
             ),
           ),
           const SizedBox(height: 20),
+
+          // ── Progress Bar (debajo del título)
+          Center(child: _buildTopProgressBar()),
+          const SizedBox(height: 16),
 
           // LECCION COMPLETADA Header
           FadeInDown(
@@ -661,7 +605,7 @@ class _BlurtingLessonWidgetState extends State<BlurtingLessonWidget> {
               height: 165,
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) => Image.asset(
-                'assets/images/healthy_eating/images/titi patita.png',
+                'assets/images/healthy_eating/images/titi patita.webp',
                 height: 165,
                 fit: BoxFit.contain,
               ),

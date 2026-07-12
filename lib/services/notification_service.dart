@@ -1,9 +1,12 @@
+import 'dart:math';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:flutter_timezone/flutter_timezone.dart';
 import '../app/router.dart';
+import '../app/services/motivational_service.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -487,6 +490,159 @@ class NotificationService {
       debugPrint('✅ [NotificationService] ¡Notificación retrasada agendada!');
     } catch (e) {
       debugPrint('❌ [NotificationService] Error al programar notificación retrasada: $e');
+    }
+  }
+
+  Future<void> cancelMotivationalNotification() async {
+    if (kIsWeb) return;
+    try {
+      await _notificationsPlugin.cancel(10101);
+      debugPrint('🔔 [NotificationService] Notificación motivacional cancelada.');
+    } catch (e) {
+      debugPrint('❌ [NotificationService] Error al cancelar notificación motivacional: $e');
+    }
+  }
+
+  Future<void> scheduleMotivationalNotification({bool force = false}) async {
+    if (kIsWeb) return;
+    await init();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final bool enabled = prefs.getBool('motivational_notifications_enabled') ?? true;
+      if (!enabled) {
+        await cancelMotivationalNotification();
+        return;
+      }
+
+      final String todayStr = DateTime.now().toString().substring(0, 10); // yyyy-MM-dd
+      final String? lastScheduled = prefs.getString('last_scheduled_motivational_date');
+      
+      if (lastScheduled == todayStr && !force) {
+        debugPrint('📅 [NotificationService] Notificación motivacional ya agendada para hoy ($todayStr).');
+        return;
+      }
+
+      final random = Random();
+      int scheduledHour;
+      int scheduledMinute;
+
+      // 50% chance morning block (8am-12pm), 50% chance evening (7pm)
+      if (random.nextBool()) {
+        // Morning block: 8:00 AM to 11:59 AM
+        scheduledHour = 8 + random.nextInt(4);
+        scheduledMinute = random.nextInt(60);
+      } else {
+        // 7:00 PM (19:00)
+        scheduledHour = 19;
+        scheduledMinute = 0;
+      }
+
+      final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+      tz.TZDateTime scheduledDate = tz.TZDateTime(
+        tz.local,
+        now.year,
+        now.month,
+        now.day,
+        scheduledHour,
+        scheduledMinute,
+      );
+
+      // If scheduled time has already passed today, schedule for tomorrow
+      if (scheduledDate.isBefore(now)) {
+        scheduledDate = scheduledDate.add(const Duration(days: 1));
+      }
+
+      final phrase = MotivationalService.getRandomPhrase();
+
+      const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+        'motivational_channel',
+        'Frases Motivadoras',
+        channelDescription: 'Canal para mensajes de apoyo y motivación diarios',
+        importance: Importance.max,
+        priority: Priority.high,
+        playSound: true,
+        sound: RawResourceAndroidNotificationSound('noti_sound'),
+      );
+
+      const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+        sound: 'noti_sound.mp3',
+      );
+
+      const NotificationDetails platformDetails = NotificationDetails(
+        android: androidDetails,
+        iOS: iosDetails,
+      );
+
+      // Cancel previous to ensure clean overwrite
+      await _notificationsPlugin.cancel(10101);
+
+      await _notificationsPlugin.zonedSchedule(
+        10101,
+        'Reflexión de Bienestar',
+        phrase,
+        scheduledDate,
+        platformDetails,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+      );
+
+      await prefs.setString('last_scheduled_motivational_date', todayStr);
+      debugPrint('✅ [NotificationService] Frase motivacional programada para: ${scheduledDate.toLocal()}');
+    } catch (e) {
+      debugPrint('❌ [NotificationService] Error al programar frase motivacional: $e');
+    }
+  }
+
+  Future<void> showTestMotivationalNotification({required int seconds}) async {
+    if (kIsWeb) return;
+    await init();
+
+    try {
+      final tz.TZDateTime scheduledDate =
+          tz.TZDateTime.now(tz.local).add(Duration(seconds: seconds));
+
+      final phrase = MotivationalService.getRandomPhrase();
+
+      const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+        'motivational_channel_test',
+        'Prueba Frases Motivadoras',
+        channelDescription: 'Canal para probar notificaciones motivacionales con sonido',
+        importance: Importance.max,
+        priority: Priority.high,
+        playSound: true,
+        sound: RawResourceAndroidNotificationSound('noti_sound'),
+      );
+
+      const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+        sound: 'noti_sound.mp3',
+      );
+
+      const NotificationDetails platformDetails = NotificationDetails(
+        android: androidDetails,
+        iOS: iosDetails,
+      );
+
+      await _notificationsPlugin.zonedSchedule(
+        99999, // Unique test ID
+        'Reflexión de Bienestar (Test)',
+        phrase,
+        scheduledDate,
+        platformDetails,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+      );
+      debugPrint('✅ [NotificationService] Alarma de prueba motivacional agendada para dentro de $seconds segundos');
+    } catch (e) {
+      debugPrint('❌ [NotificationService] Error al programar prueba motivacional: $e');
     }
   }
 }

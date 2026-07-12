@@ -36,7 +36,7 @@ class _Module6PageState extends State<Module6Page> {
           ),
 
           // Shared Header with Home Button
-          const ModuleHeader(showHome: true),
+          const ModuleHeader(showHome: true, showBack: true),
 
           // 4 Buttons in 1 single row at the bottom (matching module 3 and 5 style)
           Positioned(

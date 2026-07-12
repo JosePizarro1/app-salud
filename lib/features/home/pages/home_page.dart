@@ -4,10 +4,15 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../widgets/module_header.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/home_tutorial_overlay.dart';
 import '../../../app/services/background_music_manager.dart';
+import '../../../app/services/sfx_manager.dart';
+import '../../../app/services/motivational_service.dart';
+import '../../../services/notification_service.dart';
+import '../../../app/services/stats_sync_service.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -16,19 +21,25 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with WidgetsBindingObserver, TickerProviderStateMixin {
   // Estado de escalado para cada módulo (0: Mesa/Modulo1, 1: Mod2, 2: Mod3, etc.)
   final List<bool> _moduleScales = List.generate(6, (_) => false);
   bool _showTutorial = false;
   bool _isPlayingTiti = false;
   Timer? _titiTimer;
-  bool _isDebugMode = false;
   final AudioPlayer _dragAudioPlayer = AudioPlayer()
     ..setAudioContext(AudioContext(
       android: AudioContextAndroid(
         audioFocus: AndroidAudioFocus.none,
       ),
     ));
+
+  // Motivational banner state
+  bool _showMotivationalBanner = false;
+  double _bannerOpacity = 0.0;
+  String _motivationalText = '';
+  Timer? _bannerTimer;
+  late final AnimationController _bannerPulseController;
 
   bool _isImagesPrecached = false;
   List<Offset>? _modulePositions;
@@ -39,8 +50,17 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _bannerPulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+      lowerBound: 0.98,
+      upperBound: 1.02,
+    );
     _checkTutorialStatus();
     BackgroundMusicManager().init();
+    // Sync offline stats
+    StatsSyncService().syncUnsyncedStats();
   }
 
   Future<void> _checkTutorialStatus() async {
@@ -48,7 +68,11 @@ class _HomePageState extends State<HomePage> {
     final hasShown = prefs.getBool('home_tutorial_shown') ?? false;
     if (!hasShown && mounted) {
       setState(() => _showTutorial = true);
+    } else if (mounted) {
+      _showMotivationalPopup();
     }
+    // Check/Schedule daily notification
+    NotificationService().scheduleMotivationalNotification();
   }
 
   Future<void> _completeTutorial() async {
@@ -56,7 +80,10 @@ class _HomePageState extends State<HomePage> {
     await prefs.setBool('home_tutorial_shown', true);
     if (mounted) {
       setState(() => _showTutorial = false);
+      _showMotivationalPopup();
     }
+    // Schedule notification after tutorial
+    NotificationService().scheduleMotivationalNotification();
   }
 
   @override
@@ -98,14 +125,67 @@ class _HomePageState extends State<HomePage> {
       precacheImage(const AssetImage('assets/images/fondo_modulo4_sueno_titi.webp'), context);
       precacheImage(const AssetImage('assets/images/fondo_modulo5_calendario.webp'), context);
       precacheImage(const AssetImage('assets/images/fondo_modulo6.webp'), context);
+      precacheImage(const AssetImage('assets/images/noti_interna.webp'), context);
     }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _titiTimer?.cancel();
+    _bannerTimer?.cancel();
+    _bannerPulseController.dispose();
     _dragAudioPlayer.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _showMotivationalPopup();
+      NotificationService().scheduleMotivationalNotification();
+    }
+  }
+
+  void _showMotivationalPopup() async {
+    final prefs = await SharedPreferences.getInstance();
+    final bool enabled = prefs.getBool('motivational_notifications_enabled') ?? true;
+    if (!enabled) return;
+
+    final phrase = MotivationalService.getRandomPhrase();
+
+    // Play welcome sound if settings allow
+    SfxManager().playNotiSound();
+
+    if (!mounted) return;
+
+    setState(() {
+      _motivationalText = phrase;
+      _showMotivationalBanner = true;
+      _bannerOpacity = 1.0;
+    });
+
+    _bannerPulseController.repeat(reverse: true);
+
+    _bannerTimer?.cancel();
+    _bannerTimer = Timer(const Duration(seconds: 5), () {
+      _dismissBanner();
+    });
+  }
+
+  void _dismissBanner() {
+    if (!mounted) return;
+    setState(() {
+      _bannerOpacity = 0.0;
+    });
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted && _bannerOpacity == 0.0) {
+        setState(() {
+          _showMotivationalBanner = false;
+        });
+        _bannerPulseController.stop();
+      }
+    });
   }
 
   Future<void> _playDragEndSound() async {
@@ -293,8 +373,7 @@ class _HomePageState extends State<HomePage> {
                           Container(
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(1000),
-                              border: _isDebugMode ? Border.all(color: Colors.red, width: 2) : null,
-                              color: _isDebugMode ? Colors.red.withOpacity(0.2) : Colors.transparent,
+                              color: Colors.transparent,
                             ),
                           ),
                         ),
@@ -328,28 +407,20 @@ class _HomePageState extends State<HomePage> {
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTap: isDraggingThis ? null : () async {
+                    SfxManager().playClick();
                     debugPrint("Tapped button for Module ${index + 1} ($route) - Pre-scale trigger");
                     await _triggerScale(scaleIndex);
                     debugPrint("Navigating to module route: $route");
+                    // Track module access locally & offline-sync
+                    StatsSyncService().logModuleAccess(route);
                     if (context.mounted) context.push(route);
                   },
                   child: SizedBox(
                     width: btnHeight,
                     height: btnHeight,
-                    child: Stack(
-                      children: [
-                        Image.asset(
-                          btnAsset,
-                          fit: BoxFit.contain,
-                        ),
-                        if (_isDebugMode)
-                          Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.blue, width: 1.5),
-                              color: Colors.blue.withOpacity(0.3),
-                            ),
-                          ),
-                      ],
+                    child: Image.asset(
+                      btnAsset,
+                      fit: BoxFit.contain,
                     ),
                   ),
                 ),
@@ -414,50 +485,7 @@ class _HomePageState extends State<HomePage> {
           // ── Header (Configuración y Emergencia) ──
           const ModuleHeader(),
 
-          // ── Debug Mode Toggle Button ──
-          Positioned(
-            left: screenWidth * 0.22,
-            top: screenHeight * 0.10,
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  setState(() {
-                    _isDebugMode = !_isDebugMode;
-                  });
-                },
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: _isDebugMode ? Colors.redAccent.withOpacity(0.9) : Colors.black45,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.white24),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        _isDebugMode ? Icons.bug_report : Icons.bug_report_outlined,
-                        color: Colors.white,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _isDebugMode ? 'DEBUG: ON' : 'DEBUG',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
+
 
           // ── ELEMENTOS DE MÓDULOS AGRUPADOS Y MÓVILES ORDENADOS POR PROFUNDIDAD (2.5D) ──
           if (_modulePositions != null)
@@ -471,6 +499,108 @@ class _HomePageState extends State<HomePage> {
                 screenHeight,
               ));
             }(),
+
+          // ── Notification Banner (Right to left entry, top right location near emergency) ──
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeOutBack,
+            top: screenHeight * 0.08, // Aligned near the emergency button height
+            right: _showMotivationalBanner ? screenWidth * 0.05 : -screenWidth, // Slides in from right offscreen
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 500),
+              opacity: _bannerOpacity,
+              child: GestureDetector(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  _bannerTimer?.cancel();
+                  _dismissBanner();
+                },
+                child: AnimatedBuilder(
+                  animation: _bannerPulseController,
+                  builder: (context, child) {
+                    return Transform.scale(
+                      scale: _showMotivationalBanner ? _bannerPulseController.value : 1.0,
+                      child: child,
+                    );
+                  },
+                  child: Container(
+                    width: screenWidth * 0.72, // Slim and elegant width so it fits next to screen edge
+                    height: (screenWidth * 0.72) * (269 / 600), // Match the original aspect ratio
+                    decoration: const BoxDecoration(
+                      image: DecorationImage(
+                        image: AssetImage('assets/images/noti_interna.webp'),
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 36, left: 16, right: 16, bottom: 16),
+                      child: Center(
+                        child: SingleChildScrollView(
+                          child: Text(
+                            _motivationalText,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.outfit(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF5C381E), // Brown color
+                              height: 1.2,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // ── Botón de Test para Pop-up Interno ──
+          Positioned(
+            bottom: 16,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Material(
+                color: Colors.black54,
+                borderRadius: BorderRadius.circular(12),
+                child: InkWell(
+                  onTap: () async {
+                    HapticFeedback.lightImpact();
+                    final prefs = await SharedPreferences.getInstance();
+                    final bool enabled = prefs.getBool('motivational_notifications_enabled') ?? true;
+                    if (enabled) {
+                      _showMotivationalPopup();
+                    } else {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Las frases diarias están desactivadas en la tuerca.'),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.favorite_rounded, color: Colors.white, size: 16),
+                        SizedBox(width: 6),
+                        Text(
+                          'Probar Pop-up',
+                          style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
 
           // ── Tutorial Overlay (First run only) ──
           if (_showTutorial)

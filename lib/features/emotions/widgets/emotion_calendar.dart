@@ -13,6 +13,7 @@ class EmotionCalendar extends StatelessWidget {
   final Map<String, EmotionType> emotions;
   final void Function(String dateStr) onDayTap;
   final String? selectedDateStr;
+
   const EmotionCalendar({
     super.key,
     required this.year,
@@ -137,53 +138,62 @@ class EmotionCalendar extends StatelessWidget {
                 circleColor = AppColors.primary.withValues(alpha: 0.15);
               }
 
-              return GestureDetector(
-                onTap: isFuture ? null : () => onDayTap(dateStr),
-                behavior: HitTestBehavior.opaque,
-                child: Container(
-                  alignment: Alignment.center,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: circleColor,
-                      shape: BoxShape.circle,
-                      border: isSelected
-                          ? Border.all(
-                              color: AppColors.primary,
-                              width: 2.5,
-                            )
-                          : (isToday
-                              ? Border.all(
-                                  color: const Color(0xFFFF8A71),
-                                  width: 1.5,
-                                )
-                              : null),
-                    ),
-                    child: Center(
-                      child: emotion != null
-                          ? Text(
-                              emotion.emoji,
-                              style: const TextStyle(fontSize: 16),
-                            )
-                          : Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  '$day',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 13,
-                                    fontWeight: isSelected || isToday ? FontWeight.bold : FontWeight.w400,
-                                    color: isSelected
-                                        ? AppColors.primary
-                                        : (isToday
-                                            ? const Color(0xFFFF8A71)
-                                            : const Color(0xFF2D3142)),
+              return Container(
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(
+                  color: Colors.transparent, // Ensures the entire cell is clickable
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkResponse(
+                    onTap: isFuture ? null : () => onDayTap(dateStr),
+                    containedInkWell: true,
+                    highlightColor: Colors.transparent,
+                    splashColor: AppColors.primary.withValues(alpha: 0.2),
+                    customBorder: const CircleBorder(),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: circleColor,
+                        shape: BoxShape.circle,
+                        border: isSelected
+                            ? Border.all(
+                                color: AppColors.primary,
+                                width: 2.5,
+                              )
+                            : (isToday
+                                ? Border.all(
+                                    color: const Color(0xFFFF8A71),
+                                    width: 1.5,
+                                  )
+                                : null),
+                      ),
+                      child: Center(
+                        child: emotion != null
+                            ? Text(
+                                emotion.emoji,
+                                style: const TextStyle(fontSize: 16),
+                              )
+                            : Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    '$day',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 13,
+                                      fontWeight: isSelected || isToday ? FontWeight.bold : FontWeight.w400,
+                                      color: isSelected
+                                          ? AppColors.primary
+                                          : (isToday
+                                              ? const Color(0xFFFF8A71)
+                                              : const Color(0xFF2D3142)),
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
+                                ],
+                              ),
+                      ),
                     ),
                   ),
                 ),

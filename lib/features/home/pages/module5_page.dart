@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../widgets/module_header.dart';
+import '../../../app/services/sfx_manager.dart';
 
 class Module5Page extends StatefulWidget {
   const Module5Page({super.key});
@@ -12,6 +13,17 @@ class Module5Page extends StatefulWidget {
 class _Module5PageState extends State<Module5Page> {
   // Estado de escala para los botones (0: Diario, 1: Emociones)
   final List<bool> _isButtonScaled = [false, false];
+  bool _isPrecached = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isPrecached) {
+      _isPrecached = true;
+      precacheImage(const AssetImage('assets/images/boton_diario.webp'), context);
+      precacheImage(const AssetImage('assets/images/Bemociones.webp'), context);
+    }
+  }
 
   Future<void> _triggerScale(int index) async {
     setState(() => _isButtonScaled[index] = true);
@@ -49,7 +61,7 @@ class _Module5PageState extends State<Module5Page> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _buildMenuButton(
-                  imagePath: 'assets/images/boton diario (1).png',
+                  imagePath: 'assets/images/boton_diario.webp',
                   index: 0,
                   sizeScale: 0.67,
                   onTap: () async {
@@ -59,7 +71,7 @@ class _Module5PageState extends State<Module5Page> {
                 ),
                 const SizedBox(width: 15),
                 _buildMenuButton(
-                  imagePath: 'assets/images/Bemociones.png',
+                  imagePath: 'assets/images/Bemociones.webp',
                   index: 1,
                   sizeScale: 0.95,
                   onTap: () async {
@@ -86,7 +98,10 @@ class _Module5PageState extends State<Module5Page> {
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeInOut,
       child: GestureDetector(
-        onTap: onTap,
+        onTap: () {
+          SfxManager().playClick();
+          onTap();
+        },
         child: SizedBox(
           width: MediaQuery.of(context).size.width * 0.3 * sizeScale,
           height: MediaQuery.of(context).size.height * 0.15 * sizeScale,

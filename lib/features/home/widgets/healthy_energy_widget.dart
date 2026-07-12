@@ -183,7 +183,7 @@ class HealthyEnergyWidgetState extends State<HealthyEnergyWidget> {
                   height: 185,
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) => Image.asset(
-                    'assets/images/healthy_eating/images/titi patita.png',
+                    'assets/images/healthy_eating/images/titi patita.webp',
                     height: 165,
                     fit: BoxFit.contain,
                   ),
@@ -230,7 +230,7 @@ class HealthyEnergyWidgetState extends State<HealthyEnergyWidget> {
                   height: 165,
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) => Image.asset(
-                    'assets/images/healthy_eating/images/titi patita.png',
+                    'assets/images/healthy_eating/images/titi patita.webp',
                     height: 145,
                     fit: BoxFit.contain,
                   ),
@@ -277,7 +277,7 @@ class HealthyEnergyWidgetState extends State<HealthyEnergyWidget> {
                   height: 165,
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) => Image.asset(
-                    'assets/images/healthy_eating/images/titi patita.png',
+                    'assets/images/healthy_eating/images/titi patita.webp',
                     height: 145,
                     fit: BoxFit.contain,
                   ),

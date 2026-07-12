@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:animate_do/animate_do.dart';
-import 'package:audioplayers/audioplayers.dart';
+import '../../../app/services/sfx_manager.dart';
 
 class SpacedRepetitionLessonWidget extends StatefulWidget {
   final VoidCallback onBackToMenu;
@@ -18,28 +18,11 @@ class SpacedRepetitionLessonWidget extends StatefulWidget {
 
 class _SpacedRepetitionLessonWidgetState extends State<SpacedRepetitionLessonWidget> {
   int _currentStep = 0; // 0: Intro, 1: Step 1, 2: Step 2, 3: Step 3, 4: Step 4, 5: Why works, 6: Completed
-  final AudioPlayer _audioPlayer = AudioPlayer();
-
   // Completed screen staggered animation state
   bool _showCompletedItem1 = false;
   bool _showCompletedItem2 = false;
   bool _showCompletedItem3 = false;
   bool _showCompletedItem4 = false;
-
-  @override
-  void dispose() {
-    _audioPlayer.dispose();
-    super.dispose();
-  }
-
-  Future<void> _playSound(String path) async {
-    try {
-      await _audioPlayer.stop();
-      await _audioPlayer.play(AssetSource(path));
-    } catch (e) {
-      debugPrint('Error playing sound: $e');
-    }
-  }
 
   void _changeStep(int newStep) {
     setState(() {
@@ -55,7 +38,7 @@ class _SpacedRepetitionLessonWidgetState extends State<SpacedRepetitionLessonWid
 
     // Play sound on Step 1, 2, 3, 4
     if (newStep == 1 || newStep == 2 || newStep == 3 || newStep == 4) {
-      _playSound('audio/success_cheerful.mp3');
+      SfxManager().playSuccess();
     }
 
     // Start staggered sequence on Completed view
@@ -116,19 +99,9 @@ class _SpacedRepetitionLessonWidgetState extends State<SpacedRepetitionLessonWid
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Top Progress Bar
+        // Body Content (under parent page's ModuleHeader)
         Positioned(
-          top: screenHeight * 0.11,
-          left: 0,
-          right: 0,
-          child: Center(
-            child: _buildTopProgressBar(),
-          ),
-        ),
-
-        // Body Content
-        Positioned(
-          top: screenHeight * 0.14,
+          top: screenHeight * 0.13,
           bottom: screenHeight * 0.12,
           left: 0,
           right: 0,
@@ -198,7 +171,7 @@ class _SpacedRepetitionLessonWidgetState extends State<SpacedRepetitionLessonWid
     return SingleChildScrollView(
       key: const ValueKey('SpacedRepetitionIntroView'),
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.only(left: 24, right: 24, top: 20),
       child: Column(
         children: [
           // Title "REPETICIÓN ESPACIADA"
@@ -223,6 +196,10 @@ class _SpacedRepetitionLessonWidgetState extends State<SpacedRepetitionLessonWid
             ),
           ),
           const SizedBox(height: 25),
+
+          // ── Progress Bar (debajo del título)
+          Center(child: _buildTopProgressBar()),
+          const SizedBox(height: 16),
 
           // Subtitle "¿Qué es?"
           FadeInUp(
@@ -300,7 +277,7 @@ class _SpacedRepetitionLessonWidgetState extends State<SpacedRepetitionLessonWid
             duration: const Duration(milliseconds: 700),
             delay: const Duration(milliseconds: 400),
             child: Image.asset(
-              'assets/images/healthy_eating/images/titi patita.png',
+              'assets/images/healthy_eating/images/titi patita.webp',
               height: 165,
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) => const SizedBox(),
@@ -321,7 +298,7 @@ class _SpacedRepetitionLessonWidgetState extends State<SpacedRepetitionLessonWid
     return SingleChildScrollView(
       key: ValueKey('SpacedRepetitionStep$stepNumber'),
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.only(left: 24, right: 24, top: 20),
       child: Column(
         children: [
           // Header Sub
@@ -361,6 +338,10 @@ class _SpacedRepetitionLessonWidgetState extends State<SpacedRepetitionLessonWid
             ),
           ),
           const SizedBox(height: 15),
+
+          // ── Progress Bar (debajo del título)
+          Center(child: _buildTopProgressBar()),
+          const SizedBox(height: 16),
 
           // ¿Cuándo aplicarla? Subheader
           FadeInUp(
@@ -447,7 +428,7 @@ class _SpacedRepetitionLessonWidgetState extends State<SpacedRepetitionLessonWid
               height: 175,
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) => Image.asset(
-                'assets/images/healthy_eating/images/titi patita.png',
+                'assets/images/healthy_eating/images/titi patita.webp',
                 height: 175,
                 fit: BoxFit.contain,
               ),
@@ -462,7 +443,7 @@ class _SpacedRepetitionLessonWidgetState extends State<SpacedRepetitionLessonWid
     return SingleChildScrollView(
       key: const ValueKey('SpacedRepetitionWhyWorksView'),
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.only(left: 24, right: 24, top: 20),
       child: Column(
         children: [
           // Header Sub
@@ -502,6 +483,10 @@ class _SpacedRepetitionLessonWidgetState extends State<SpacedRepetitionLessonWid
             ),
           ),
           const SizedBox(height: 25),
+
+          // ── Progress Bar (debajo del título)
+          Center(child: _buildTopProgressBar()),
+          const SizedBox(height: 16),
 
           // Subtitle "¿Por qué funciona?"
           FadeInUp(
@@ -579,7 +564,7 @@ class _SpacedRepetitionLessonWidgetState extends State<SpacedRepetitionLessonWid
             duration: const Duration(milliseconds: 700),
             delay: const Duration(milliseconds: 400),
             child: Image.asset(
-              'assets/images/healthy_eating/images/titi patita.png',
+              'assets/images/healthy_eating/images/titi patita.webp',
               height: 165,
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) => const SizedBox(),
@@ -594,7 +579,7 @@ class _SpacedRepetitionLessonWidgetState extends State<SpacedRepetitionLessonWid
     return SingleChildScrollView(
       key: const ValueKey('SpacedRepetitionCompletedView'),
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.only(left: 24, right: 24, top: 20),
       child: Column(
         children: [
           // Title "TÉCNICAS DE ESTUDIO"
@@ -634,6 +619,10 @@ class _SpacedRepetitionLessonWidgetState extends State<SpacedRepetitionLessonWid
             ),
           ),
           const SizedBox(height: 20),
+
+          // ── Progress Bar (debajo del título)
+          Center(child: _buildTopProgressBar()),
+          const SizedBox(height: 16),
 
           // LECCION COMPLETADA Header
           FadeInDown(
@@ -702,7 +691,7 @@ class _SpacedRepetitionLessonWidgetState extends State<SpacedRepetitionLessonWid
               height: 165,
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) => Image.asset(
-                'assets/images/healthy_eating/images/titi patita.png',
+                'assets/images/healthy_eating/images/titi patita.webp',
                 height: 165,
                 fit: BoxFit.contain,
               ),

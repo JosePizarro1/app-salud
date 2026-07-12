@@ -8,12 +8,16 @@ import 'app/theme_controller.dart';
 import 'app/widgets/connectivity_wrapper.dart';
 import 'app/widgets/session_lifecycle_wrapper.dart';
 import 'services/notification_service.dart';
+import 'app/services/background_music_manager.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Initialize notifications gracefully
   await NotificationService().init();
+
+  // Initialize background music and load preferences gracefully
+  await BackgroundMusicManager().init();
   
   await dotenv.load(fileName: ".env");
   

@@ -67,8 +67,20 @@ class _StudyTechniquesPageState extends State<StudyTechniquesPage> {
               ),
             ),
 
-            // Shared Header with Home Button
-            const ModuleHeader(showHome: true),
+            // Shared Header with Home and Back Buttons (Custom Navigation Stack)
+            ModuleHeader(
+              showHome: true,
+              showBack: true,
+              onBackTap: () {
+                if (_activeLesson != 0) {
+                  setState(() {
+                    _activeLesson = 0;
+                  });
+                } else {
+                  context.pop();
+                }
+              },
+            ),
 
             // Toggle view between main list menu and specific active lesson widget
             _activeLesson == 0
@@ -110,7 +122,7 @@ class _StudyTechniquesPageState extends State<StudyTechniquesPage> {
       children: [
         // Main scrollable content
         Positioned(
-          top: screenHeight * 0.15,
+          top: screenHeight * 0.20,
           bottom: screenHeight * 0.12,
           left: 0,
           right: 0,
@@ -221,7 +233,7 @@ class _StudyTechniquesPageState extends State<StudyTechniquesPage> {
                     height: 170,
                     fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) => Image.asset(
-                      'assets/images/healthy_eating/images/titi patita.png',
+                      'assets/images/healthy_eating/images/titi patita.webp',
                       height: 170,
                       fit: BoxFit.contain,
                     ),

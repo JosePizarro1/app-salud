@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:dotlottie_flutter/dotlottie_flutter.dart';
-import 'package:audioplayers/audioplayers.dart';
+import '../../../app/services/sfx_manager.dart';
 import '../../../app/theme/app_colors.dart';
 
 enum Lesson3State { question, correct, incorrect }
@@ -20,31 +20,6 @@ class _HealthyEatingLesson3WidgetState extends State<HealthyEatingLesson3Widget>
   Lesson3State _viewState = Lesson3State.question;
   int? _hoveredOption;
   bool _showCelebration = false;
-  final AudioPlayer _audioPlayer = AudioPlayer();
-
-  @override
-  void dispose() {
-    _audioPlayer.dispose();
-    super.dispose();
-  }
-
-  Future<void> _playCelebrationSound() async {
-    try {
-      await _audioPlayer.stop();
-      await _audioPlayer.play(AssetSource('audio/success_cheerful.mp3'));
-    } catch (e) {
-      debugPrint('Error playing celebration sound: $e');
-    }
-  }
-
-  Future<void> _playIncorrectSound() async {
-    try {
-      await _audioPlayer.stop();
-      await _audioPlayer.play(AssetSource('audio/error_sound.mp3'));
-    } catch (e) {
-      debugPrint('Error playing incorrect sound: $e');
-    }
-  }
 
   void _handleOptionSelected(int optionId) {
     if (optionId == 1) {
@@ -53,11 +28,11 @@ class _HealthyEatingLesson3WidgetState extends State<HealthyEatingLesson3Widget>
         _viewState = Lesson3State.correct;
         _showCelebration = true;
       });
-      _playCelebrationSound();
+      SfxManager().playSuccess();
       widget.onCorrectAnswer?.call();
     } else {
       // Incorrect option selected (Candies & donuts)
-      _playIncorrectSound();
+      SfxManager().playError();
       setState(() {
         _viewState = Lesson3State.incorrect;
       });
@@ -214,7 +189,7 @@ class _HealthyEatingLesson3WidgetState extends State<HealthyEatingLesson3Widget>
             height: 210,
             fit: BoxFit.contain,
             errorBuilder: (context, error, stackTrace) => Image.asset(
-              'assets/images/healthy_eating/images/titi patita.png',
+              'assets/images/healthy_eating/images/titi patita.webp',
               height: 170,
               fit: BoxFit.contain,
             ),
@@ -367,7 +342,7 @@ class _HealthyEatingLesson3WidgetState extends State<HealthyEatingLesson3Widget>
                 duration: const Duration(milliseconds: 600),
                 delay: const Duration(milliseconds: 250),
                 child: Image.asset(
-                  'assets/images/healthy_eating/images/titi patita.png',
+                  'assets/images/healthy_eating/images/titi patita.webp',
                   height: 185,
                   fit: BoxFit.contain,
                 ),
@@ -452,11 +427,11 @@ class _HealthyEatingLesson3WidgetState extends State<HealthyEatingLesson3Widget>
         FadeInUp(
           duration: const Duration(milliseconds: 600),
           child: Image.asset(
-            'assets/images/healthy_eating/images/titi triste.png',
+            'assets/images/healthy_eating/images/titi_triste.webp',
             height: 210,
             fit: BoxFit.contain,
             errorBuilder: (context, error, stackTrace) => Image.asset(
-              'assets/images/healthy_eating/images/titi patita.png',
+              'assets/images/healthy_eating/images/titi patita.webp',
               height: 170,
               fit: BoxFit.contain,
             ),

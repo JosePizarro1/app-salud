@@ -110,14 +110,14 @@ class _SudokuPageState extends State<SudokuPage> {
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/images/fondo_sudoku.png'),
+            image: AssetImage('assets/images/fondo_sudoku.webp'),
             fit: BoxFit.cover,
           ),
         ),
         child: Stack(
           children: [
             // Header
-            const ModuleHeader(showHome: true),
+            const ModuleHeader(showHome: true, showBack: true),
 
             SafeArea(
               child: Column(

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:animate_do/animate_do.dart';
 import '../widgets/module_header.dart';
+import '../../../app/services/sfx_manager.dart';
+import '../../../app/services/stats_sync_service.dart';
 
 class Module3Page extends StatefulWidget {
   const Module3Page({super.key});
@@ -11,8 +13,19 @@ class Module3Page extends StatefulWidget {
 }
 
 class _Module3PageState extends State<Module3Page> {
-  // Estado de escala para los 3 botones
-  final List<bool> _buttonScales = [false, false, false];
+  // Estado de escala para los 2 botones
+  final List<bool> _buttonScales = [false, false];
+  bool _isPrecached = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isPrecached) {
+      _isPrecached = true;
+      precacheImage(const AssetImage('assets/images/Bmeditacion.webp'), context);
+      precacheImage(const AssetImage('assets/images/Brespiracion.webp'), context);
+    }
+  }
 
   Future<void> _triggerScale(int index) async {
     setState(() => _buttonScales[index] = true);
@@ -66,34 +79,26 @@ class _Module3PageState extends State<Module3Page> {
                 // Botón Meditación
                 _buildMenuButton(
                   index: 0,
-                  imagePath: 'assets/images/Bmeditacion.png',
+                  imagePath: 'assets/images/Bmeditacion.webp',
                   onTap: () async {
                     await _triggerScale(0);
+                    // Track meditation sub-module access
+                    StatsSyncService().logModuleAccess('/meditation');
                     if (context.mounted) context.push('/meditation');
                   },
                 ),
                 
-                const SizedBox(width: 10),
+                const SizedBox(width: 15),
                 
                 // Botón Respiración
                 _buildMenuButton(
                   index: 1,
-                  imagePath: 'assets/images/Brespiracion.png',
+                  imagePath: 'assets/images/Brespiracion.webp',
                   onTap: () async {
                     await _triggerScale(1);
+                    // Track breathing sub-module access
+                    StatsSyncService().logModuleAccess('/breathing');
                     if (context.mounted) context.push('/breathing');
-                  },
-                ),
-                
-                const SizedBox(width: 10),
-                
-                // Botón Emociones
-                _buildMenuButton(
-                  index: 2,
-                  imagePath: 'assets/images/Bemociones.png',
-                  onTap: () async {
-                    await _triggerScale(2);
-                    if (context.mounted) context.push('/emotions');
                   },
                 ),
               ],
@@ -115,7 +120,10 @@ class _Module3PageState extends State<Module3Page> {
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeInOut,
       child: GestureDetector(
-        onTap: onTap,
+        onTap: () {
+          SfxManager().playClick();
+          onTap();
+        },
         child: SizedBox(
           width: MediaQuery.of(context).size.width * 0.3,
           height: MediaQuery.of(context).size.height * 0.15,

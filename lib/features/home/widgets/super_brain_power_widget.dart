@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:animate_do/animate_do.dart';
-import 'package:audioplayers/audioplayers.dart';
+import '../../../app/services/sfx_manager.dart';
 import '../../../app/theme/app_colors.dart';
 
 class SuperBrainPowerWidget extends StatefulWidget {
@@ -12,19 +12,12 @@ class SuperBrainPowerWidget extends StatefulWidget {
 }
 
 class _SuperBrainPowerWidgetState extends State<SuperBrainPowerWidget> {
-  final AudioPlayer _audioPlayer = AudioPlayer();
   int _visibleCount = 0;
 
   @override
   void initState() {
     super.initState();
     _startAnimationSequence();
-  }
-
-  @override
-  void dispose() {
-    _audioPlayer.dispose();
-    super.dispose();
   }
 
   Future<void> _startAnimationSequence() async {
@@ -43,12 +36,7 @@ class _SuperBrainPowerWidgetState extends State<SuperBrainPowerWidget> {
   }
 
   Future<void> _playSound() async {
-    try {
-      await _audioPlayer.stop();
-      await _audioPlayer.play(AssetSource('images/healthy_eating/sonido_noti_entrada.mp3'));
-    } catch (e) {
-      debugPrint('Error playing benefit appearance sound: $e');
-    }
+    await SfxManager().playNotiInterna();
   }
 
   Widget _buildBrainBenefitItem({

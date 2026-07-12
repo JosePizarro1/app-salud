@@ -15,6 +15,7 @@ import '../widgets/meditation_painters.dart';
 import '../../home/widgets/module_header.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../services/notification_service.dart';
+import '../../../app/services/stats_sync_service.dart';
 
 
 class MeditationPage extends StatefulWidget {
@@ -24,7 +25,7 @@ class MeditationPage extends StatefulWidget {
   State<MeditationPage> createState() => _MeditationPageState();
 }
 
-class _MeditationPageState extends State<MeditationPage> with TickerProviderStateMixin {
+class _MeditationPageState extends State<MeditationPage> with TickerProviderStateMixin, WidgetsBindingObserver {
   bool _isCommitted = false;
   bool _wiggleCheckbox = false;
   int? _selectedTimeOption;
@@ -45,6 +46,11 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
   String? _selectedExperience;
   String? _selectedFeeling;
   bool _isSavingFeedback = false;
+  final List<String> _selectedImpediments = [];
+  final TextEditingController _feedbackCommentCtrl = TextEditingController();
+  final List<bool> _wiggleImpediments = List.generate(4, (_) => false);
+  bool _wiggleComment = false;
+  bool _isFeedbackSubmitting = false;
 
   // Video Recommendations State
   bool _showRecommendations = false;
@@ -122,6 +128,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _circleAnimController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 4),
@@ -147,16 +154,17 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
   void didChangeDependencies() {
     super.didChangeDependencies();
     // Precache button images for instant rendering
-    precacheImage(const AssetImage('assets/images/modulo_respiracion/B1minuto.png'), context);
-    precacheImage(const AssetImage('assets/images/modulo_respiracion/B3minutos.png'), context);
-    precacheImage(const AssetImage('assets/images/modulo_respiracion/B5minutos.png'), context);
-    precacheImage(const AssetImage('assets/images/modulo_respiracion/Bcampana.PNG'), context);
-    precacheImage(const AssetImage('assets/images/modulo_respiracion/sol.png'), context);
-    precacheImage(const AssetImage('assets/images/modulo_respiracion/luna.png'), context);
+    precacheImage(const AssetImage('assets/images/modulo_respiracion/B1minuto.webp'), context);
+    precacheImage(const AssetImage('assets/images/modulo_respiracion/B3minutos.webp'), context);
+    precacheImage(const AssetImage('assets/images/modulo_respiracion/B5minutos.webp'), context);
+    precacheImage(const AssetImage('assets/images/modulo_respiracion/Bcampana.webp'), context);
+    precacheImage(const AssetImage('assets/images/modulo_respiracion/sol.webp'), context);
+    precacheImage(const AssetImage('assets/images/modulo_respiracion/luna.webp'), context);
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _sessionTimer?.cancel();
     _breathingTimer?.cancel();
     _circleAnimController.dispose();
@@ -169,6 +177,19 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
     super.dispose();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      if (_isPlaying && !_isAudioPaused) {
+        try {
+          _audioPlayer.pause();
+          setState(() {
+            _isAudioPaused = true;
+          });
+        } catch (_) {}
+      }
+    }
+  }
 
   // Load saved routine notifications from shared_preferences cache
   Future<void> _loadNotificationSettings() async {
@@ -217,6 +238,9 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
     // Prevent timer multiplication
     _sessionTimer?.cancel();
     _breathingTimer?.cancel();
+
+    // Log meditation session duration to database and local cache
+    StatsSyncService().logMeditationSession(minutes);
 
     setState(() {
       _selectedMinutes = minutes;
@@ -645,7 +669,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                       Row(
                         children: [
                           Image.asset(
-                            'assets/images/modulo_respiracion/sol.png',
+                            'assets/images/modulo_respiracion/sol.webp',
                             width: 44,
                             height: 44,
                           ),
@@ -668,8 +692,8 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                             },
                             child: Image.asset(
                               localDayEnabled
-                                  ? 'assets/images/modulo_respiracion/Bactivar_notificacion.png'
-                                  : 'assets/images/modulo_respiracion/Bdesactivar_notificacion.png',
+                                  ? 'assets/images/modulo_respiracion/Bactivar_notificacion.webp'
+                                  : 'assets/images/modulo_respiracion/Bdesactivar_notificacion.webp',
                               width: 80,
                               height: 36,
                               fit: BoxFit.contain,
@@ -718,7 +742,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                       Row(
                         children: [
                           Image.asset(
-                            'assets/images/modulo_respiracion/luna.png',
+                            'assets/images/modulo_respiracion/luna.webp',
                             width: 44,
                             height: 44,
                           ),
@@ -741,8 +765,8 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                             },
                             child: Image.asset(
                               localNightEnabled
-                                  ? 'assets/images/modulo_respiracion/Bactivar_notificacion.png'
-                                  : 'assets/images/modulo_respiracion/Bdesactivar_notificacion.png',
+                                  ? 'assets/images/modulo_respiracion/Bactivar_notificacion.webp'
+                                  : 'assets/images/modulo_respiracion/Bdesactivar_notificacion.webp',
                               width: 80,
                               height: 36,
                               fit: BoxFit.contain,
@@ -949,7 +973,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
           // Dynamic Background
           if (isSelectionView || _isSelectingAudio) ...[
             Image.asset(
-              'assets/images/fondo_modulo3.PNG',
+              'assets/images/fondo_modulo3.webp',
               fit: BoxFit.cover,
             ),
             if (_isSelectingAudio)
@@ -1001,7 +1025,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                     child: Opacity(
                       opacity: isNotificationActive ? 1.0 : 0.55,
                       child: Image.asset(
-                        'assets/images/modulo_respiracion/Bcampana.PNG',
+                        'assets/images/modulo_respiracion/Bcampana.webp',
                         fit: BoxFit.contain,
                       ),
                     ),
@@ -1091,17 +1115,17 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                     const SizedBox(height: 20),
 
                     _buildTimeButton(
-                      imagePath: 'assets/images/modulo_respiracion/B1minuto.png',
+                      imagePath: 'assets/images/modulo_respiracion/B1minuto.webp',
                       minutes: 1,
                     ),
                     const SizedBox(height: 10),
                     _buildTimeButton(
-                      imagePath: 'assets/images/modulo_respiracion/B3minutos.png',
+                      imagePath: 'assets/images/modulo_respiracion/B3minutos.webp',
                       minutes: 3,
                     ),
                     const SizedBox(height: 10),
                     _buildTimeButton(
-                      imagePath: 'assets/images/modulo_respiracion/B5minutos.png',
+                      imagePath: 'assets/images/modulo_respiracion/B5minutos.webp',
                       minutes: 5,
                     ),
 

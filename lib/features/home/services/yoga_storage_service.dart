@@ -17,6 +17,8 @@ class YogaStorageService {
 
   // 1. Record practice: Increment locally and trigger background sync
   static Future<void> recordPractice() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
     try {
       final prefs = await SharedPreferences.getInstance();
       final todayStr = _getLocalTodayString();

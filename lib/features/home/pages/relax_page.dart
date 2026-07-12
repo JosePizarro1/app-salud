@@ -6,8 +6,79 @@ import 'package:go_router/go_router.dart';
 import '../../../app/theme/app_colors.dart';
 import '../widgets/module_header.dart';
 
-class RelaxPage extends StatelessWidget {
+import '../../../app/services/sfx_manager.dart';
+
+import 'package:audioplayers/audioplayers.dart';
+import '../../../app/services/background_music_manager.dart';
+
+class RelaxPage extends StatefulWidget {
   const RelaxPage({super.key});
+
+  @override
+  State<RelaxPage> createState() => _RelaxPageState();
+}
+
+class _RelaxPageState extends State<RelaxPage> with WidgetsBindingObserver {
+  final AudioPlayer _relaxAudioPlayer = AudioPlayer()
+    ..setAudioContext(AudioContext(
+      android: AudioContextAndroid(
+        audioFocus: AndroidAudioFocus.none,
+      ),
+    ));
+
+  bool _hasPlayed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // 1. Temporarily suspend general background music without changing user preference
+    BackgroundMusicManager().suspendMusic();
+
+    // 2. Configure player
+    _relaxAudioPlayer.setReleaseMode(ReleaseMode.loop);
+
+    // 3. Start audio if enabled in preferences
+    _handleSoundToggle();
+
+    // 4. Listen to sound updates
+    BackgroundMusicManager().isPlayingNotifier.addListener(_handleSoundToggle);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    BackgroundMusicManager().isPlayingNotifier.removeListener(_handleSoundToggle);
+    _relaxAudioPlayer.dispose();
+    // Restore background music when leaving the page
+    BackgroundMusicManager().unsuspendMusic();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      try {
+        _relaxAudioPlayer.pause();
+      } catch (_) {}
+    } else if (state == AppLifecycleState.resumed) {
+      _handleSoundToggle();
+    }
+  }
+
+  void _handleSoundToggle() {
+    final isPlaying = BackgroundMusicManager().isPlaying;
+    if (isPlaying) {
+      if (!_hasPlayed) {
+        _relaxAudioPlayer.play(AssetSource('audio/audio_yoga.mp3'));
+        _hasPlayed = true;
+      } else {
+        _relaxAudioPlayer.resume();
+      }
+    } else {
+      _relaxAudioPlayer.pause();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +167,12 @@ class RelaxPage extends StatelessWidget {
                           imagePath: 'assets/images/ModuloYoga/boton_relajacion_profunda.webp',
                           baseScale: 1.27, // Increased scale (total 1.27)
                           onTap: () {
-                            context.push('/breathing');
+                            _showInstructionBottomSheet(
+                              context,
+                              title: 'Relajación Profunda 4-7-8',
+                              subtitle: 'Esta técnica de respiración actúa como un tranquilizante natural para el sistema nervioso, ideal para relajarte y liberar el estrés.',
+                              routePath: '/breathing',
+                            );
                           },
                           todoComment: 'Relajación profunda 4-7-8',
                         ),
@@ -106,7 +182,12 @@ class RelaxPage extends StatelessWidget {
                           imagePath: 'assets/images/ModuloYoga/boton_respiracion_equilibrada.webp',
                           baseScale: 1.37, // Increased scale (total 1.37)
                           onTap: () {
-                            context.push('/box_breathing');
+                            _showInstructionBottomSheet(
+                              context,
+                              title: 'Respiración Equilibrada (Caja)',
+                              subtitle: 'Técnica utilizada para calmar la mente y mejorar la concentración, ideal después de estudiar o rendir evaluaciones.',
+                              routePath: '/box_breathing',
+                            );
                           },
                           todoComment: 'Respiración equilibrada',
                         ),
@@ -133,6 +214,92 @@ class RelaxPage extends StatelessWidget {
           const ModuleHeader(showHome: true, showBack: true),
         ],
       ),
+    );
+  }
+
+  void _showInstructionBottomSheet(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required String routePath,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (BuildContext context) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Pull Bar
+              Container(
+                width: 40,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: Colors.grey.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Title
+              Text(
+                title,
+                style: GoogleFonts.outfit(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.secondary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              // Description
+              Text(
+                subtitle,
+                style: GoogleFonts.outfit(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textSecondaryLight,
+                  height: 1.4,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              // Button - Start Now
+              ElevatedButton(
+                onPressed: () {
+                  SfxManager().playClick();
+                  HapticFeedback.mediumImpact();
+                  Navigator.of(context).pop();
+                  context.push(routePath);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.success,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 56),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  elevation: 2,
+                  shadowColor: AppColors.success.withValues(alpha: 0.3),
+                ),
+                child: Text(
+                  'Empezar Ahora',
+                  style: GoogleFonts.outfit(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -168,6 +335,7 @@ class _ActionButtonState extends State<_ActionButton> {
         onTapUp: (_) => setState(() => _isPressed = false),
         onTapCancel: () => setState(() => _isPressed = false),
         onTap: () {
+          SfxManager().playClick();
           HapticFeedback.mediumImpact();
           widget.onTap();
         },

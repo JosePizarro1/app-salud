@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:animate_do/animate_do.dart';
 import 'dart:async';
 import '../../home/widgets/module_header.dart';
 import '../../../app/theme/app_colors.dart';
+import '../../../app/services/sfx_manager.dart';
 import '../models/emotion_entry.dart';
 import '../services/emotion_storage.dart';
 import '../services/diary_storage.dart';
@@ -24,66 +26,57 @@ class _EmotionsCalendarPageState extends State<EmotionsCalendarPage> {
   Map<String, EmotionType> _emotions = {};
   bool _isLoading = true;
 
-  // ── Nuevas variables de estado ──
   late String _selectedDateStr;
   Timer? _debounceTimer;
 
-  // Almacén en memoria de los diarios por fecha
-  final Map<String, Map<String, String>> _diarioEntries = {};
+  // Single text controller for the entire diary free text
+  final TextEditingController _diaryContentCtrl = TextEditingController();
 
-  // Controladores para la simulación del Diario Personal
-  final TextEditingController _emocionElegidaCtrl = TextEditingController();
-  final TextEditingController _porqueCtrl = TextEditingController();
-  final TextEditingController _metaCtrl = TextEditingController();
-  final TextEditingController _prioridadesCtrl = TextEditingController();
-  final TextEditingController _logrosCtrl = TextEditingController();
-
-  // ── Auxiliares para Diario ──
-  void _saveDiarioField(String key, String value) {
-    if (!_diarioEntries.containsKey(_selectedDateStr)) {
-      _diarioEntries[_selectedDateStr] = {};
+  // Load local diary content from SharedPreferences (100% private and offline-first)
+  Future<void> _loadLocalDiaryForSelectedDate() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final key = 'diary_text_$_selectedDateStr';
+      final savedText = prefs.getString(key) ?? '';
+      _diaryContentCtrl.text = savedText;
+    } catch (_) {
+      // Local fallback safety
     }
-    _diarioEntries[_selectedDateStr]![key] = value;
+  }
 
-    // Debounce del guardado en Supabase
+  // Save diary content locally (100% offline and private)
+  Future<void> _saveLocalDiary(String text) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final key = 'diary_text_$_selectedDateStr';
+      if (text.trim().isEmpty) {
+        await prefs.remove(key);
+      } else {
+        await prefs.setString(key, text);
+      }
+    } catch (_) {
+      // Local fallback safety
+    }
+  }
+
+  void _onDiaryTextChanged(String val) {
     if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 500), () async {
-      await DiaryStorage.saveDiaryEntry(_selectedDateStr, _diarioEntries[_selectedDateStr]!);
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+      _saveLocalDiary(val);
     });
   }
 
-  void _flushDebounceSave() {
+  void _flushLocalSave() {
     if (_debounceTimer?.isActive ?? false) {
       _debounceTimer!.cancel();
-      DiaryStorage.saveDiaryEntry(_selectedDateStr, _diarioEntries[_selectedDateStr] ?? {});
+      _saveLocalDiary(_diaryContentCtrl.text);
     }
-  }
-
-  void _loadDiarioForSelectedDate() {
-    final entry = _diarioEntries[_selectedDateStr] ?? {};
-    
-    // Si ya existe una emoción registrada en Supabase para este día, y la del diario está vacía, pre-rellenamos
-    final selectedDayEmotion = _emotions[_selectedDateStr];
-    String defaultEmocion = '';
-    if (selectedDayEmotion != null) {
-      defaultEmocion = '${selectedDayEmotion.emoji} ${selectedDayEmotion.label}';
-    }
-    
-    _emocionElegidaCtrl.text = entry['emocion'] ?? defaultEmocion;
-    _porqueCtrl.text = entry['porque'] ?? '';
-    _metaCtrl.text = entry['meta'] ?? '';
-    _prioridadesCtrl.text = entry['prioridades'] ?? '';
-    _logrosCtrl.text = entry['logros'] ?? '';
   }
 
   @override
   void dispose() {
-    _flushDebounceSave();
-    _emocionElegidaCtrl.dispose();
-    _porqueCtrl.dispose();
-    _metaCtrl.dispose();
-    _prioridadesCtrl.dispose();
-    _logrosCtrl.dispose();
+    _flushLocalSave();
+    _diaryContentCtrl.dispose();
     _debounceTimer?.cancel();
     super.dispose();
   }
@@ -99,36 +92,67 @@ class _EmotionsCalendarPageState extends State<EmotionsCalendarPage> {
   }
 
   Future<void> _loadData() async {
-    setState(() => _isLoading = true);
+    final targetMonthPrefix = '$_currentYear-${_currentMonth.toString().padLeft(2, '0')}-';
+    final alreadyHasData = _emotions.keys.any((key) => key.startsWith(targetMonthPrefix));
+
+    if (!alreadyHasData) {
+      setState(() => _isLoading = true);
+    }
+
     try {
-      final results = await Future.wait([
-        EmotionStorage.getEmotionsForMonth(_currentYear, _currentMonth),
-        DiaryStorage.getDiaryForMonth(_currentYear, _currentMonth),
-      ]);
+      final emotionsMap = await EmotionStorage.getEmotionsForMonth(_currentYear, _currentMonth);
 
       if (mounted) {
         setState(() {
-          _emotions = results[0] as Map<String, EmotionType>;
-
-          _diarioEntries.clear();
-          _diarioEntries.addAll(results[1] as Map<String, Map<String, String>>);
-
+          _emotions.addAll(emotionsMap);
           _isLoading = false;
-          _loadDiarioForSelectedDate();
         });
+        await _loadLocalDiaryForSelectedDate();
+        
+        // Pre-fetch adjacent months in the background
+        _preFetchMonths(_currentYear, _currentMonth);
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error al cargar datos de Supabase')),
-        );
+        await _loadLocalDiaryForSelectedDate();
       }
     }
   }
 
+  Future<void> _preFetchMonths(int currentYear, int currentMonth) async {
+    // Calculate prev month
+    int prevYear = currentYear;
+    int prevMonth = currentMonth - 1;
+    if (prevMonth == 0) {
+      prevMonth = 12;
+      prevYear--;
+    }
+
+    // Calculate next month
+    int nextYear = currentYear;
+    int nextMonth = currentMonth + 1;
+    if (nextMonth == 13) {
+      nextMonth = 1;
+      nextYear++;
+    }
+
+    // Pre-fetch both in background
+    try {
+      final prevMap = await EmotionStorage.getEmotionsForMonth(prevYear, prevMonth);
+      final nextMap = await EmotionStorage.getEmotionsForMonth(nextYear, nextMonth);
+      
+      if (mounted) {
+        setState(() {
+          _emotions.addAll(prevMap);
+          _emotions.addAll(nextMap);
+        });
+      }
+    } catch (_) {}
+  }
+
   void _prevMonth() {
-    _flushDebounceSave();
+    _flushLocalSave();
     setState(() {
       if (_currentMonth == 1) {
         _currentMonth = 12;
@@ -141,7 +165,7 @@ class _EmotionsCalendarPageState extends State<EmotionsCalendarPage> {
   }
 
   void _nextMonth() {
-    _flushDebounceSave();
+    _flushLocalSave();
     setState(() {
       if (_currentMonth == 12) {
         _currentMonth = 1;
@@ -154,40 +178,36 @@ class _EmotionsCalendarPageState extends State<EmotionsCalendarPage> {
   }
 
   Future<void> _registerEmotion(String dateStr) async {
-    _flushDebounceSave();
+    _flushLocalSave();
+
+    // 1. Play click sound instantly
+    SfxManager().playClick();
+
     setState(() {
       _selectedDateStr = dateStr;
-      _loadDiarioForSelectedDate();
     });
 
+    // 2. Open picker modal instantly without waiting for disk read
     final currentEmotion = _emotions[dateStr];
-
     final selected = await EmotionPickerModal.show(
       context,
       currentEmotion: currentEmotion,
     );
 
+    if (mounted) {
+      FocusScope.of(context).unfocus();
+    }
+
+    // 3. Load local diary after modal closes
+    await _loadLocalDiaryForSelectedDate();
+
     if (selected != null) {
       // Optimistic update
       setState(() {
         _emotions[dateStr] = selected;
-        // Auto-update the diary emotion if it's empty or placeholder
-        if (_emocionElegidaCtrl.text.isEmpty || _emocionElegidaCtrl.text == 'Ej. Feliz 🌸') {
-          _emocionElegidaCtrl.text = '${selected.emoji} ${selected.label}';
-          _saveDiarioField('emocion', '${selected.emoji} ${selected.label}');
-        }
       });
 
-      try {
-        await EmotionStorage.saveEmotion(dateStr, selected);
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Error al guardar emoción en Supabase')),
-          );
-          _loadData(); // Revert to server state
-        }
-      }
+      await EmotionStorage.saveEmotion(dateStr, selected);
     }
   }
 
@@ -227,12 +247,9 @@ class _EmotionsCalendarPageState extends State<EmotionsCalendarPage> {
             SafeArea(
               child: Padding(
                 padding: const EdgeInsets.only(top: 130),
-                child: RefreshIndicator(
-                  onRefresh: _loadData,
-                  color: AppColors.primary,
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(parent: ClampingScrollPhysics()),
-                    child: Column(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
                       children: [
                         const SizedBox(height: 10),
 
@@ -424,10 +441,9 @@ class _EmotionsCalendarPageState extends State<EmotionsCalendarPage> {
                   ),
                 ),
               ),
-            ),
 
-            // ── Header (Home + Emergency) ──
-            const ModuleHeader(showHome: true),
+            // ── Header (Home, Back + Emergency) ──
+            const ModuleHeader(showHome: true, showBack: true),
           ],
         ),
       ),
@@ -487,37 +503,44 @@ class _EmotionsCalendarPageState extends State<EmotionsCalendarPage> {
                       const Icon(Icons.menu_book_rounded, color: Color(0xFF8C8470), size: 22),
                     ],
                   ),
-                  const SizedBox(height: 20),
-                  _buildNotebookLine('1. ¿Qué emoción elegí hoy?', _emocionElegidaCtrl, hint: 'Ej. Feliz 🌸', fieldKey: 'emocion', readOnly: true),
-                  _buildNotebookLine('2. ¿Por qué me siento de esta manera?', _porqueCtrl, hint: 'Escribe tu motivo aquí...', fieldKey: 'porque'),
-                  _buildNotebookLine('3. ¿Cuál es mi gran meta para hoy?', _metaCtrl, hint: 'Ej. Terminar mi tarea pendiente', fieldKey: 'meta'),
-                  _buildNotebookLine('4. ¿Cuáles son mis prioridades hoy?', _prioridadesCtrl, hint: 'Ej. Mi salud, estudiar y descansar', fieldKey: 'prioridades'),
-                  _buildNotebookLine('5. ¿Qué logré hoy por lo que estoy agradecido/a?', _logrosCtrl, hint: 'Ej. Organizar mi tiempo', fieldKey: 'logros'),
+                  const SizedBox(height: 12),
+                  // Unified Notebook Page (Free Text Area with Invisible Guides)
+                  TextField(
+                    controller: _diaryContentCtrl,
+                    maxLines: 8,
+                    minLines: 5,
+                    keyboardType: TextInputType.multiline,
+                    onChanged: _onDiaryTextChanged,
+                    style: GoogleFonts.caveat(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF2B4C7E),
+                      height: 1.2,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Escribe aquí tu sentir o vivencias de hoy...\n\n'
+                          'Guías de reflexión (opcional):\n'
+                          '• ¿Por qué me siento de esta manera?\n'
+                          '• ¿Cuál es mi gran meta para hoy?\n'
+                          '• ¿Cuáles son mis prioridades?\n'
+                          '• ¿Por qué estoy agradecido/a hoy?',
+                      hintStyle: GoogleFonts.caveat(
+                        fontSize: 20,
+                        color: Colors.grey.shade400,
+                        height: 1.2,
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                    ),
+                  ),
                   const SizedBox(height: 10),
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton.icon(
                       onPressed: () {
                         setState(() {
-                          // Mantener la emoción del día si existe en el calendario
-                          final selectedDayEmotion = _emotions[_selectedDateStr];
-                          if (selectedDayEmotion != null) {
-                            _emocionElegidaCtrl.text = '${selectedDayEmotion.emoji} ${selectedDayEmotion.label}';
-                            _saveDiarioField('emocion', '${selectedDayEmotion.emoji} ${selectedDayEmotion.label}');
-                          } else {
-                            _emocionElegidaCtrl.clear();
-                            _saveDiarioField('emocion', '');
-                          }
-
-                          _porqueCtrl.clear();
-                          _metaCtrl.clear();
-                          _prioridadesCtrl.clear();
-                          _logrosCtrl.clear();
-
-                          _saveDiarioField('porque', '');
-                          _saveDiarioField('meta', '');
-                          _saveDiarioField('prioridades', '');
-                          _saveDiarioField('logros', '');
+                          _diaryContentCtrl.clear();
+                          _saveLocalDiary('');
                         });
                       },
                       icon: const Icon(Icons.cleaning_services_rounded, size: 16, color: Color(0xFF8C8470)),
@@ -536,57 +559,6 @@ class _EmotionsCalendarPageState extends State<EmotionsCalendarPage> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildNotebookLine(String question, TextEditingController controller, {required String hint, required String fieldKey, bool readOnly = false}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            question,
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF7D7259),
-            ),
-          ),
-          const SizedBox(height: 2),
-          TextField(
-            controller: controller,
-            readOnly: readOnly,
-            onChanged: readOnly ? null : (val) => _saveDiarioField(fieldKey, val),
-            // Estilo de letra a mano alzada en azul tinta hermoso
-            style: GoogleFonts.caveat(
-              fontSize: 22,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF2B4C7E),
-              height: 1.1,
-            ),
-            maxLines: null,
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle: GoogleFonts.caveat(
-                fontSize: 20,
-                color: Colors.grey.shade400,
-              ),
-              isDense: true,
-              border: const UnderlineInputBorder(
-                borderSide: BorderSide(color: Color(0xFFDDDBC2), width: 1),
-              ),
-              enabledBorder: const UnderlineInputBorder(
-                borderSide: BorderSide(color: Color(0xFFDDDBC2), width: 1),
-              ),
-              focusedBorder: const UnderlineInputBorder(
-                borderSide: BorderSide(color: AppColors.primary, width: 1.5),
-              ),
-              contentPadding: const EdgeInsets.symmetric(vertical: 4),
-            ),
-          ),
-        ],
       ),
     );
   }

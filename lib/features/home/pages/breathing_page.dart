@@ -210,8 +210,8 @@ class _BreathingPageState extends State<BreathingPage> with TickerProviderStateM
             ),
           ),
 
-          // Encabezado principal (Home y Emergencia)
-          const ModuleHeader(showHome: true),
+          // Encabezado principal (Home, Back y Emergencia)
+          const ModuleHeader(showHome: true, showBack: true),
 
           // Animación de celebración Lottie (éxito)
           if (_showCelebration)

@@ -6,6 +6,7 @@ import 'package:animate_do/animate_do.dart';
 import 'package:flutter/services.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/widgets/theme_switcher.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -23,6 +24,8 @@ class _SettingsPageState extends State<SettingsPage> {
 
   void _logout() async {
     HapticFeedback.mediumImpact();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('is_admin_mode');
     await Supabase.instance.client.auth.signOut();
     if (mounted) context.go('/login');
   }

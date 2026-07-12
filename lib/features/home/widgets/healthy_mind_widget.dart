@@ -182,7 +182,7 @@ class HealthyMindWidgetState extends State<HealthyMindWidget> {
                   height: 200,
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) => Image.asset(
-                    'assets/images/healthy_eating/images/titi patita.png',
+                    'assets/images/healthy_eating/images/titi patita.webp',
                     height: 180,
                     fit: BoxFit.contain,
                   ),
@@ -229,7 +229,7 @@ class HealthyMindWidgetState extends State<HealthyMindWidget> {
                   height: 185,
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) => Image.asset(
-                    'assets/images/healthy_eating/images/titi patita.png',
+                    'assets/images/healthy_eating/images/titi patita.webp',
                     height: 165,
                     fit: BoxFit.contain,
                   ),

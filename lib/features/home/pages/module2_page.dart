@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:animate_do/animate_do.dart';
 import '../widgets/module_header.dart';
+import '../../../app/services/sfx_manager.dart';
 
 class Module2Page extends StatefulWidget {
   const Module2Page({super.key});
@@ -123,7 +124,10 @@ class _Module2PageState extends State<Module2Page> {
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeInOut,
       child: GestureDetector(
-        onTap: onTap,
+        onTap: () {
+          SfxManager().playClick();
+          onTap();
+        },
         child: SizedBox(
           width: MediaQuery.of(context).size.width * 0.175,
           height: MediaQuery.of(context).size.height * 0.075,

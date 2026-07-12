@@ -108,7 +108,7 @@ class HomeTutorialOverlay extends StatelessWidget {
                 const SizedBox(height: 24),
                 // Titi patita mascot
                 Image.asset(
-                  'assets/images/healthy_eating/images/titi patita.png',
+                  'assets/images/healthy_eating/images/titi patita.webp',
                   height: 170,
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) => const SizedBox(),

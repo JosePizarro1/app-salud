@@ -1,10 +1,80 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter/services.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'active_pause_timer_page.dart';
+import '../../../app/services/background_music_manager.dart';
+import '../../../app/services/sfx_manager.dart';
 
-class ActivePausePage extends StatelessWidget {
+class ActivePausePage extends StatefulWidget {
   const ActivePausePage({super.key});
+
+  @override
+  State<ActivePausePage> createState() => _ActivePausePageState();
+}
+
+class _ActivePausePageState extends State<ActivePausePage> with WidgetsBindingObserver {
+  final AudioPlayer _activePauseAudioPlayer = AudioPlayer()
+    ..setAudioContext(AudioContext(
+      android: AudioContextAndroid(
+        audioFocus: AndroidAudioFocus.none,
+      ),
+    ));
+
+  bool _hasPlayed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // 1. Temporarily suspend general background music without changing user preference
+    BackgroundMusicManager().suspendMusic();
+
+    // 2. Configure player
+    _activePauseAudioPlayer.setReleaseMode(ReleaseMode.loop);
+
+    // 3. Start audio if enabled in preferences
+    _handleSoundToggle();
+
+    // 4. Listen to sound updates
+    BackgroundMusicManager().isPlayingNotifier.addListener(_handleSoundToggle);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    BackgroundMusicManager().isPlayingNotifier.removeListener(_handleSoundToggle);
+    _activePauseAudioPlayer.dispose();
+    // Restore background music when leaving the page
+    BackgroundMusicManager().unsuspendMusic();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      try {
+        _activePauseAudioPlayer.pause();
+      } catch (_) {}
+    } else if (state == AppLifecycleState.resumed) {
+      _handleSoundToggle();
+    }
+  }
+
+  void _handleSoundToggle() {
+    final isPlaying = BackgroundMusicManager().isPlaying;
+    if (isPlaying) {
+      if (!_hasPlayed) {
+        _activePauseAudioPlayer.play(AssetSource('audio/pausa_activa.mp3'));
+        _hasPlayed = true;
+      } else {
+        _activePauseAudioPlayer.resume();
+      }
+    } else {
+      _activePauseAudioPlayer.pause();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +108,10 @@ class ActivePausePage extends StatelessWidget {
                     ),
                     child: IconButton(
                       icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF28AF52)),
-                      onPressed: () => context.pop(),
+                      onPressed: () {
+                        SfxManager().playClick();
+                        context.pop();
+                      },
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -72,7 +145,41 @@ class ActivePausePage extends StatelessWidget {
                       ],
                     ),
                   ),
-                ]              ),
+                  const SizedBox(width: 12),
+                  ValueListenableBuilder<bool>(
+                    valueListenable: BackgroundMusicManager().isPlayingNotifier,
+                    builder: (context, isPlaying, child) {
+                      return GestureDetector(
+                        onTap: () {
+                          SfxManager().playClick();
+                          BackgroundMusicManager().toggleMusic();
+                          HapticFeedback.lightImpact();
+                        },
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black12,
+                                blurRadius: 4,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            isPlaying ? Icons.volume_up_rounded : Icons.volume_off_rounded,
+                            color: const Color(0xFF28AF52),
+                            size: 24,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -242,6 +349,7 @@ class ActivePausePage extends StatelessWidget {
       ),
       child: GestureDetector(
         onTap: () {
+          SfxManager().playClick();
           final exercise = ActivePauseExercise(
             number: number,
             title: title,

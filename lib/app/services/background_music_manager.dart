@@ -1,8 +1,9 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class BackgroundMusicManager {
+class BackgroundMusicManager with WidgetsBindingObserver {
   static final BackgroundMusicManager _instance = BackgroundMusicManager._internal();
   factory BackgroundMusicManager() => _instance;
 
@@ -14,6 +15,7 @@ class BackgroundMusicManager {
   SharedPreferences? _prefs;
   final AudioPlayer _audioPlayer = AudioPlayer();
   final ValueNotifier<bool> isPlayingNotifier = ValueNotifier<bool>(false);
+  final ValueNotifier<double> volumeNotifier = ValueNotifier<double>(0.5);
 
   bool get isPlaying => isPlayingNotifier.value;
 
@@ -21,10 +23,44 @@ class BackgroundMusicManager {
   static const String _prefKey = 'bg_music_enabled';
 
   Future<void> init() async {
+    WidgetsBinding.instance.removeObserver(this);
+    WidgetsBinding.instance.addObserver(this);
     _prefs = await SharedPreferences.getInstance();
+    
+    // Load and apply volume setting
+    final double savedVolume = _prefs?.getDouble('bg_music_volume') ?? 0.5;
+    volumeNotifier.value = savedVolume;
+    await _audioPlayer.setVolume(savedVolume);
+
     final bool isEnabled = _prefs?.getBool(_prefKey) ?? true; // Plays by default
     if (isEnabled) {
       await startMusic();
+    }
+  }
+
+  Future<void> setVolume(double newVolume) async {
+    try {
+      volumeNotifier.value = newVolume;
+      await _audioPlayer.setVolume(newVolume);
+      _prefs ??= await SharedPreferences.getInstance();
+      await _prefs?.setDouble('bg_music_volume', newVolume);
+    } catch (e) {
+      debugPrint('Error setting background music volume: $e');
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      try {
+        _audioPlayer.pause();
+      } catch (_) {}
+    } else if (state == AppLifecycleState.resumed) {
+      try {
+        if (isPlaying && !_isMusicSuspended) {
+          _audioPlayer.resume();
+        }
+      } catch (_) {}
     }
   }
 

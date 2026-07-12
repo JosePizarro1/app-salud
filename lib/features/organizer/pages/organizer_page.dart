@@ -1035,8 +1035,8 @@ class _OrganizerPageState extends State<OrganizerPage> {
             ),
           ),
 
-          // Shared Header (Home + Emergency)
-          const ModuleHeader(showHome: true),
+          // Shared Header (Home, Back + Emergency)
+          const ModuleHeader(showHome: true, showBack: true),
 
           // Help Button (Interrogación) - Using Container placeholder to avoid 404 fetch error until asset is added
           Positioned(

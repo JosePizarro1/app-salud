@@ -40,6 +40,7 @@ dependencies:
   url_launcher: ^6.3.1
   audioplayers: ^6.1.0
   video_player: ^2.9.2
+  fl_chart: ^0.69.0
 
 
 
@@ -97,18 +98,18 @@ flutter:
 # Native Splash Screen configuration (Android only)
 flutter_native_splash:
   color: "#E8F5F0"
-  image: assets/images/healthy_eating/images/titi patita.png
+  image: assets/images/healthy_eating/images/titi patita.webp
   android: true
   ios: false
   web: false
   android_12:
     color: "#E8F5F0"
-    image: assets/images/healthy_eating/images/titi patita.png
+    image: assets/images/healthy_eating/images/titi patita.webp
 
 # App Launcher Icon configuration (Android only)
 flutter_launcher_icons:
   android: true
   ios: false
-  image_path: "assets/images/healthy_eating/images/titi patita.png"
+  image_path: "assets/images/healthy_eating/images/titi patita.webp"
   adaptive_icon_background: "#E8F5F0"
-  adaptive_icon_foreground: "assets/images/healthy_eating/images/titi patita.png"
+  adaptive_icon_foreground: "assets/images/healthy_eating/images/titi patita.webp"

@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:go_router/go_router.dart';
-import 'package:audioplayers/audioplayers.dart';
+import '../../../app/services/sfx_manager.dart';
 import '../widgets/module_header.dart';
 
 class PhysicalActivityPage extends StatefulWidget {
@@ -15,7 +15,6 @@ class PhysicalActivityPage extends StatefulWidget {
 
 class _PhysicalActivityPageState extends State<PhysicalActivityPage> {
   final PageController _pageController = PageController();
-  final AudioPlayer _audioPlayer = AudioPlayer();
   int _currentPage = 0;
 
   // Scale states for the 6 benefits buttons
@@ -82,7 +81,6 @@ class _PhysicalActivityPageState extends State<PhysicalActivityPage> {
   @override
   void dispose() {
     _pageController.dispose();
-    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -95,14 +93,11 @@ class _PhysicalActivityPageState extends State<PhysicalActivityPage> {
       _isCardOpened[index] = !_isCardOpened[index];
     });
 
-    // Play sound when info is discovered/revealed
+    // Play sound when info is discovered/revealed or closed
     if (!wasOpen) {
-      try {
-        await _audioPlayer.stop();
-        await _audioPlayer.play(AssetSource('audio/success_cheerful.mp3'));
-      } catch (e) {
-        debugPrint('Error playing success audio: $e');
-      }
+      SfxManager().playSuccess();
+    } else {
+      SfxManager().playClick();
     }
   }
 
@@ -159,38 +154,6 @@ class _PhysicalActivityPageState extends State<PhysicalActivityPage> {
         ),
       );
     }
-  }
-
-  Widget _buildTopProgressBar() {
-    if (_currentPage > 4) return const SizedBox(width: 128); // Empty space to align on benefits page
-    
-    // Map current page to active progress segment:
-    // Page 0 (Welcome): Segment 0 active
-    // Page 1 (Card 1): Segment 0 active
-    // Page 2 (Card 2): Segment 1 active
-    // Page 3 (Card 3): Segment 2 active
-    // Page 4 (Card 4): Segment 3 active
-    int activeSegment = 0;
-    if (_currentPage >= 1 && _currentPage <= 4) {
-      activeSegment = _currentPage - 1;
-    }
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(4, (index) {
-        final isActive = index <= activeSegment;
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          width: 32,
-          height: 6,
-          decoration: BoxDecoration(
-            color: isActive ? const Color(0xFF4CAF50) : Colors.black12,
-            borderRadius: BorderRadius.circular(3),
-          ),
-        );
-      }),
-    );
   }
 
   Widget _buildWelcomeSlide() {
@@ -528,7 +491,10 @@ class _PhysicalActivityPageState extends State<PhysicalActivityPage> {
                   ),
                   const SizedBox(height: 20),
                   GestureDetector(
-                    onTap: () => Navigator.pop(context),
+                    onTap: () {
+                      SfxManager().playClick();
+                      Navigator.pop(context);
+                    },
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                       decoration: BoxDecoration(
@@ -612,17 +578,8 @@ class _PhysicalActivityPageState extends State<PhysicalActivityPage> {
             ),
 
             // Original ModuleHeader (untouched)
-            const ModuleHeader(showHome: true),
+            const ModuleHeader(showHome: true, showBack: true),
 
-            // Center progress bar overlay
-            Positioned(
-              top: screenHeight * 0.105,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: _buildTopProgressBar(),
-              ),
-            ),
 
             // Main PageView content (floats directly on the background)
             Positioned(
@@ -660,6 +617,7 @@ class _PhysicalActivityPageState extends State<PhysicalActivityPage> {
                   if (_currentPage > 0)
                     GestureDetector(
                       onTap: () {
+                        SfxManager().playClick();
                         _pageController.previousPage(
                           duration: const Duration(milliseconds: 300),
                           curve: Curves.easeInOut,
@@ -685,6 +643,7 @@ class _PhysicalActivityPageState extends State<PhysicalActivityPage> {
                   if (_currentPage < 5)
                     GestureDetector(
                       onTap: () {
+                        SfxManager().playClick();
                         _pageController.nextPage(
                           duration: const Duration(milliseconds: 300),
                           curve: Curves.easeInOut,
@@ -715,7 +674,10 @@ class _PhysicalActivityPageState extends State<PhysicalActivityPage> {
                   else
                     // Listo Button for final page (Benefits)
                     GestureDetector(
-                      onTap: () => context.pop(),
+                      onTap: () {
+                        SfxManager().playClick();
+                        context.pop();
+                      },
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                         decoration: BoxDecoration(
@@ -826,6 +788,7 @@ class _PhysicalActivityPageState extends State<PhysicalActivityPage> {
                   duration: const Duration(milliseconds: 150),
                   child: GestureDetector(
                     onTap: () async {
+                      SfxManager().playClick();
                       await _triggerBenefitScale(index);
                       if (!mounted) return;
                       _showBenefitDetail(context, index);

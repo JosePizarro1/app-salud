@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:animate_do/animate_do.dart';
-import 'package:audioplayers/audioplayers.dart';
+import '../../../app/services/sfx_manager.dart';
 
 class HealthyEatingCompletionWidget extends StatefulWidget {
   const HealthyEatingCompletionWidget({super.key});
@@ -14,27 +14,10 @@ class _HealthyEatingCompletionWidgetState extends State<HealthyEatingCompletionW
   bool _showCheck1 = false;
   bool _showCheck2 = false;
   bool _showCheck3 = false;
-  final AudioPlayer _audioPlayer = AudioPlayer();
-
   @override
   void initState() {
     super.initState();
     _startSequentialChecks();
-  }
-
-  @override
-  void dispose() {
-    _audioPlayer.dispose();
-    super.dispose();
-  }
-
-  Future<void> _playSound() async {
-    try {
-      await _audioPlayer.stop();
-      await _audioPlayer.play(AssetSource('images/healthy_eating/sonido_noti_entrada.mp3'));
-    } catch (e) {
-      debugPrint('Error playing check notification sound: $e');
-    }
   }
 
   void _startSequentialChecks() {
@@ -42,7 +25,7 @@ class _HealthyEatingCompletionWidgetState extends State<HealthyEatingCompletionW
     Future.delayed(const Duration(milliseconds: 400), () {
       if (mounted) {
         setState(() => _showCheck1 = true);
-        _playSound();
+        SfxManager().playNotiInterna();
       }
     });
 
@@ -50,7 +33,7 @@ class _HealthyEatingCompletionWidgetState extends State<HealthyEatingCompletionW
     Future.delayed(const Duration(milliseconds: 1300), () {
       if (mounted) {
         setState(() => _showCheck2 = true);
-        _playSound();
+        SfxManager().playNotiInterna();
       }
     });
 
@@ -58,7 +41,7 @@ class _HealthyEatingCompletionWidgetState extends State<HealthyEatingCompletionW
     Future.delayed(const Duration(milliseconds: 2200), () {
       if (mounted) {
         setState(() => _showCheck3 = true);
-        _playSound();
+        SfxManager().playNotiInterna();
       }
     });
   }
@@ -171,7 +154,7 @@ class _HealthyEatingCompletionWidgetState extends State<HealthyEatingCompletionW
                 height: 210,
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) => Image.asset(
-                  'assets/images/healthy_eating/images/titi patita.png',
+                  'assets/images/healthy_eating/images/titi patita.webp',
                   height: 210,
                   fit: BoxFit.contain,
                 ),

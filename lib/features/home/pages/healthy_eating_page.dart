@@ -33,29 +33,6 @@ class _HealthyEatingPageState extends State<HealthyEatingPage> {
     super.dispose();
   }
 
-  Widget _buildTopProgressBar() {
-    if (_currentPage < 2 || _currentPage > 4) return const SizedBox(width: 128); // Active on detail slides (2-4)
-
-    int activeSegment = _currentPage - 2;
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(3, (index) {
-        final isActive = index <= activeSegment;
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          width: 32,
-          height: 6,
-          decoration: BoxDecoration(
-            color: isActive ? const Color(0xFFFF8A71) : Colors.black12,
-            borderRadius: BorderRadius.circular(3),
-          ),
-        );
-      }),
-    );
-  }
-
   Widget _buildWelcomeSlide() {
     return SingleChildScrollView(
       child: Column(
@@ -246,7 +223,7 @@ class _HealthyEatingPageState extends State<HealthyEatingPage> {
 
           // Titi Mascot (titi patita)
           Image.asset(
-            'assets/images/healthy_eating/images/titi patita.png',
+            'assets/images/healthy_eating/images/titi patita.webp',
             height: 160,
             fit: BoxFit.contain,
             errorBuilder: (context, error, stackTrace) => Image.asset(
@@ -331,17 +308,7 @@ class _HealthyEatingPageState extends State<HealthyEatingPage> {
             ),
 
             // Header
-            const ModuleHeader(showHome: true),
-
-            // Progress bar
-            Positioned(
-              top: screenHeight * 0.105,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: _buildTopProgressBar(),
-              ),
-            ),
+            const ModuleHeader(showHome: true, showBack: true),
 
             // Main PageView content
             Positioned(

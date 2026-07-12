@@ -103,7 +103,7 @@ class HealthyEatingDetailWidget extends StatelessWidget {
               height: 180,
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) => Image.asset(
-                'assets/images/healthy_eating/images/titi patita.png',
+                'assets/images/healthy_eating/images/titi patita.webp',
                 height: 160,
                 fit: BoxFit.contain,
               ),

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:ui';
+import '../widgets/module_header.dart';
+import '../../../app/services/sfx_manager.dart';
 
 class EmergencyPage extends StatefulWidget {
   const EmergencyPage({super.key});
@@ -25,6 +27,7 @@ class _EmergencyPageState extends State<EmergencyPage> {
   }
 
   void _onBetterTap() async {
+    SfxManager().playClick();
     setState(() => _isBetterPressed = true);
     await Future.delayed(const Duration(milliseconds: 150));
     if (mounted) {
@@ -35,6 +38,7 @@ class _EmergencyPageState extends State<EmergencyPage> {
   }
 
   void _onChatTap() async {
+    SfxManager().playClick();
     setState(() => _isChatPressed = true);
     await Future.delayed(const Duration(milliseconds: 150));
     if (mounted) {
@@ -53,7 +57,7 @@ class _EmergencyPageState extends State<EmergencyPage> {
         children: [
           // 1. Background Image (Cozy fondotiti)
           Image.asset(
-            'assets/images/fondotiti.jpg',
+            'assets/images/fondotiti.webp',
             fit: BoxFit.cover,
           ),
 
@@ -147,7 +151,7 @@ class _EmergencyPageState extends State<EmergencyPage> {
                                   width: screenWidth * 0.756,
                                   height: screenWidth * 0.189,
                                   child: Image.asset(
-                                    'assets/images/modulo_respiracion/Bsentirme_mejor.png',
+                                    'assets/images/modulo_respiracion/Bsentirme_mejor.webp',
                                     fit: BoxFit.contain,
                                   ),
                                 ),
@@ -166,7 +170,7 @@ class _EmergencyPageState extends State<EmergencyPage> {
                                   width: screenWidth * 0.72,
                                   height: screenWidth * 0.18,
                                   child: Image.asset(
-                                    'assets/images/modulo_respiracion/Bchat_titi.png',
+                                    'assets/images/modulo_respiracion/Bchat_titi.webp',
                                     fit: BoxFit.contain,
                                   ),
                                 ),
@@ -179,7 +183,7 @@ class _EmergencyPageState extends State<EmergencyPage> {
                               width: screenWidth * 0.46,
                               height: screenWidth * 0.46,
                               child: Image.asset(
-                                'assets/images/modulo_respiracion/titi emergencia-2.gif',
+                                'assets/images/modulo_respiracion/titi_emergencia_2.webp',
                                 fit: BoxFit.contain,
                               ),
                             ),
@@ -193,26 +197,11 @@ class _EmergencyPageState extends State<EmergencyPage> {
             ),
           ),
 
-          // 4. Positioned Home Button (Bhome.PNG) - Replaces the simple back button
-          Positioned(
-            left: MediaQuery.of(context).size.width * 0.05,
-            top: MediaQuery.of(context).size.height * 0.091,
-            child: AnimatedScale(
-              scale: _isHomePressed ? 1.3 : 1.0,
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeInOut,
-              child: GestureDetector(
-                onTap: _triggerHome,
-                child: SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.15,
-                  height: MediaQuery.of(context).size.width * 0.15,
-                  child: Image.asset(
-                    'assets/images/Bhome.PNG',
-                    fit: BoxFit.contain,
-                  ),
-                ),
-              ),
-            ),
+          // 4. Encabezado principal (Home, Back y Toggle de Sonido) sin el botón de emergencia redundante
+          const ModuleHeader(
+            showHome: true,
+            showBack: true,
+            showEmergency: false,
           ),
         ],
       ),

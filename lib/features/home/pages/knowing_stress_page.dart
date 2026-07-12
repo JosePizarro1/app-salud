@@ -3,7 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:animate_do/animate_do.dart';
-import 'package:audioplayers/audioplayers.dart';
+import 'package:dotlottie_flutter/dotlottie_flutter.dart';
+import '../../../app/services/sfx_manager.dart';
 import '../widgets/module_header.dart';
 
 class KnowingStressPage extends StatefulWidget {
@@ -16,7 +17,6 @@ class KnowingStressPage extends StatefulWidget {
 class _KnowingStressPageState extends State<KnowingStressPage> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
-  final AudioPlayer _audioPlayer = AudioPlayer();
 
   // States for Page 2 (Manifestations)
   int _activeManifestation = -1;
@@ -24,11 +24,6 @@ class _KnowingStressPageState extends State<KnowingStressPage> {
   // States for Page 4 (Strategies Checklist)
   final List<bool> _checkedStrategies = [false, false, false];
 
-  // States for Page 5 (Breathing Timer)
-  bool _isBreathing = false;
-  String _breathingText = "Presiona para iniciar";
-  int _breathingCountdown = 4;
-  int _selectedTechnique = 0; // 0: Respiración, 1: Relajación, 2: Mindfulness
 
   // States for Page 6 (Sequential checks)
   bool _showCheck1 = false;
@@ -38,54 +33,17 @@ class _KnowingStressPageState extends State<KnowingStressPage> {
   @override
   void dispose() {
     _pageController.dispose();
-    _audioPlayer.dispose();
     super.dispose();
   }
 
   Future<void> _playSound(String path) async {
-    try {
-      await _audioPlayer.stop();
-      await _audioPlayer.play(AssetSource(path));
-    } catch (e) {
-      debugPrint('Error playing sound: $e');
+    if (path.contains('success_cheerful')) {
+      SfxManager().playSuccess();
+    } else {
+      SfxManager().playNotiInterna();
     }
   }
 
-  void _startBreathingExercise() async {
-    if (_isBreathing) return;
-    setState(() {
-      _isBreathing = true;
-      _breathingText = "¡Inhala!";
-      _breathingCountdown = 4;
-    });
-    _playSound('audio/success_cheerful.mp3'); // soft start cue
-
-    // Inhale 4s
-    for (int i = 4; i > 0; i--) {
-      if (!mounted) return;
-      setState(() => _breathingCountdown = i);
-      await Future.delayed(const Duration(seconds: 1));
-    }
-
-    // Exhale 4s
-    if (!mounted) return;
-    setState(() {
-      _breathingText = "¡Exhala lentamente!";
-      _breathingCountdown = 4;
-    });
-
-    for (int i = 4; i > 0; i--) {
-      if (!mounted) return;
-      setState(() => _breathingCountdown = i);
-      await Future.delayed(const Duration(seconds: 1));
-    }
-
-    if (!mounted) return;
-    setState(() {
-      _isBreathing = false;
-      _breathingText = "¡Excelente! ¿Hacemos otro?";
-    });
-  }
 
   void _startSequentialChecks() {
     setState(() {
@@ -114,27 +72,6 @@ class _KnowingStressPageState extends State<KnowingStressPage> {
         _playSound('images/healthy_eating/sonido_noti_entrada.mp3');
       }
     });
-  }
-
-  Widget _buildTopProgressBar() {
-    if (_currentPage < 1 || _currentPage > 4) return const SizedBox(width: 128);
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(4, (index) {
-        final isActive = index <= (_currentPage - 1);
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          width: 28,
-          height: 6,
-          decoration: BoxDecoration(
-            color: isActive ? const Color(0xFFFF8A71) : const Color(0xFFFFECE5),
-            borderRadius: BorderRadius.circular(3),
-          ),
-        );
-      }),
-    );
   }
 
   // Slide 1: Welcome / What is stress
@@ -471,7 +408,7 @@ class _KnowingStressPageState extends State<KnowingStressPage> {
             ),
             const SizedBox(height: 20),
             Image.asset(
-              'assets/images/healthy_eating/images/titi patita.png',
+              'assets/images/healthy_eating/images/titi patita.webp',
               height: 140,
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) => const SizedBox(),
@@ -506,13 +443,20 @@ class _KnowingStressPageState extends State<KnowingStressPage> {
         child: Column(
           children: [
             const SizedBox(height: 12),
-            Text(
-              'ESTRATEGIAS DE GESTIÓN',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.outfit(
-                fontSize: 22,
-                fontWeight: FontWeight.w900,
-                color: Colors.black87,
+            ShaderMask(
+              shaderCallback: (bounds) => const LinearGradient(
+                colors: [Color(0xFF5C6BC0), Color(0xFF4CAF50)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ).createShader(bounds),
+              child: Text(
+                'ESTRATEGIAS DE GESTIÓN',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.outfit(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                ),
               ),
             ),
             const SizedBox(height: 6),
@@ -590,204 +534,198 @@ class _KnowingStressPageState extends State<KnowingStressPage> {
     );
   }
 
-  // Slide 5: Practical Techniques
+  // Slide 5: Practical Techniques (Redesigned Informative Cards)
   Widget _buildSlide5() {
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
-            Text(
-              'TÉCNICAS RECOMENDADAS',
+      padding: const EdgeInsets.only(left: 20, right: 20, top: 0),
+      child: Column(
+        children: [
+          // Brain dotLottie animation decoration
+          SizedBox(
+            height: 60,
+            child: DotLottieView(
+              sourceType: 'asset',
+              source: 'assets/images/sleep_care/funny_brain.lottie',
+              autoplay: true,
+              loop: true,
+            ),
+          ),
+          const SizedBox(height: 4),
+
+          ShaderMask(
+            shaderCallback: (bounds) => const LinearGradient(
+              colors: [Color(0xFF5C6BC0), Color(0xFF4CAF50)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ).createShader(bounds),
+            child: Text(
+              'TÉCNICAS DE MANEJO\nDEL ESTRÉS',
               textAlign: TextAlign.center,
               style: GoogleFonts.outfit(
                 fontSize: 22,
                 fontWeight: FontWeight.w900,
-                color: Colors.black87,
+                color: Colors.white,
+                height: 1.25,
               ),
             ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildTechTab(0, 'Respirar', Icons.air_rounded),
-                _buildTechTab(1, 'Relajar', Icons.fitness_center_rounded),
-                _buildTechTab(2, 'Organizar', Icons.calendar_today_rounded),
-              ],
-            ),
-            const SizedBox(height: 16),
-            if (_selectedTechnique == 0) ...[
-              // Breathing practice card
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE0F7FA),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: const Color(0xFFB2EBF2), width: 1.5),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      'Técnica: Respiración 4-4',
-                      style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF006064)),
+          ),
+          const SizedBox(height: 20),
+
+          // 2x2 Grid of cards
+          Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildGridCard(
+                      title: 'Respiración',
+                      description: 'Inhalar, mantener y exhalar lentamente.',
+                      icon: Icons.air_rounded,
+                      bgColor: const Color(0xFFE1F5FE),
+                      borderColor: const Color(0xFFB3E5FC),
+                      textColor: const Color(0xFF01579B),
+                      iconColor: const Color(0xFF0288D1),
+                      delayMs: 100,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Inhala por 4 segundos, luego exhala lentamente por otros 4 segundos para regular tus latidos y calmar la ansiedad.',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.outfit(fontSize: 15, color: Colors.black87),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildGridCard(
+                      title: 'Relajación muscular',
+                      description: 'Contraer y relajar músculos',
+                      icon: Icons.fitness_center_rounded,
+                      bgColor: const Color(0xFFFFF8E1),
+                      borderColor: const Color(0xFFFFE082),
+                      textColor: const Color(0xFF5D4037),
+                      iconColor: const Color(0xFFFFA000),
+                      delayMs: 200,
                     ),
-                    const SizedBox(height: 20),
-                    GestureDetector(
-                      onTap: _startBreathingExercise,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        width: _isBreathing ? 130 : 180,
-                        height: _isBreathing ? 130 : 54,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF00ACC1),
-                          // Always rectangle — animate borderRadius to 65 to look like a circle
-                          borderRadius: BorderRadius.circular(_isBreathing ? 65 : 27),
-                        ),
-                        alignment: Alignment.center,
-                        child: _isBreathing
-                            ? Text(
-                                '$_breathingCountdown',
-                                style: GoogleFonts.outfit(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.white),
-                              )
-                            : Text(
-                                'Empezar ahora',
-                                style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                              ),
-                      ),
-                    ),
-                    if (_isBreathing) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        _breathingText,
-                        style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF006064)),
-                      ),
-                    ],
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ] else if (_selectedTechnique == 1) ...[
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEDE7F6),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: const Color(0xFFD1C4E9), width: 1.5),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      'Técnica: Relajación Muscular',
-                      style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF311B92)),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildGridCard(
+                      title: 'Mindfulness',
+                      description: 'Enfocarse en el presente sin juzgar.',
+                      icon: Icons.spa_rounded,
+                      bgColor: const Color(0xFFF3E5F5),
+                      borderColor: const Color(0xFFE1BEE7),
+                      textColor: const Color(0xFF4A148C),
+                      iconColor: const Color(0xFF9C27B0),
+                      delayMs: 300,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Contrae tus hombros hacia arriba con fuerza durante 5 segundos y luego suéltalos de golpe dejando salir el aire. Repite 3 veces.',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.outfit(fontSize: 15, color: Colors.black87),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildGridCard(
+                      title: 'Organización',
+                      description: 'Planificar y dividir tareas.',
+                      icon: Icons.assignment_turned_in_rounded,
+                      bgColor: const Color(0xFFE8F5E9),
+                      borderColor: const Color(0xFFC8E6C9),
+                      textColor: const Color(0xFF1B5E20),
+                      iconColor: const Color(0xFF4CAF50),
+                      delayMs: 400,
                     ),
-                    const SizedBox(height: 16),
-                    const Icon(Icons.spa_rounded, size: 50, color: Color(0xFF673AB7)),
-                  ],
-                ),
-              ),
-            ] else ...[
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE8F5E9),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: const Color(0xFFC8E6C9), width: 1.5),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      'Técnica: Planificación Dividida',
-                      style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF1B5E20)),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'No intentes abarcar todo un proyecto a la vez. Divide tus tareas en bloques de 25 minutos con descansos de 5 minutos.',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.outfit(fontSize: 15, color: Colors.black87),
-                    ),
-                    const SizedBox(height: 16),
-                    const Icon(Icons.playlist_add_check_rounded, size: 50, color: Color(0xFF4CAF50)),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ],
-            const SizedBox(height: 20),
-            // Happy Titi Mascot display below selected technique
-            FadeInUp(
-              duration: const Duration(milliseconds: 500),
-              child: Image.asset(
-                'assets/images/healthy_eating/gifs/titi1 feliz.gif',
-                height: 160,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) => Image.asset(
-                  'assets/images/healthy_eating/images/titi patita.png',
-                  height: 160,
-                  fit: BoxFit.contain,
+          ),
+          const SizedBox(height: 16),
+
+          // Titi pointing up
+          FadeInUp(
+            duration: const Duration(milliseconds: 600),
+            child: Image.asset(
+              'assets/images/healthy_eating/images/titi patita.webp',
+              height: 145,
+              fit: BoxFit.contain,
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGridCard({
+    required String title,
+    required String description,
+    required IconData icon,
+    required Color bgColor,
+    required Color borderColor,
+    required Color textColor,
+    required Color iconColor,
+    required int delayMs,
+  }) {
+    return FadeInUp(
+      duration: const Duration(milliseconds: 500),
+      delay: Duration(milliseconds: delayMs),
+      child: Container(
+        height: 125,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: borderColor, width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: borderColor.withValues(alpha: 0.15),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.outfit(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
+                  ),
+                ),
+                Icon(
+                  icon,
+                  size: 24,
+                  color: iconColor,
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Expanded(
+              child: Text(
+                description,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.outfit(
+                  fontSize: 11.5,
+                  color: textColor.withValues(alpha: 0.8),
+                  height: 1.25,
                 ),
               ),
             ),
-            const SizedBox(height: 12),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTechTab(int index, String label, IconData icon) {
-    final isActive = _selectedTechnique == index;
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        setState(() {
-          _selectedTechnique = index;
-        });
-        _playSound('images/healthy_eating/sonido_noti_entrada.mp3');
-      },
-      child: Column(
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: isActive ? const Color(0xFFFF8A71) : Colors.white.withValues(alpha: 0.9),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isActive ? const Color(0xFFFF8A71) : Colors.black12,
-                width: 1.5,
-              ),
-            ),
-            alignment: Alignment.center,
-            child: Icon(
-              icon,
-              color: isActive ? Colors.white : Colors.black54,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            style: GoogleFonts.outfit(
-              fontSize: 13.5,
-              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-              color: isActive ? const Color(0xFFFF8A71) : Colors.black54,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   // Slide 6: Completion
   Widget _buildSlide6() {
@@ -856,7 +794,7 @@ class _KnowingStressPageState extends State<KnowingStressPage> {
                 height: 210,
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) => Image.asset(
-                  'assets/images/healthy_eating/images/titi patita.png',
+                  'assets/images/healthy_eating/images/titi patita.webp',
                   height: 210,
                   fit: BoxFit.contain,
                 ),
@@ -958,17 +896,7 @@ class _KnowingStressPageState extends State<KnowingStressPage> {
             ),
 
           // Shared Header with Home Button
-          const ModuleHeader(showHome: true),
-
-          // Top Progress Bar
-          Positioned(
-            top: screenHeight * 0.11,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: _buildTopProgressBar(),
-            ),
-          ),
+          const ModuleHeader(showHome: true, showBack: true),
 
           // PageView content
           Positioned(
