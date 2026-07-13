@@ -67,7 +67,7 @@ class _PhysicalActivityPageState extends State<PhysicalActivityPage> {
       'number': '4',
       'title': '¡Tú puedes!',
       'desc': 'Pequeños movimientos cada día, grandes cambios en tu vida.',
-      'iconPath': 'assets/images/Modulo6/titi modulo leccion1 (1) (1).gif',
+      'iconPath': 'assets/images/Modulo6/titi modulo leccion1 (1) (1).webp',
       'isAsset': true,
       'fallbackIconPath': 'assets/images/gato1.png',
       'bgColor': const Color(0xFFFFF2ED), // Soft Coral/Pink background
@@ -185,7 +185,7 @@ class _PhysicalActivityPageState extends State<PhysicalActivityPage> {
 
         // Mascot
         Image.asset(
-          'assets/images/Modulo6/titi modulo leccion1 (1) (1).gif',
+          'assets/images/Modulo6/titi modulo leccion1 (1) (1).webp',
           height: 220,
           fit: BoxFit.contain,
           errorBuilder: (context, error, stackTrace) => Image.asset(

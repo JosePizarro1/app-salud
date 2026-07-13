@@ -14,6 +14,10 @@ import '../features/home/pages/module6_page.dart';
 import '../features/home/pages/physical_activity_page.dart';
 import '../features/home/pages/knowing_stress_page.dart';
 import '../features/home/pages/healthy_eating_page.dart';
+import '../features/home/pages/bmi_calculator_page.dart';
+import '../features/home/pages/portions_guide_page.dart';
+import '../features/home/pages/knowing_foods_page.dart';
+import '../features/home/pages/food_discovery_page.dart';
 import '../features/home/pages/study_techniques_page.dart';
 import '../features/settings/pages/settings_page.dart';
 import '../features/emotions/pages/emotions_calendar_page.dart';
@@ -131,6 +135,28 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/healthy_eating',
       pageBuilder: (context, state) => _buildFadePage(state: state, child: const HealthyEatingPage()),
+    ),
+    GoRoute(
+      path: '/bmi_calculator',
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const BmiCalculatorPage()),
+    ),
+    GoRoute(
+      path: '/portions_guide',
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const PortionsGuidePage()),
+    ),
+    GoRoute(
+      path: '/knowing_foods',
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const KnowingFoodsPage()),
+    ),
+    GoRoute(
+      path: '/discovery_foods/:category',
+      pageBuilder: (context, state) {
+        final categoryId = state.pathParameters['category'] ?? 'energy';
+        return _buildFadePage(
+          state: state,
+          child: FoodDiscoveryPage(categoryId: categoryId),
+        );
+      },
     ),
     GoRoute(
       path: '/knowing_stress',

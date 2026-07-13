@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:animate_do/animate_do.dart';
+import '../../../app/services/sfx_manager.dart';
 
 enum HealthyEnergyState { overview, proteccion, vitalidad }
 
@@ -120,6 +121,7 @@ class HealthyEnergyWidgetState extends State<HealthyEnergyWidget> {
                   duration: const Duration(milliseconds: 150),
                   child: GestureDetector(
                     onTap: () async {
+                      SfxManager().playClick();
                       setState(() => _benefitScales[0] = true);
                       await Future.delayed(const Duration(milliseconds: 150));
                       if (context.mounted) {
@@ -135,7 +137,7 @@ class HealthyEnergyWidgetState extends State<HealthyEnergyWidget> {
                       width: MediaQuery.of(context).size.width * 0.85,
                       height: 85,
                       child: Image.asset(
-                        'assets/images/healthy_eating/images/boton proteccion inmune.png',
+                        'assets/images/healthy_eating/images/boton proteccion inmune.webp',
                         fit: BoxFit.contain,
                       ),
                     ),
@@ -151,6 +153,7 @@ class HealthyEnergyWidgetState extends State<HealthyEnergyWidget> {
                   duration: const Duration(milliseconds: 150),
                   child: GestureDetector(
                     onTap: () async {
+                      SfxManager().playClick();
                       setState(() => _benefitScales[1] = true);
                       await Future.delayed(const Duration(milliseconds: 150));
                       if (context.mounted) {
@@ -166,7 +169,7 @@ class HealthyEnergyWidgetState extends State<HealthyEnergyWidget> {
                       width: MediaQuery.of(context).size.width * 0.85,
                       height: 85,
                       child: Image.asset(
-                        'assets/images/healthy_eating/images/boton vitalidad activa.png',
+                        'assets/images/healthy_eating/images/boton vitalidad activa.webp',
                         fit: BoxFit.contain,
                       ),
                     ),
@@ -194,13 +197,16 @@ class HealthyEnergyWidgetState extends State<HealthyEnergyWidget> {
               FadeInRight(
                 duration: const Duration(milliseconds: 500),
                 child: GestureDetector(
-                  onTap: resetToOverview,
+                  onTap: () {
+                    SfxManager().playClick();
+                    resetToOverview();
+                  },
                   child: Container(
                     margin: const EdgeInsets.only(top: 8, bottom: 2),
                     width: MediaQuery.of(context).size.width * 0.85,
                     height: 85,
                     child: Image.asset(
-                      'assets/images/healthy_eating/images/boton proteccion inmune.png',
+                      'assets/images/healthy_eating/images/boton proteccion inmune.webp',
                       fit: BoxFit.contain,
                     ),
                   ),
@@ -241,13 +247,16 @@ class HealthyEnergyWidgetState extends State<HealthyEnergyWidget> {
               FadeInLeft(
                 duration: const Duration(milliseconds: 500),
                 child: GestureDetector(
-                  onTap: resetToOverview,
+                  onTap: () {
+                    SfxManager().playClick();
+                    resetToOverview();
+                  },
                   child: Container(
                     margin: const EdgeInsets.only(top: 8, bottom: 2),
                     width: MediaQuery.of(context).size.width * 0.85,
                     height: 85,
                     child: Image.asset(
-                      'assets/images/healthy_eating/images/boton vitalidad activa.png',
+                      'assets/images/healthy_eating/images/boton vitalidad activa.webp',
                       fit: BoxFit.contain,
                     ),
                   ),

@@ -555,52 +555,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
             ),
           ),
 
-          // ── Botón de Test para Pop-up Interno ──
-          Positioned(
-            bottom: 16,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Material(
-                color: Colors.black54,
-                borderRadius: BorderRadius.circular(12),
-                child: InkWell(
-                  onTap: () async {
-                    HapticFeedback.lightImpact();
-                    final prefs = await SharedPreferences.getInstance();
-                    final bool enabled = prefs.getBool('motivational_notifications_enabled') ?? true;
-                    if (enabled) {
-                      _showMotivationalPopup();
-                    } else {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Las frases diarias están desactivadas en la tuerca.'),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      }
-                    }
-                  },
-                  borderRadius: BorderRadius.circular(12),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(Icons.favorite_rounded, color: Colors.white, size: 16),
-                        SizedBox(width: 6),
-                        Text(
-                          'Probar Pop-up',
-                          style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
 
           // ── Tutorial Overlay (First run only) ──
           if (_showTutorial)

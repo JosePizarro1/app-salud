@@ -74,11 +74,13 @@ flutter:
     - assets/images/ModuloYoga/
     - assets/images/ModuloYoga/pasos/
     - assets/images/modulo estudio png/
+    - assets/alimentos/
 
     - assets/images/modulo_respiracion/
     - assets/images/pausa_activa/
     - assets/images/Home_botones/
     - assets/images/modulo4_botones/
+    - assets/images/letreros/
     - assets/audio/
     - assets/audio/playlist/
     - "assets/audio/AUDIOS DE MEDITACIÓN GUIADA/AUDIOS 01 MINUTO/"
@@ -87,6 +89,7 @@ flutter:
     - assets/lottie/start_button_hovering.lottie
     - assets/lottie/mascot.lottie
     - assets/lottie/success_celebration.lottie
+    - assets/images/sleep_care/funny_brain.lottie
     - .env
 
 

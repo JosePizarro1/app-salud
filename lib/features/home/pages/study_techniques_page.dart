@@ -157,7 +157,7 @@ class _StudyTechniquesPageState extends State<StudyTechniquesPage> {
                 // Vertical Stack of Buttons
                 _buildTechniqueButton(
                   index: 0,
-                  imagePath: 'assets/images/modulo estudio png/boton metodo blurting.png',
+                  imagePath: 'assets/images/modulo estudio png/boton metodo blurting.webp',
                   onTap: () {
                     _triggerScale(0);
                     setState(() => _activeLesson = 1);
@@ -165,7 +165,7 @@ class _StudyTechniquesPageState extends State<StudyTechniquesPage> {
                 ),
                 _buildTechniqueButton(
                   index: 1,
-                  imagePath: 'assets/images/modulo estudio png/boton tecnica feynman.png',
+                  imagePath: 'assets/images/modulo estudio png/boton tecnica feynman.webp',
                   onTap: () {
                     _triggerScale(1);
                     setState(() => _activeLesson = 2);
@@ -173,7 +173,7 @@ class _StudyTechniquesPageState extends State<StudyTechniquesPage> {
                 ),
                 _buildTechniqueButton(
                   index: 2,
-                  imagePath: 'assets/images/modulo estudio png/boton repeticion espaciada.png',
+                  imagePath: 'assets/images/modulo estudio png/boton repeticion espaciada.webp',
                   onTap: () {
                     _triggerScale(2);
                     setState(() => _activeLesson = 3);
@@ -181,7 +181,7 @@ class _StudyTechniquesPageState extends State<StudyTechniquesPage> {
                 ),
                 _buildTechniqueButton(
                   index: 3,
-                  imagePath: 'assets/images/modulo estudio png/boton tecnica pomodoro.png',
+                  imagePath: 'assets/images/modulo estudio png/boton tecnica pomodoro.webp',
                   onTap: () {
                     _triggerScale(3);
                     setState(() => _activeLesson = 4);
@@ -229,7 +229,7 @@ class _StudyTechniquesPageState extends State<StudyTechniquesPage> {
                 FadeInUp(
                   duration: const Duration(milliseconds: 700),
                   child: Image.asset(
-                    'assets/images/modulo estudio png/titi escribiendo.png',
+                    'assets/images/modulo estudio png/titi escribiendo.webp',
                     height: 170,
                     fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) => Image.asset(

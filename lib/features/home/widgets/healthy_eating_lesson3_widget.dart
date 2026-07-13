@@ -185,7 +185,7 @@ class _HealthyEatingLesson3WidgetState extends State<HealthyEatingLesson3Widget>
           duration: const Duration(milliseconds: 600),
           delay: const Duration(milliseconds: 300),
           child: Image.asset(
-            'assets/images/healthy_eating/gifs/titi pensativo (1).gif',
+            'assets/images/healthy_eating/gifs/titi pensativo (1).webp',
             height: 210,
             fit: BoxFit.contain,
             errorBuilder: (context, error, stackTrace) => Image.asset(
@@ -205,11 +205,11 @@ class _HealthyEatingLesson3WidgetState extends State<HealthyEatingLesson3Widget>
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _buildLessonOption(
-                imagePath: 'assets/images/healthy_eating/images/leccion3 boton1.png',
+                imagePath: 'assets/images/healthy_eating/images/leccion3 boton1.webp',
                 optionId: 1,
               ),
               _buildLessonOption(
-                imagePath: 'assets/images/healthy_eating/images/leccion3 boton2.png',
+                imagePath: 'assets/images/healthy_eating/images/leccion3 boton2.webp',
                 optionId: 2,
               ),
             ],

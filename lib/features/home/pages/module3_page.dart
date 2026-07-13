@@ -65,8 +65,19 @@ class _Module3PageState extends State<Module3Page> {
             ),
           ),
 
-          // Shared Header with Home Button
-          const ModuleHeader(showHome: true),
+          // Central WebP letrero (Optimizado y Posicionado de forma responsiva)
+          Positioned(
+            top: MediaQuery.of(context).size.height * 0.12, // Subido al 12% de la pantalla para celulares
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Image.asset(
+                'assets/images/letreros/letrero_meditacion.webp',
+                fit: BoxFit.contain,
+                width: MediaQuery.of(context).size.width * 0.8,
+              ),
+            ),
+          ),
 
           // Botones en la parte inferior (30% más abajo del centro)
           Positioned(
@@ -104,6 +115,9 @@ class _Module3PageState extends State<Module3Page> {
               ],
             ),
           ),
+
+          // Shared Header with Home Button (colocado al final para quedar encima de todo y recibir toques)
+          const ModuleHeader(showHome: true),
         ],
       ),
     );

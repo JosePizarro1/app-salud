@@ -53,7 +53,7 @@ class _HealthyEatingCompletionWidgetState extends State<HealthyEatingCompletionW
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Image.asset(
-            'assets/images/healthy_eating/images/boton check.png',
+            'assets/images/healthy_eating/images/boton check.webp',
             width: 34,
             height: 34,
             fit: BoxFit.contain,
@@ -150,7 +150,7 @@ class _HealthyEatingCompletionWidgetState extends State<HealthyEatingCompletionW
               duration: const Duration(milliseconds: 600),
               delay: const Duration(milliseconds: 200),
               child: Image.asset(
-                'assets/images/healthy_eating/images/titi heroe felzi.png',
+                'assets/images/healthy_eating/images/titi heroe felzi.webp',
                 height: 210,
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) => Image.asset(

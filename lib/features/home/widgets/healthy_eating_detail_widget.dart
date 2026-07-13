@@ -19,44 +19,7 @@ class HealthyEatingDetailWidget extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Title
-          FadeInDown(
-            duration: const Duration(milliseconds: 600),
-            child: ShaderMask(
-              shaderCallback: (bounds) => const LinearGradient(
-                colors: [Color(0xFF5C6BC0), Color(0xFF4CAF50)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ).createShader(bounds),
-              child: Text(
-                'ALIMENTACIÓN\nSALUDABLE',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.outfit(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-
-          // Subtitle
-          FadeInDown(
-            duration: const Duration(milliseconds: 600),
-            delay: const Duration(milliseconds: 150),
-            child: Text(
-              '¿Qué descubriremos hoy?',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.outfit(
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-                color: const Color(0xFF2E7D32),
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
 
           // Button image at the top
           FadeInRight(

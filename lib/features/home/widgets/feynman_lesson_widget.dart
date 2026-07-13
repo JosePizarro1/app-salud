@@ -129,34 +129,34 @@ class _FeynmanLessonWidgetState extends State<FeynmanLessonWidget> {
       case 1:
         return _buildStepView(
           stepNumber: 1,
-          imagePath: 'assets/images/modulo estudio png/nro 1.png',
+          imagePath: 'assets/images/modulo estudio png/nro 1.webp',
           header: 'Elegir un tema',
           subtitle: 'Selecciona el contenido que deseas aprender.',
-          titiPath: 'assets/images/modulo estudio png/titi leyendo echado hacia arriba.png',
+          titiPath: 'assets/images/modulo estudio png/titi leyendo echado hacia arriba.webp',
         );
       case 2:
         return _buildStepView(
           stepNumber: 2,
-          imagePath: 'assets/images/modulo estudio png/nro 2.png',
+          imagePath: 'assets/images/modulo estudio png/nro 2.webp',
           header: 'Escribir y explicar el tema',
           subtitle: 'Estudia el material y luego escribe todo lo que recuerdes. Después, explícalo en voz alta como si se lo enseñaras a otra persona, usando un lenguaje sencillo.',
-          titiPath: 'assets/images/modulo estudio png/titi con lentes feliz.png',
+          titiPath: 'assets/images/modulo estudio png/titi con lentes feliz.webp',
         );
       case 3:
         return _buildStepView(
           stepNumber: 3,
-          imagePath: 'assets/images/modulo estudio png/nro 3.png',
+          imagePath: 'assets/images/modulo estudio png/nro 3.webp',
           header: 'Identificar y completar vacíos',
           subtitle: 'Revisa el contenido original y detecta qué partes olvidaste o no entendiste bien. Refuerza esos puntos.',
-          titiPath: 'assets/images/modulo estudio png/titi leyendo echado.png',
+          titiPath: 'assets/images/modulo estudio png/titi leyendo echado.webp',
         );
       case 4:
         return _buildStepView(
           stepNumber: 4,
-          imagePath: 'assets/images/modulo estudio png/nro 4.png',
+          imagePath: 'assets/images/modulo estudio png/nro 4.webp',
           header: 'Escribir y enseñar nuevamente',
           subtitle: 'Vuelve a escribir el tema de forma más clara y completa, luego de eso vas a explicarlo nuevamente a una persona imaginaria.',
-          titiPath: 'assets/images/modulo estudio png/titi estudiando con hoja.png',
+          titiPath: 'assets/images/modulo estudio png/titi estudiando con hoja.webp',
         );
       case 5:
         return _buildWhyWorksView(screenHeight);
@@ -628,7 +628,7 @@ class _FeynmanLessonWidgetState extends State<FeynmanLessonWidget> {
             children: [
               if (_showCompletedItem1)
                 _buildSummaryItem(
-                  imagePath: 'assets/images/modulo estudio png/nro 1.png',
+                  imagePath: 'assets/images/modulo estudio png/nro 1.webp',
                   stepText: 'Selecciona un tema que desees aprender.',
                   index: 0,
                 )
@@ -637,7 +637,7 @@ class _FeynmanLessonWidgetState extends State<FeynmanLessonWidget> {
 
               if (_showCompletedItem2)
                 _buildSummaryItem(
-                  imagePath: 'assets/images/modulo estudio png/nro 2.png',
+                  imagePath: 'assets/images/modulo estudio png/nro 2.webp',
                   stepText: 'Escribe y explica el tema como si se lo enseñaras a alguien más.',
                   index: 1,
                 )
@@ -646,7 +646,7 @@ class _FeynmanLessonWidgetState extends State<FeynmanLessonWidget> {
 
               if (_showCompletedItem3)
                 _buildSummaryItem(
-                  imagePath: 'assets/images/modulo estudio png/nro 3.png',
+                  imagePath: 'assets/images/modulo estudio png/nro 3.webp',
                   stepText: 'Detecta qué partes olvidaste o no entendiste bien.',
                   index: 2,
                 )
@@ -655,7 +655,7 @@ class _FeynmanLessonWidgetState extends State<FeynmanLessonWidget> {
 
               if (_showCompletedItem4)
                 _buildSummaryItem(
-                  imagePath: 'assets/images/modulo estudio png/nro 4.png',
+                  imagePath: 'assets/images/modulo estudio png/nro 4.webp',
                   stepText: 'Revisa la información y vuelve a explicarla de forma sencilla.',
                   index: 3,
                 )
@@ -670,7 +670,7 @@ class _FeynmanLessonWidgetState extends State<FeynmanLessonWidget> {
           FadeInUp(
             duration: const Duration(milliseconds: 700),
             child: Image.asset(
-              'assets/images/modulo estudio png/titi estudiando con hoja.png',
+              'assets/images/modulo estudio png/titi estudiando con hoja.webp',
               height: 165,
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) => Image.asset(

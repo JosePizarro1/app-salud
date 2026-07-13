@@ -2309,7 +2309,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
             shape: BoxShape.circle,
             border: Border.all(color: const Color(0xFF88D49E), width: 1.5),
             image: const DecorationImage(
-              image: AssetImage('assets/images/mascot.png'),
+              image: AssetImage('assets/images/mascot.webp'),
               fit: BoxFit.cover,
             ),
           ),

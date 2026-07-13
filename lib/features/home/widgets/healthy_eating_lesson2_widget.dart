@@ -186,7 +186,7 @@ class _HealthyEatingLesson2WidgetState extends State<HealthyEatingLesson2Widget>
           duration: const Duration(milliseconds: 600),
           delay: const Duration(milliseconds: 300),
           child: Image.asset(
-            'assets/images/healthy_eating/images/titi lentes.png',
+            'assets/images/healthy_eating/images/titi lentes.webp',
             height: 210,
             fit: BoxFit.contain,
             errorBuilder: (context, error, stackTrace) => Image.asset(
@@ -206,11 +206,11 @@ class _HealthyEatingLesson2WidgetState extends State<HealthyEatingLesson2Widget>
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _buildLessonOption(
-                imagePath: 'assets/images/healthy_eating/images/leccion2 boton1.png',
+                imagePath: 'assets/images/healthy_eating/images/leccion2 boton1.webp',
                 optionId: 1,
               ),
               _buildLessonOption(
-                imagePath: 'assets/images/healthy_eating/images/leccion2 boton2.png',
+                imagePath: 'assets/images/healthy_eating/images/leccion2 boton2.webp',
                 optionId: 2,
               ),
             ],
@@ -293,7 +293,7 @@ class _HealthyEatingLesson2WidgetState extends State<HealthyEatingLesson2Widget>
         FadeInUp(
           duration: const Duration(milliseconds: 600),
           child: Image.asset(
-            'assets/images/healthy_eating/images/titi lentes.png',
+            'assets/images/healthy_eating/images/titi lentes.webp',
             height: 210,
             fit: BoxFit.contain,
             errorBuilder: (context, error, stackTrace) => Image.asset(
@@ -400,7 +400,7 @@ class _HealthyEatingLesson2WidgetState extends State<HealthyEatingLesson2Widget>
         FadeInUp(
           duration: const Duration(milliseconds: 600),
           child: Image.asset(
-            'assets/images/healthy_eating/images/titi lentes cansado.png',
+            'assets/images/healthy_eating/images/titi lentes cansado.webp',
             height: 210,
             fit: BoxFit.contain,
             errorBuilder: (context, error, stackTrace) => Image.asset(

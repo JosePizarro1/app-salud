@@ -71,9 +71,21 @@ class Module4Page extends StatelessWidget {
           onTap: () {
             context.push(route);
           },
-          child: Image.asset(
-            imagePath,
-            fit: BoxFit.contain,
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.35),
+                  blurRadius: 12,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Image.asset(
+              imagePath,
+              fit: BoxFit.contain,
+            ),
           ),
         ),
       ),

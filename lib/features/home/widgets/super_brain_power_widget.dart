@@ -5,7 +5,8 @@ import '../../../app/services/sfx_manager.dart';
 import '../../../app/theme/app_colors.dart';
 
 class SuperBrainPowerWidget extends StatefulWidget {
-  const SuperBrainPowerWidget({super.key});
+  final VoidCallback? onAnimationComplete;
+  const SuperBrainPowerWidget({super.key, this.onAnimationComplete});
 
   @override
   State<SuperBrainPowerWidget> createState() => _SuperBrainPowerWidgetState();
@@ -33,6 +34,8 @@ class _SuperBrainPowerWidgetState extends State<SuperBrainPowerWidget> {
       await Future.delayed(const Duration(milliseconds: 1100));
       if (!mounted) return;
     }
+
+    widget.onAnimationComplete?.call();
   }
 
   Future<void> _playSound() async {
@@ -181,28 +184,28 @@ class _SuperBrainPowerWidgetState extends State<SuperBrainPowerWidget> {
 
             // Benefits List
             _buildBrainBenefitItem(
-              iconPath: 'assets/images/healthy_eating/images/super potencia cerebral 1.png',
+              iconPath: 'assets/images/healthy_eating/images/super potencia cerebral 1.webp',
               title: 'Combate la fatiga',
               description: 'Mantén tu energía durante el día.',
               index: 0,
               isVisible: _visibleCount >= 1,
             ),
             _buildBrainBenefitItem(
-              iconPath: 'assets/images/healthy_eating/images/super potencia cerebral 2.png',
+              iconPath: 'assets/images/healthy_eating/images/super potencia cerebral 2.webp',
               title: 'Mejora la memoria',
               description: 'Favorece el aprendizaje y la concentración.',
               index: 1,
               isVisible: _visibleCount >= 2,
             ),
             _buildBrainBenefitItem(
-              iconPath: 'assets/images/healthy_eating/images/super potencia cerebral 3.png',
+              iconPath: 'assets/images/healthy_eating/images/super potencia cerebral 3.webp',
               title: 'Impulsa las funciones cerebrales',
               description: 'Contribuye a un mejor rendimiento mental.',
               index: 2,
               isVisible: _visibleCount >= 3,
             ),
             _buildBrainBenefitItem(
-              iconPath: 'assets/images/healthy_eating/images/super potencia cerebral 4.png',
+              iconPath: 'assets/images/healthy_eating/images/super potencia cerebral 4.webp',
               title: 'Súper rendimiento',
               description: 'Una alimentación inteligente ayuda a que tu mente funcione mejor cada día.',
               index: 3,

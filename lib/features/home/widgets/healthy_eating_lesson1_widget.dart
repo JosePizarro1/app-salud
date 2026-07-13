@@ -186,7 +186,7 @@ class _HealthyEatingLesson1WidgetState extends State<HealthyEatingLesson1Widget>
           duration: const Duration(milliseconds: 600),
           delay: const Duration(milliseconds: 300),
           child: Image.asset(
-            'assets/images/healthy_eating/images/titi heroe felzi.png',
+            'assets/images/healthy_eating/images/titi heroe felzi.webp',
             height: 210,
             fit: BoxFit.contain,
             errorBuilder: (context, error, stackTrace) => Image.asset(
@@ -206,11 +206,11 @@ class _HealthyEatingLesson1WidgetState extends State<HealthyEatingLesson1Widget>
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _buildLessonOption(
-                imagePath: 'assets/images/healthy_eating/images/leccion1 boton1.png',
+                imagePath: 'assets/images/healthy_eating/images/leccion1 boton1.webp',
                 optionId: 1,
               ),
               _buildLessonOption(
-                imagePath: 'assets/images/healthy_eating/images/leccion1 boton2.png',
+                imagePath: 'assets/images/healthy_eating/images/leccion1 boton2.webp',
                 optionId: 2,
               ),
             ],
@@ -293,7 +293,7 @@ class _HealthyEatingLesson1WidgetState extends State<HealthyEatingLesson1Widget>
         FadeInUp(
           duration: const Duration(milliseconds: 600),
           child: Image.asset(
-            'assets/images/healthy_eating/images/titi heroe felzi.png',
+            'assets/images/healthy_eating/images/titi heroe felzi.webp',
             height: 210,
             fit: BoxFit.contain,
             errorBuilder: (context, error, stackTrace) => Image.asset(
@@ -425,7 +425,7 @@ class _HealthyEatingLesson1WidgetState extends State<HealthyEatingLesson1Widget>
         FadeInUp(
           duration: const Duration(milliseconds: 600),
           child: Image.asset(
-            'assets/images/healthy_eating/images/titi heroe cansado.png',
+            'assets/images/healthy_eating/images/titi heroe cansado.webp',
             height: 220,
             fit: BoxFit.contain,
             errorBuilder: (context, error, stackTrace) => Image.asset(

@@ -113,7 +113,7 @@ class _KnowingStressPageState extends State<KnowingStressPage> {
           FadeInUp(
             duration: const Duration(milliseconds: 600),
             child: Image.asset(
-              'assets/images/healthy_eating/gifs/titi pensativo (1).gif',
+              'assets/images/healthy_eating/gifs/titi pensativo (1).webp',
               height: 200,
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) => const Icon(
@@ -161,9 +161,9 @@ class _KnowingStressPageState extends State<KnowingStressPage> {
   // Slide 2: Manifestations
   Widget _buildSlide2() {
     final nivelImages = [
-      'assets/images/Modulo6/nivel_fisico.png',
-      'assets/images/Modulo6/nivel_psicologico.png',
-      'assets/images/Modulo6/nivel_conductual.png',
+      'assets/images/Modulo6/nivel_fisico.webp',
+      'assets/images/Modulo6/nivel_psicologico.webp',
+      'assets/images/Modulo6/nivel_conductual.webp',
     ];
     final nivelDetails = [
       '• Fatiga constante\n• Tensión muscular en cuello y hombros\n• Problemas digestivos\n• Alteraciones del sueño (insomnio)',
@@ -790,7 +790,7 @@ class _KnowingStressPageState extends State<KnowingStressPage> {
               duration: const Duration(milliseconds: 600),
               delay: const Duration(milliseconds: 200),
               child: Image.asset(
-                'assets/images/healthy_eating/gifs/titi1 feliz.gif',
+                'assets/images/healthy_eating/gifs/titi1 feliz.webp',
                 height: 210,
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) => Image.asset(

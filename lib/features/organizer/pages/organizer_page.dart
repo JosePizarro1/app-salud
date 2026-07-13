@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:audioplayers/audioplayers.dart';
+import '../../../app/services/sfx_manager.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../home/widgets/module_header.dart';
 import '../services/organizer_task_storage.dart';
@@ -16,34 +16,24 @@ class OrganizerPage extends StatefulWidget {
   State<OrganizerPage> createState() => _OrganizerPageState();
 }
 
-class _OrganizerPageState extends State<OrganizerPage> {
+class _OrganizerPageState extends State<OrganizerPage> with SingleTickerProviderStateMixin {
   late int _currentYear;
   late int _currentMonth;
   late String _selectedDateStr;
   bool _isLoading = true;
+
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
 
   // Monthly tasks list for calendar dots
   Map<String, List<Map<String, dynamic>>> _monthTasks = {};
   // Selected date tasks
   List<Map<String, dynamic>> _dateTasks = [];
 
-  final AudioPlayer _audioPlayer = AudioPlayer();
-
   @override
   void dispose() {
-    _audioPlayer.dispose();
+    _pulseController.dispose();
     super.dispose();
-  }
-
-  Future<void> _playSound(String assetPath) async {
-    try {
-      await _audioPlayer.stop();
-      await _audioPlayer.setSource(AssetSource(assetPath));
-      await _audioPlayer.setVolume(0.8);
-      await _audioPlayer.resume();
-    } catch (_) {
-      // Ignorar errores de carga de audio
-    }
   }
 
   void _showCustomSuccessNotification(String title, String message) {
@@ -122,6 +112,16 @@ class _OrganizerPageState extends State<OrganizerPage> {
     _currentYear = now.year;
     _currentMonth = now.month;
     _selectedDateStr = _CustomDateFormat.yyyyMMdd(now);
+
+    _pulseController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _pulseAnimation = Tween<double>(begin: 0.88, end: 1.04).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
     _checkOnboardingAndLoad();
   }
 
@@ -208,7 +208,7 @@ class _OrganizerPageState extends State<OrganizerPage> {
     final pointsAwarded = await OrganizerTaskStorage.toggleTask(taskId, _selectedDateStr, newStatus);
     
     if (pointsAwarded && mounted) {
-      _playSound('audio/completado_sonid.mp3');
+      SfxManager().playCompletion();
       _showPointsCelebrationDialog();
     }
     _loadData();
@@ -605,7 +605,7 @@ class _OrganizerPageState extends State<OrganizerPage> {
 
                           navigator.pop(); // Close sheet
                           _loadData(); // Reload
-                          _playSound('audio/success_cheerful.mp3');
+                          SfxManager().playSuccess();
                           _showCustomSuccessNotification(
                             '¡Actividad Guardada!',
                             'Titi guardó tu actividad en tu horario.',
@@ -1038,35 +1038,47 @@ class _OrganizerPageState extends State<OrganizerPage> {
           // Shared Header (Home, Back + Emergency)
           const ModuleHeader(showHome: true, showBack: true),
 
-          // Help Button (Interrogación) - Using Container placeholder to avoid 404 fetch error until asset is added
+          // Pulsing translucent help button at bottom-left corner
           Positioned(
-            right: MediaQuery.of(context).size.width * 0.24, // to the left of the emergency button
-            top: MediaQuery.of(context).size.height * 0.093, // vertically aligned with the header buttons
-            child: GestureDetector(
-              onTap: () => context.push('/organizer/onboarding'),
-              child: Container(
-                width: MediaQuery.of(context).size.width * 0.14,
-                height: MediaQuery.of(context).size.width * 0.14,
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.surfaceDark : Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
+            left: 16,
+            bottom: 84, // Kept above bottom elements, next to floating action button area
+            child: AnimatedBuilder(
+              animation: _pulseAnimation,
+              builder: (context, child) {
+                return Transform.scale(
+                  scale: _pulseAnimation.value,
+                  child: child,
+                );
+              },
+              child: GestureDetector(
+                onTap: () {
+                  SfxManager().playClick();
+                  context.push('/organizer/onboarding');
+                },
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: (isDark ? AppColors.surfaceDark : Colors.white).withOpacity(0.35),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                    border: Border.all(
+                      color: (isDark ? Colors.white24 : const Color(0xFFF1EEFB)).withOpacity(0.35),
+                      width: 1.5,
                     ),
-                  ],
-                  border: Border.all(
-                    color: isDark ? Colors.white24 : const Color(0xFFF1EEFB),
-                    width: 1.5,
                   ),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  '❓',
-                  style: GoogleFonts.outfit(
-                    fontSize: 18,
+                  alignment: Alignment.center,
+                  child: Text(
+                    '❓',
+                    style: GoogleFonts.outfit(
+                      fontSize: 18,
+                    ),
                   ),
                 ),
               ),

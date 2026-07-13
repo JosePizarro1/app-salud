@@ -136,42 +136,42 @@ class _PomodoroLessonWidgetState extends State<PomodoroLessonWidget> {
       case 1:
         return _buildStepView(
           stepNumber: 1,
-          imagePath: 'assets/images/modulo estudio png/nro 1.png',
+          imagePath: 'assets/images/modulo estudio png/nro 1.webp',
           header: 'Elige una tarea',
           subtitle: 'Selecciona una actividad específica que deseas completar. Enfocarte en una sola tarea te ayudará a evitar distracciones.',
-          titiPath: 'assets/images/modulo estudio png/titi estudiando con hoja.png',
+          titiPath: 'assets/images/modulo estudio png/titi estudiando con hoja.webp',
         );
       case 2:
         return _buildStepView(
           stepNumber: 2,
-          imagePath: 'assets/images/modulo estudio png/nro 2.png',
+          imagePath: 'assets/images/modulo estudio png/nro 2.webp',
           header: 'Programa 25 minutos',
           subtitle: 'Configura un temporizador por 25 minutos. Durante ese tiempo, comprométete a trabajar únicamente en la tarea elegida.',
-          titiPath: 'assets/images/modulo estudio png/titi leyendo echado.png',
+          titiPath: 'assets/images/modulo estudio png/titi leyendo echado.webp',
         );
       case 3:
         return _buildStepView(
           stepNumber: 3,
-          imagePath: 'assets/images/modulo estudio png/nro 3.png',
+          imagePath: 'assets/images/modulo estudio png/nro 3.webp',
           header: 'Trabaja sin distracciones',
           subtitle: 'Dedica toda tu atención a la actividad. Evita revisar el celular, redes sociales o cualquier otra interrupción hasta que termine el tiempo.',
-          titiPath: 'assets/images/modulo estudio png/titi leyendo echado hacia arriba.png',
+          titiPath: 'assets/images/modulo estudio png/titi leyendo echado hacia arriba.webp',
         );
       case 4:
         return _buildStepView(
           stepNumber: 4,
-          imagePath: 'assets/images/modulo estudio png/nro 4.png',
+          imagePath: 'assets/images/modulo estudio png/nro 4.webp',
           header: 'Descansa 5 minutos',
           subtitle: 'Cuando suene el temporizador, toma una pausa breve. Puedes estirarte, caminar un poco, hidratarte o descansar la vista antes de continuar.',
-          titiPath: 'assets/images/modulo estudio png/titi con lentes feliz.png',
+          titiPath: 'assets/images/modulo estudio png/titi con lentes feliz.webp',
         );
       case 5:
         return _buildStepView(
           stepNumber: 5,
-          imagePath: 'assets/images/modulo estudio png/nro 5.png',
+          imagePath: 'assets/images/modulo estudio png/nro 5.webp',
           header: 'Repite el ciclo',
           subtitle: 'Después de cuatro sesiones de 25 minutos, realiza un descanso más largo de 15 a 30 minutos. Esto ayuda a recuperar energía y mantener un buen rendimiento durante el estudio.',
-          titiPath: 'assets/images/modulo estudio png/titi leyendo echado.png',
+          titiPath: 'assets/images/modulo estudio png/titi leyendo echado.webp',
         );
       case 6:
         return _buildWhyWorksView(screenHeight);
@@ -643,7 +643,7 @@ class _PomodoroLessonWidgetState extends State<PomodoroLessonWidget> {
             children: [
               if (_showCompletedItem1)
                 _buildSummaryItem(
-                  imagePath: 'assets/images/modulo estudio png/nro 1.png',
+                  imagePath: 'assets/images/modulo estudio png/nro 1.webp',
                   stepText: 'Elige una tarea: Selecciona una actividad específica que deseas completar.',
                   index: 0,
                 )
@@ -652,7 +652,7 @@ class _PomodoroLessonWidgetState extends State<PomodoroLessonWidget> {
 
               if (_showCompletedItem2)
                 _buildSummaryItem(
-                  imagePath: 'assets/images/modulo estudio png/nro 2.png',
+                  imagePath: 'assets/images/modulo estudio png/nro 2.webp',
                   stepText: 'Programa 25 minutos: Configura un temporizador para trabajar únicamente en ella.',
                   index: 1,
                 )
@@ -661,7 +661,7 @@ class _PomodoroLessonWidgetState extends State<PomodoroLessonWidget> {
 
               if (_showCompletedItem3)
                 _buildSummaryItem(
-                  imagePath: 'assets/images/modulo estudio png/nro 3.png',
+                  imagePath: 'assets/images/modulo estudio png/nro 3.webp',
                   stepText: 'Trabaja sin distracciones: Dedica toda tu atención hasta que termine el tiempo.',
                   index: 2,
                 )
@@ -670,7 +670,7 @@ class _PomodoroLessonWidgetState extends State<PomodoroLessonWidget> {
 
               if (_showCompletedItem4)
                 _buildSummaryItem(
-                  imagePath: 'assets/images/modulo estudio png/nro 4.png',
+                  imagePath: 'assets/images/modulo estudio png/nro 4.webp',
                   stepText: 'Descansa 5 minutos: Toma una pausa breve para estirarte y descansar la vista.',
                   index: 3,
                 )
@@ -679,7 +679,7 @@ class _PomodoroLessonWidgetState extends State<PomodoroLessonWidget> {
 
               if (_showCompletedItem5)
                 _buildSummaryItem(
-                  imagePath: 'assets/images/modulo estudio png/nro 5.png',
+                  imagePath: 'assets/images/modulo estudio png/nro 5.webp',
                   stepText: 'Repite el ciclo: Después de cuatro sesiones, toma un descanso más largo de 15 a 30 minutos.',
                   index: 4,
                 )
@@ -694,7 +694,7 @@ class _PomodoroLessonWidgetState extends State<PomodoroLessonWidget> {
           FadeInUp(
             duration: const Duration(milliseconds: 700),
             child: Image.asset(
-              'assets/images/modulo estudio png/titi estudiando con hoja.png',
+              'assets/images/modulo estudio png/titi estudiando con hoja.webp',
               height: 165,
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) => Image.asset(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:animate_do/animate_do.dart';
+import '../../../app/services/sfx_manager.dart';
 
 enum HealthyMindState { overview, equilibrio, estres }
 
@@ -119,6 +120,7 @@ class HealthyMindWidgetState extends State<HealthyMindWidget> {
                   duration: const Duration(milliseconds: 150),
                   child: GestureDetector(
                     onTap: () async {
+                      SfxManager().playClick();
                       setState(() => _benefitScales[0] = true);
                       await Future.delayed(const Duration(milliseconds: 150));
                       if (context.mounted) {
@@ -134,7 +136,7 @@ class HealthyMindWidgetState extends State<HealthyMindWidget> {
                       width: MediaQuery.of(context).size.width * 0.85,
                       height: 85,
                       child: Image.asset(
-                        'assets/images/healthy_eating/images/boton equilibrio nutricional.png',
+                        'assets/images/healthy_eating/images/boton equilibrio nutricional.webp',
                         fit: BoxFit.contain,
                       ),
                     ),
@@ -150,6 +152,7 @@ class HealthyMindWidgetState extends State<HealthyMindWidget> {
                   duration: const Duration(milliseconds: 150),
                   child: GestureDetector(
                     onTap: () async {
+                      SfxManager().playClick();
                       setState(() => _benefitScales[1] = true);
                       await Future.delayed(const Duration(milliseconds: 150));
                       if (context.mounted) {
@@ -165,7 +168,7 @@ class HealthyMindWidgetState extends State<HealthyMindWidget> {
                       width: MediaQuery.of(context).size.width * 0.85,
                       height: 85,
                       child: Image.asset(
-                        'assets/images/healthy_eating/images/boton prevencion del estres.png',
+                        'assets/images/healthy_eating/images/boton prevencion del estres.webp',
                         fit: BoxFit.contain,
                       ),
                     ),
@@ -178,7 +181,7 @@ class HealthyMindWidgetState extends State<HealthyMindWidget> {
               FadeInUp(
                 duration: const Duration(milliseconds: 600),
                 child: Image.asset(
-                  'assets/images/healthy_eating/gifs/titi deportista.gif',
+                  'assets/images/healthy_eating/gifs/titi deportista.webp',
                   height: 200,
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) => Image.asset(
@@ -193,13 +196,16 @@ class HealthyMindWidgetState extends State<HealthyMindWidget> {
               FadeInRight(
                 duration: const Duration(milliseconds: 500),
                 child: GestureDetector(
-                  onTap: resetToOverview,
+                  onTap: () {
+                    SfxManager().playClick();
+                    resetToOverview();
+                  },
                   child: Container(
                     margin: const EdgeInsets.symmetric(vertical: 8),
                     width: MediaQuery.of(context).size.width * 0.85,
                     height: 85,
                     child: Image.asset(
-                      'assets/images/healthy_eating/images/boton equilibrio nutricional.png',
+                      'assets/images/healthy_eating/images/boton equilibrio nutricional.webp',
                       fit: BoxFit.contain,
                     ),
                   ),
@@ -240,13 +246,16 @@ class HealthyMindWidgetState extends State<HealthyMindWidget> {
               FadeInLeft(
                 duration: const Duration(milliseconds: 500),
                 child: GestureDetector(
-                  onTap: resetToOverview,
+                  onTap: () {
+                    SfxManager().playClick();
+                    resetToOverview();
+                  },
                   child: Container(
                     margin: const EdgeInsets.only(top: 8, bottom: 2),
                     width: MediaQuery.of(context).size.width * 0.85,
                     height: 85,
                     child: Image.asset(
-                      'assets/images/healthy_eating/images/boton prevencion del estres.png',
+                      'assets/images/healthy_eating/images/boton prevencion del estres.webp',
                       fit: BoxFit.contain,
                     ),
                   ),
@@ -272,7 +281,7 @@ class HealthyMindWidgetState extends State<HealthyMindWidget> {
                 duration: const Duration(milliseconds: 600),
                 delay: const Duration(milliseconds: 200),
                 child: Image.asset(
-                  'assets/images/healthy_eating/images/titi lentes.png',
+                  'assets/images/healthy_eating/images/titi lentes.webp',
                   height: 165,
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) => Image.asset(

@@ -46,7 +46,7 @@ class _SleepCareReaderPageState extends State<SleepCareReaderPage> {
     try {
       final assetPath = isCorrect 
           ? 'audio/completado_sonid.mp3' 
-          : 'audio/error_sound.mp3';
+          : 'audio/sonido_incorrecto.mp3';
       await _audioPlayer.play(
         AssetSource(assetPath),
         volume: 0.7,
@@ -396,16 +396,11 @@ class _SleepCareReaderPageState extends State<SleepCareReaderPage> {
               ),
             ),
             const SizedBox(height: 28),
-            // Animación Lottie del Cerebro Divertido (Funny brain)
-            SizedBox(
-              width: double.infinity,
+            // Mascota Tití
+            Image.asset(
+              'assets/images/mascot.webp',
               height: screenHeight * 0.32,
-              child: DotLottieView(
-                sourceType: 'asset',
-                source: 'assets/images/sleep_care/funny_brain.lottie',
-                autoplay: true,
-                loop: true,
-              ),
+              fit: BoxFit.contain,
             ),
             const SizedBox(height: 16),
           ],
@@ -692,18 +687,6 @@ class _SleepCareReaderPageState extends State<SleepCareReaderPage> {
               ),
             ),
             const SizedBox(height: 16),
-            // Animación Lottie del Cerebro Divertido
-            SizedBox(
-              width: double.infinity,
-              height: screenHeight * 0.22,
-              child: DotLottieView(
-                sourceType: 'asset',
-                source: 'assets/images/sleep_care/funny_brain.lottie',
-                autoplay: true,
-                loop: true,
-              ),
-            ),
-            const SizedBox(height: 20),
             // Lista de Opciones
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,

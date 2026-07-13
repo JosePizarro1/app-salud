@@ -122,26 +122,26 @@ class _BlurtingLessonWidgetState extends State<BlurtingLessonWidget> {
       case 1:
         return _buildStepView(
           stepNumber: 1,
-          imagePath: 'assets/images/modulo estudio png/nro 1.png',
+          imagePath: 'assets/images/modulo estudio png/nro 1.webp',
           header: 'Lee un tema durante 10-15 minutos.',
           subtitle: 'No tomes apuntes. Solo enfócate en entender la información.',
-          titiPath: 'assets/images/modulo estudio png/titi leyendo echado hacia arriba.png',
+          titiPath: 'assets/images/modulo estudio png/titi leyendo echado hacia arriba.webp',
         );
       case 2:
         return _buildStepView(
           stepNumber: 2,
-          imagePath: 'assets/images/modulo estudio png/nro 2.png',
+          imagePath: 'assets/images/modulo estudio png/nro 2.webp',
           header: 'Cierra el libro/cuaderno y toma una hoja en blanco.',
           subtitle: 'Ahora escribe TODO lo que recuerdes: ideas, conceptos, palabras clave, esquemas, lo que sea. ¡Suelta todo como venga a tu mente!',
-          titiPath: 'assets/images/modulo estudio png/titi leyendo echado.png',
+          titiPath: 'assets/images/modulo estudio png/titi leyendo echado.webp',
         );
       case 3:
         return _buildStepView(
           stepNumber: 3,
-          imagePath: 'assets/images/modulo estudio png/nro 3.png',
+          imagePath: 'assets/images/modulo estudio png/nro 3.webp',
           header: 'Revisa tus apuntes con el material original.',
           subtitle: 'Marca lo que olvidaste, confundiste o escribiste mal. Esa es la info que debes repasar más.',
-          titiPath: 'assets/images/modulo estudio png/titi estudiando con hoja.png',
+          titiPath: 'assets/images/modulo estudio png/titi estudiando con hoja.webp',
         );
       case 4:
         return _buildWhyWorksView(screenHeight);
@@ -568,7 +568,7 @@ class _BlurtingLessonWidgetState extends State<BlurtingLessonWidget> {
             children: [
               if (_showCompletedItem1)
                 _buildSummaryItem(
-                  imagePath: 'assets/images/modulo estudio png/nro 1.png',
+                  imagePath: 'assets/images/modulo estudio png/nro 1.webp',
                   stepText: 'Lee un tema durante 10–15 minutos.',
                   index: 0,
                 )
@@ -577,7 +577,7 @@ class _BlurtingLessonWidgetState extends State<BlurtingLessonWidget> {
 
               if (_showCompletedItem2)
                 _buildSummaryItem(
-                  imagePath: 'assets/images/modulo estudio png/nro 2.png',
+                  imagePath: 'assets/images/modulo estudio png/nro 2.webp',
                   stepText: 'Cierra el material y escribe todo lo que recuerdes.',
                   index: 1,
                 )
@@ -586,7 +586,7 @@ class _BlurtingLessonWidgetState extends State<BlurtingLessonWidget> {
 
               if (_showCompletedItem3)
                 _buildSummaryItem(
-                  imagePath: 'assets/images/modulo estudio png/nro 3.png',
+                  imagePath: 'assets/images/modulo estudio png/nro 3.webp',
                   stepText: 'Compara tu respuesta con el contenido original e identifica lo que olvidaste.',
                   index: 2,
                 )
@@ -601,7 +601,7 @@ class _BlurtingLessonWidgetState extends State<BlurtingLessonWidget> {
           FadeInUp(
             duration: const Duration(milliseconds: 700),
             child: Image.asset(
-              'assets/images/modulo estudio png/titi estudiando con hoja.png',
+              'assets/images/modulo estudio png/titi estudiando con hoja.webp',
               height: 165,
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) => Image.asset(

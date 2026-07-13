@@ -129,34 +129,34 @@ class _SpacedRepetitionLessonWidgetState extends State<SpacedRepetitionLessonWid
       case 1:
         return _buildStepView(
           stepNumber: 1,
-          imagePath: 'assets/images/modulo estudio png/nro 1.png',
+          imagePath: 'assets/images/modulo estudio png/nro 1.webp',
           header: 'Justo después de la clase',
           subtitle: 'Resume los puntos clave con tus propias palabras, elabora una guía de estudio o crea tarjetas de memoria.',
-          titiPath: 'assets/images/modulo estudio png/titi leyendo echado hacia arriba.png',
+          titiPath: 'assets/images/modulo estudio png/titi leyendo echado hacia arriba.webp',
         );
       case 2:
         return _buildStepView(
           stepNumber: 2,
-          imagePath: 'assets/images/modulo estudio png/nro 2.png',
+          imagePath: 'assets/images/modulo estudio png/nro 2.webp',
           header: 'Al día siguiente',
           subtitle: 'Ponte a prueba sin revisar tus apuntes para comprobar qué recuerdas.',
-          titiPath: 'assets/images/modulo estudio png/titi leyendo echado.png',
+          titiPath: 'assets/images/modulo estudio png/titi leyendo echado.webp',
         );
       case 3:
         return _buildStepView(
           stepNumber: 3,
-          imagePath: 'assets/images/modulo estudio png/nro 3.png',
+          imagePath: 'assets/images/modulo estudio png/nro 3.webp',
           header: 'Tres días después',
           subtitle: 'Vuelve a evaluarte, reforzando lo aprendido y practicando con ejercicios o recordando la información.',
-          titiPath: 'assets/images/modulo estudio png/titi estudiando con hoja.png',
+          titiPath: 'assets/images/modulo estudio png/titi estudiando con hoja.webp',
         );
       case 4:
         return _buildStepView(
           stepNumber: 4,
-          imagePath: 'assets/images/modulo estudio png/nro 4.png',
+          imagePath: 'assets/images/modulo estudio png/nro 4.webp',
           header: 'Una semana después',
           subtitle: 'Continúa repasando, identifica las partes que más te cuestan y enfócate en mejorarlas.',
-          titiPath: 'assets/images/modulo estudio png/titi estudiando con hoja.png',
+          titiPath: 'assets/images/modulo estudio png/titi estudiando con hoja.webp',
         );
       case 5:
         return _buildWhyWorksView(screenHeight);
@@ -645,7 +645,7 @@ class _SpacedRepetitionLessonWidgetState extends State<SpacedRepetitionLessonWid
             children: [
               if (_showCompletedItem1)
                 _buildSummaryItem(
-                  imagePath: 'assets/images/modulo estudio png/nro 1.png',
+                  imagePath: 'assets/images/modulo estudio png/nro 1.webp',
                   stepText: 'Justo después de la clase: Resume los puntos clave y elabora tarjetas.',
                   index: 0,
                 )
@@ -654,7 +654,7 @@ class _SpacedRepetitionLessonWidgetState extends State<SpacedRepetitionLessonWid
 
               if (_showCompletedItem2)
                 _buildSummaryItem(
-                  imagePath: 'assets/images/modulo estudio png/nro 2.png',
+                  imagePath: 'assets/images/modulo estudio png/nro 2.webp',
                   stepText: 'Al día siguiente: Ponte a prueba sin revisar tus apuntes.',
                   index: 1,
                 )
@@ -663,7 +663,7 @@ class _SpacedRepetitionLessonWidgetState extends State<SpacedRepetitionLessonWid
 
               if (_showCompletedItem3)
                 _buildSummaryItem(
-                  imagePath: 'assets/images/modulo estudio png/nro 3.png',
+                  imagePath: 'assets/images/modulo estudio png/nro 3.webp',
                   stepText: 'Tres días después: Vuelve a evaluarte reforzando lo aprendido.',
                   index: 2,
                 )
@@ -672,7 +672,7 @@ class _SpacedRepetitionLessonWidgetState extends State<SpacedRepetitionLessonWid
 
               if (_showCompletedItem4)
                 _buildSummaryItem(
-                  imagePath: 'assets/images/modulo estudio png/nro 4.png',
+                  imagePath: 'assets/images/modulo estudio png/nro 4.webp',
                   stepText: 'Una semana después: Continúa repasando y enfócate en mejorar.',
                   index: 3,
                 )
@@ -687,7 +687,7 @@ class _SpacedRepetitionLessonWidgetState extends State<SpacedRepetitionLessonWid
           FadeInUp(
             duration: const Duration(milliseconds: 700),
             child: Image.asset(
-              'assets/images/modulo estudio png/titi estudiando con hoja.png',
+              'assets/images/modulo estudio png/titi estudiando con hoja.webp',
               height: 165,
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) => Image.asset(

@@ -61,6 +61,20 @@ class SfxManager {
     }
   }
 
+  /// Play the completion sound effect for the interactive portions guide
+  Future<void> playCompletion() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final isEnabled = prefs.getBool('bg_music_enabled') ?? true;
+      if (!isEnabled) return;
+
+      await _sfxPlayer.stop();
+      await _sfxPlayer.play(AssetSource('audio/completado_sonid.mp3'));
+    } catch (_) {
+      // Quietly ignore audio playback errors
+    }
+  }
+
   /// Play the error sound effect
   Future<void> playError() async {
     try {
@@ -69,7 +83,7 @@ class SfxManager {
       if (!isEnabled) return;
 
       await _sfxPlayer.stop();
-      await _sfxPlayer.play(AssetSource('audio/error_sound.mp3'));
+      await _sfxPlayer.play(AssetSource('audio/sonido_incorrecto.mp3'));
     } catch (_) {
       // Quietly ignore audio playback errors
     }
