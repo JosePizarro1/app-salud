@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../features/auth/pages/welcome_splash_page.dart';
 import '../features/auth/pages/login_page.dart';
 import '../features/auth/pages/register_page.dart';
@@ -61,6 +62,28 @@ CustomTransitionPage<T> _buildFadePage<T>({
 
 final appRouter = GoRouter(
   initialLocation: '/welcome',
+  redirect: (context, state) async {
+    final prefs = await SharedPreferences.getInstance();
+    final isAdmin = prefs.getBool('is_admin_mode') ?? false;
+    final matchedPath = state.uri.path;
+
+    final isPublicRoute = matchedPath == '/welcome' || 
+                          matchedPath == '/login' || 
+                          matchedPath == '/register';
+
+    if (isAdmin) {
+      // Si es admin y trata de entrar a una ruta de usuario (que no sea pública ni empiece con /admin)
+      if (!matchedPath.startsWith('/admin') && !isPublicRoute) {
+        return '/admin/dashboard';
+      }
+    } else {
+      // Si es usuario normal y trata de entrar a la sección de admin
+      if (matchedPath.startsWith('/admin')) {
+        return '/home';
+      }
+    }
+    return null; // Permitir navegación normal
+  },
   routes: [
     GoRoute(
       path: '/welcome',

@@ -508,7 +508,7 @@ class _DomainTextEditingController extends TextEditingController {
         TextSpan(text: userText),
         TextSpan(
           text: domain,
-          style: style?.copyWith(color: style.color?.withValues(alpha: 0.3) ?? Colors.grey),
+          style: style?.copyWith(color: style.color ?? Colors.black),
         ),
       ],
     );

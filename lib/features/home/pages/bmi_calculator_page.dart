@@ -51,6 +51,17 @@ class _BmiCalculatorPageState extends State<BmiCalculatorPage> {
     super.dispose();
   }
 
+  void _clearResult() {
+    if (_bmiResult != null) {
+      setState(() {
+        _bmiResult = null;
+        _bmiClassification = '';
+        _titiAdvice = '';
+        _needsNutritionist = false;
+      });
+    }
+  }
+
   void _calculateBmi() {
     if (!_formKey.currentState!.validate()) return;
 
@@ -683,6 +694,7 @@ class _BmiCalculatorPageState extends State<BmiCalculatorPage> {
                                                       // Auto-reset months if 19 or older
                                                       if (_years >= 19) _months = 0;
                                                     });
+                                                    _clearResult();
                                                   }
                                                 },
                                               ),
@@ -726,6 +738,7 @@ class _BmiCalculatorPageState extends State<BmiCalculatorPage> {
                                                     : (val) {
                                                         if (val != null) {
                                                           setState(() => _months = val);
+                                                          _clearResult();
                                                         }
                                                       },
                                               ),
@@ -1040,6 +1053,7 @@ class _BmiCalculatorPageState extends State<BmiCalculatorPage> {
         setState(() {
           _gender = genderValue;
         });
+        _clearResult();
       },
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
@@ -1288,7 +1302,7 @@ class _BmiCalculatorPageState extends State<BmiCalculatorPage> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Al no encontrarte en el rango Normal, te recomendamos consultar con un profesional de la salud o nutricionista para recibir una guía de alimentación personalizada y adecuada para vos.',
+                            'Al no encontrarte en el rango Normal, te recomendamos consultar con un profesional de la salud o nutricionista para recibir una guía de alimentación personalizada y adecuada para ti.',
                             style: GoogleFonts.outfit(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,

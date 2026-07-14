@@ -445,10 +445,12 @@ class _PostureDetailDialogState extends State<_PostureDetailDialog> with SingleT
         curve: Curves.easeInOut,
       );
     } else {
-      // Pause at the end
-      setState(() {
-        _isPlaying = false;
-      });
+      // Loop back to the first step
+      _pageController.animateToPage(
+        0,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
     }
   }
 
@@ -621,28 +623,28 @@ class _PostureDetailDialogState extends State<_PostureDetailDialog> with SingleT
                 // Play / Pause / Finish Circular Progress
                 Builder(
                   builder: (context) {
-                    bool isLastStep = _currentStep == widget.steps.length - 1;
+                    final bool isLastStep = _currentStep == widget.steps.length - 1;
                     return GestureDetector(
                       onTap: isLastStep ? () => Navigator.of(context).pop(true) : _togglePlayPause,
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
-                          if (!isLastStep)
-                            SizedBox(
-                              width: 50,
-                              height: 50,
-                              child: AnimatedBuilder(
-                                animation: _animationController,
-                                builder: (context, child) {
-                                  return CircularProgressIndicator(
-                                    value: _animationController.value,
-                                    strokeWidth: 4,
-                                    color: AppColors.success,
-                                    backgroundColor: Colors.grey.withValues(alpha: 0.2),
-                                  );
-                                },
-                              ),
+                          // Always show circular progress — on last step it fills then loops
+                          SizedBox(
+                            width: 50,
+                            height: 50,
+                            child: AnimatedBuilder(
+                              animation: _animationController,
+                              builder: (context, child) {
+                                return CircularProgressIndicator(
+                                  value: _animationController.value,
+                                  strokeWidth: 4,
+                                  color: AppColors.success,
+                                  backgroundColor: Colors.grey.withValues(alpha: 0.2),
+                                );
+                              },
                             ),
+                          ),
                           Container(
                             width: 40,
                             height: 40,
@@ -651,7 +653,9 @@ class _PostureDetailDialogState extends State<_PostureDetailDialog> with SingleT
                               color: AppColors.success.withValues(alpha: 0.1),
                             ),
                             child: Icon(
-                              isLastStep ? Icons.check_rounded : (_isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded),
+                              isLastStep
+                                  ? Icons.check_rounded
+                                  : (_isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded),
                               color: AppColors.success,
                               size: 24,
                             ),

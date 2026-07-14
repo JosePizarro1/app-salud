@@ -39,6 +39,16 @@ class _Module1PageState extends State<Module1Page> {
           // Shared Header with Home Button
           const ModuleHeader(showHome: true),
 
+          // JUEGOS letrero — centered, 60% above vertical center
+          Align(
+            alignment: const Alignment(0, -0.6),
+            child: Image.asset(
+              'assets/images/letreros/JUEGOS.webp',
+              width: MediaQuery.of(context).size.width * 0.7,
+              fit: BoxFit.contain,
+            ),
+          ),
+
           // Botón en la parte inferior (siguiendo el estilo del modulo 3)
           Positioned(
             top: MediaQuery.of(context).size.height * 0.78,

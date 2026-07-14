@@ -612,6 +612,7 @@ class _ForumPageState extends State<ForumPage> {
     List<Map<String, dynamic>> postReplies,
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final String authorName = (post['author_name'] as String? ?? 'Usuario').trim();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -664,9 +665,9 @@ class _ForumPageState extends State<ForumPage> {
                   child: CircleAvatar(
                     radius: 18,
                     backgroundColor: isDark ? Colors.white10 : AppColors.surfaceLight,
-                    backgroundImage: (post['author_name'] == 'Titi') ? const AssetImage('assets/images/gato1.png') : null,
-                    child: (post['author_name'] == 'Titi') ? null : Text(
-                      post['author_name'][0].toUpperCase(),
+                    backgroundImage: (authorName == 'Titi') ? const AssetImage('assets/images/gato1.png') : null,
+                    child: (authorName == 'Titi') ? null : Text(
+                      authorName.isNotEmpty ? authorName[0].toUpperCase() : 'U',
                       style: GoogleFonts.outfit(
                         color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
                         fontWeight: FontWeight.bold,
@@ -676,61 +677,63 @@ class _ForumPageState extends State<ForumPage> {
                 ),
               ),
               const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        post['author_name'],
-                        style: GoogleFonts.outfit(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      authorName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      softWrap: false,
+                      style: GoogleFonts.outfit(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    // Soft Green Student "Miembro" badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1E3520) : const Color(0xFFE2F0D9),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF385723).withValues(alpha: 0.4) : const Color(0xFFC5E0B4),
+                          width: 1,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      // Soft Green Student "Miembro" badge
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1E3520) : const Color(0xFFE2F0D9),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isDark ? const Color(0xFF385723).withValues(alpha: 0.4) : const Color(0xFFC5E0B4),
-                            width: 1,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.eco_rounded,
+                            size: 10,
+                            color: isDark ? const Color(0xFF8CD37B) : const Color(0xFF385723),
                           ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.eco_rounded,
-                              size: 10,
+                          const SizedBox(width: 4),
+                          Text(
+                            'Miembro',
+                            style: GoogleFonts.outfit(
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
                               color: isDark ? const Color(0xFF8CD37B) : const Color(0xFF385723),
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Miembro',
-                              style: GoogleFonts.outfit(
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                                color: isDark ? const Color(0xFF8CD37B) : const Color(0xFF385723),
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  Text(
-                    _formatTimeAgo(post['created_at']),
-                    style: GoogleFonts.outfit(
-                      fontSize: 12,
-                      color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    Text(
+                      _formatTimeAgo(post['created_at']),
+                      style: GoogleFonts.outfit(
+                        fontSize: 12,
+                        color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -819,6 +822,7 @@ class _ForumPageState extends State<ForumPage> {
   Widget _buildReplyTile(Map<String, dynamic> reply) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isAdminReply = reply['is_admin'] == true;
+    final String authorName = (reply['author_name'] as String? ?? 'Usuario').trim();
     
     return Container(
       margin: const EdgeInsets.only(top: 8),
@@ -864,7 +868,7 @@ class _ForumPageState extends State<ForumPage> {
                 backgroundColor: isDark ? Colors.white10 : AppColors.surfaceLight,
                 backgroundImage: isAdminReply ? const AssetImage('assets/images/gato1.png') : null,
                 child: isAdminReply ? null : Text(
-                  reply['author_name'][0].toUpperCase(),
+                  authorName.isNotEmpty ? authorName[0].toUpperCase() : 'U',
                   style: GoogleFonts.outfit(
                     color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
                     fontWeight: FontWeight.bold,
@@ -880,10 +884,14 @@ class _ForumPageState extends State<ForumPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      reply['author_name'],
+                      authorName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      softWrap: false,
                       style: GoogleFonts.outfit(
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
@@ -892,7 +900,7 @@ class _ForumPageState extends State<ForumPage> {
                             : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight),
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(height: 4),
                     // Badge: Maestro / Miembro
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -932,7 +940,7 @@ class _ForumPageState extends State<ForumPage> {
                         ],
                       ),
                     ),
-                    const Spacer(),
+                    const SizedBox(height: 4),
                     Text(
                       _formatTimeAgo(reply['created_at']),
                       style: GoogleFonts.outfit(

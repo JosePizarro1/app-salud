@@ -52,34 +52,45 @@ class _Module5PageState extends State<Module5Page> {
           // Shared Header with Home Button
           const ModuleHeader(showHome: true),
 
-          // Botones en la parte inferior (siguiendo el estilo del modulo 1 y 3)
-          Positioned(
-            top: MediaQuery.of(context).size.height * 0.78,
-            left: 0,
-            right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildMenuButton(
-                  imagePath: 'assets/images/boton_diario.webp',
-                  index: 0,
-                  sizeScale: 0.67,
-                  onTap: () async {
-                    await _triggerScale(0);
-                    if (context.mounted) context.push('/organizer');
-                  },
-                ),
-                const SizedBox(width: 15),
-                _buildMenuButton(
-                  imagePath: 'assets/images/Bemociones.webp',
-                  index: 1,
-                  sizeScale: 0.95,
-                  onTap: () async {
-                    await _triggerScale(1);
-                    if (context.mounted) context.push('/emotions');
-                  },
-                ),
-              ],
+          // HORARIO letrero — centered, 60% above vertical center
+          Align(
+            alignment: const Alignment(0, -0.6),
+            child: Image.asset(
+              'assets/images/letreros/HORARIO.webp',
+              width: MediaQuery.of(context).size.width * 0.756,
+              fit: BoxFit.contain,
+            ),
+          ),
+
+          // Navigation buttons: 2 buttons pushed to screen edges (left: Diario, right: Emociones)
+          Align(
+            alignment: const Alignment(0, 0.4),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  _buildMenuButton(
+                    imagePath: 'assets/images/boton_diario.webp',
+                    index: 0,
+                    sizeScale: 0.67,
+                    onTap: () async {
+                      await _triggerScale(0);
+                      if (context.mounted) context.push('/organizer');
+                    },
+                  ),
+                  _buildMenuButton(
+                    imagePath: 'assets/images/Bemociones.webp',
+                    index: 1,
+                    sizeScale: 0.95,
+                    onTap: () async {
+                      await _triggerScale(1);
+                      if (context.mounted) context.push('/emotions');
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         ],

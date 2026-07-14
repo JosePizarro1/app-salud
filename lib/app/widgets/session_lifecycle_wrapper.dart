@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/session_service.dart';
 
 class SessionLifecycleWrapper extends StatefulWidget {
@@ -27,12 +29,25 @@ class _SessionLifecycleWrapperState extends State<SessionLifecycleWrapper> with 
     }
 
     // Escuchar cambios en el estado de autenticación
-    Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+    Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
       final event = data.event;
       if (event == AuthChangeEvent.signedIn) {
         _startSession();
       } else if (event == AuthChangeEvent.signedOut) {
         _stopSession();
+
+        // Evitar deslogeo/redirección si está en modo admin
+        final prefs = await SharedPreferences.getInstance();
+        final isAdmin = prefs.getBool('is_admin_mode') ?? false;
+        if (isAdmin) return;
+
+        if (mounted) {
+          final router = GoRouter.of(context);
+          final currentPath = router.routeInformationProvider.value.uri.path;
+          if (currentPath != '/login' && currentPath != '/register' && currentPath != '/welcome') {
+            router.go('/login');
+          }
+        }
       }
     });
   }

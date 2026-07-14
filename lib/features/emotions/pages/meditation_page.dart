@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,16 +6,19 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:animate_do/animate_do.dart';
-import 'package:video_player/video_player.dart';
 import '../../../app/widgets/bounceable_scale.dart';
-import '../../../app/widgets/custom_fade_in.dart';
-import '../widgets/meditation_painters.dart';
 import '../../home/widgets/module_header.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../services/notification_service.dart';
 import '../../../app/services/stats_sync_service.dart';
+import '../../../app/services/background_music_manager.dart';
 
+import '../widgets/meditation/meditation_selection_view.dart';
+import '../widgets/meditation/meditation_breathing_view.dart';
+import '../widgets/meditation/meditation_audio_selection_view.dart';
+import '../widgets/meditation/meditation_player_view.dart';
+import '../widgets/meditation/meditation_recommendations_view.dart';
+import '../widgets/meditation/meditation_finished_view.dart';
 
 class MeditationPage extends StatefulWidget {
   const MeditationPage({super.key});
@@ -26,40 +28,24 @@ class MeditationPage extends StatefulWidget {
 }
 
 class _MeditationPageState extends State<MeditationPage> with TickerProviderStateMixin, WidgetsBindingObserver {
-  bool _isCommitted = false;
-  bool _wiggleCheckbox = false;
-  int? _selectedTimeOption;
-
   // Flow State
   bool _isSessionActive = false;
   bool _isSessionFinished = false;
   bool _isConfiguring = false;
-  bool _isSelectingAudio = false; // NEW: audio selection view
-  bool _isPlaying = false;        // NEW: player view active
+  bool _isSelectingAudio = false;
+  bool _isPlaying = false;
   int _selectedMinutes = 1;
   int _secondsRemaining = 0;
   Timer? _sessionTimer;
 
   // Feedback Flow State
   bool _showFeedback = false;
-  int _feedbackStep = 1;
-  String? _selectedExperience;
-  String? _selectedFeeling;
   bool _isSavingFeedback = false;
-  final List<String> _selectedImpediments = [];
-  final TextEditingController _feedbackCommentCtrl = TextEditingController();
-  final List<bool> _wiggleImpediments = List.generate(4, (_) => false);
-  bool _wiggleComment = false;
-  bool _isFeedbackSubmitting = false;
 
   // Video Recommendations State
   bool _showRecommendations = false;
   List<Map<String, dynamic>> _recommendedVideos = [];
   bool _isLoadingVideos = false;
-  VideoPlayerController? _activeVideoController;
-  bool _isPlayerInitialized = false;
-  String? _playingVideoUrl;
-
 
   // Breathing loop state: 'inhale', 'hold', 'exhale', 'hold_empty'
   String _breathingPhase = 'inhale';
@@ -79,11 +65,6 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
   StreamSubscription? _durationSub;
   StreamSubscription? _positionSub;
   StreamSubscription? _completionSub;
-
-  // ── Particle Animation ──
-  late AnimationController _particleController;
-  final List<Particle> _particles = [];
-  final _random = Random();
 
   // Notification Configuration State
   bool _isDayNotificationEnabled = false;
@@ -118,34 +99,18 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
     ],
   };
 
-  static const List<String> _audioTitles = [
-    'Meditación de Calma Interior 🌸',
-    'Conexión con tu Respiración 🌿',
-    'Relajación Consciente 🌙',
-    'Momento de Bienestar ✨',
-  ];
-
   @override
   void initState() {
     super.initState();
+    // Do NOT suspend background music here anymore, so it keeps playing in selection menu.
     WidgetsBinding.instance.addObserver(this);
     _circleAnimController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 4),
     );
-    _circleScaleAnimation = Tween<double>(begin: 1.0, end: 2.2).animate(
+    _circleScaleAnimation = Tween<double>(begin: 1.0, end: 1.7).animate(
       CurvedAnimation(parent: _circleAnimController, curve: Curves.easeInOut),
     );
-
-    _particleController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 1),
-    )..repeat();
-
-    // Generate particles
-    for (int i = 0; i < 30; i++) {
-      _particles.add(Particle(random: _random));
-    }
 
     _loadNotificationSettings();
   }
@@ -168,12 +133,12 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
     _sessionTimer?.cancel();
     _breathingTimer?.cancel();
     _circleAnimController.dispose();
-    _particleController.dispose();
     _audioPlayer.dispose();
     _durationSub?.cancel();
     _positionSub?.cancel();
     _completionSub?.cancel();
-    _activeVideoController?.dispose();
+    // Restore background music when leaving the page
+    BackgroundMusicManager().unsuspendMusic();
     super.dispose();
   }
 
@@ -207,33 +172,10 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
     });
   }
 
-  void _triggerWiggle() {
-    setState(() => _wiggleCheckbox = true);
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (mounted) {
-        setState(() => _wiggleCheckbox = false);
-      }
-    });
-  }
-
   // Starts the 10s configuring breathing phase
   void _startBreathingSession(int minutes) {
-    if (!_isCommitted) {
-      _triggerWiggle();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '¡Por favor, confirma tu compromiso de bienestar primero! 🌸',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Colors.white),
-          ),
-          backgroundColor: AppColors.secondary,
-          duration: const Duration(seconds: 2),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        ),
-      );
-      return;
-    }
+    // Suspend background music when starting active session
+    BackgroundMusicManager().suspendMusic();
 
     // Prevent timer multiplication
     _sessionTimer?.cancel();
@@ -264,7 +206,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
           _secondsRemaining--;
         });
       } else {
-        // End of 10s configuring phase → Show audio selection
+        // End of 8s configuring phase → Show audio selection
         _sessionTimer?.cancel();
         _breathingTimer?.cancel();
         _circleAnimController.stop();
@@ -342,9 +284,6 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
         _audioPlayer.stop();
         setState(() {
           _showFeedback = true;
-          _feedbackStep = 1;
-          _selectedExperience = null;
-          _selectedFeeling = null;
         });
       }
     });
@@ -394,73 +333,76 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
       _isSelectingAudio = false;
       _isPlaying = false;
       _showFeedback = false;
-      _feedbackStep = 1;
-      _selectedExperience = null;
-      _selectedFeeling = null;
-      _selectedTimeOption = null;
-      _isCommitted = false;
-      if (completed) {
-        _isSessionFinished = true;
-      }
+      _isSessionFinished = completed;
     });
+
+    // Restore background music when session ends/cancels
+    BackgroundMusicManager().unsuspendMusic();
   }
 
-  String _formatTime(int totalSeconds) {
-    final int minutes = totalSeconds ~/ 60;
-    final int seconds = totalSeconds % 60;
-    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
-  }
+  Future<void> _submitFeedback(String experience, String feeling) async {
+    setState(() {
+      _isSavingFeedback = true;
+    });
 
-  String _formatTimeShort(int totalSeconds) {
-    final int minutes = totalSeconds ~/ 60;
-    final int seconds = totalSeconds % 60;
-    return '$minutes:${seconds.toString().padLeft(2, '0')}';
-  }
-
-  Color _getPhaseColor() {
-    switch (_breathingPhase) {
-      case 'inhale':
-        return AppColors.accent;
-      case 'hold':
-        return AppColors.secondary;
-      case 'exhale':
-        return AppColors.primary;
-      default:
-        return const Color(0xFF9083ED);
+    try {
+      final client = Supabase.instance.client;
+      final user = client.auth.currentUser;
+      if (user != null) {
+        await client.from('meditation_feedback').insert({
+          'user_id': user.id,
+          'duration_minutes': _selectedMinutes,
+          'experience': experience,
+          'feeling': feeling,
+        });
+      }
+    } catch (e) {
+      debugPrint('Error saving meditation feedback to Supabase: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSavingFeedback = false;
+          _showFeedback = false;
+          _isPlaying = false;
+          _isSessionActive = false;
+          _isSessionFinished = true;
+        });
+        // Restore background music since session has finished and they will see recommendations
+        BackgroundMusicManager().unsuspendMusic();
+        _loadRecommendedVideos();
+      }
     }
   }
 
-  String _getPhaseText() {
-    switch (_breathingPhase) {
-      case 'inhale':
-        return 'Inhala profundamente... 🌬️';
-      case 'hold':
-        return 'Sostén el aire... 🧘‍♂️';
-      case 'exhale':
-        return 'Exhala lentamente... 🍃';
-      case 'hold_empty':
-        return 'Pausa y relájate... ✨';
-      default:
-        return '';
+  Future<void> _loadRecommendedVideos() async {
+    setState(() {
+      _isLoadingVideos = true;
+      _showRecommendations = true;
+      _isPlaying = false;
+    });
+    
+    try {
+      final client = Supabase.instance.client;
+      final response = await client
+          .from('recommended_videos')
+          .select()
+          .order('order_index', ascending: true);
+      
+      if (mounted) {
+        setState(() {
+          _recommendedVideos = List<Map<String, dynamic>>.from(response);
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading recommended videos: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingVideos = false;
+        });
+      }
     }
   }
-
-  // Which view to show
-  Widget _getCurrentView() {
-    if (_showRecommendations) return _buildRecommendationsView();
-    if (_isSessionActive) {
-      if (_isConfiguring) return _buildBreathingSessionView();
-      if (_isSelectingAudio) return _buildAudioSelectionView();
-      if (_isPlaying) return _buildPlayerView();
-      return _buildBreathingSessionView();
-    }
-    if (_isSessionFinished) return _buildFinishedView();
-    return _buildSelectionView();
-  }
-
-  // Should header be visible
-  bool get _showHeader => !_isSessionActive && !_isSessionFinished && !_showRecommendations;
-
 
   // Helper widget to build time inputs inside modal
   Widget _buildTimeInputBox({
@@ -665,7 +607,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
                       ),
                       const SizedBox(height: 24),
 
-                      // --- 1. Durante el día Row ---
+                      // sol Sol solarsol
                       Row(
                         children: [
                           Image.asset(
@@ -738,7 +680,7 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
 
                       const SizedBox(height: 28),
 
-                      // --- 2. Antes de dormir Row ---
+                      // Luna lunas moon
                       Row(
                         children: [
                           Image.asset(
@@ -960,6 +902,87 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
     );
   }
 
+  Widget _getCurrentView() {
+    if (_showRecommendations) {
+      return MeditationRecommendationsView(
+        recommendedVideos: _recommendedVideos,
+        isLoadingVideos: _isLoadingVideos,
+        onExit: () {
+          setState(() {
+            _showRecommendations = false;
+            _isSessionFinished = false;
+          });
+          BackgroundMusicManager().unsuspendMusic();
+        },
+        onVideoStarted: (url) {
+          BackgroundMusicManager().suspendMusic();
+        },
+        onVideoEnded: () {
+          BackgroundMusicManager().unsuspendMusic();
+        },
+      );
+    }
+    if (_isSessionActive) {
+      if (_isConfiguring) {
+        return MeditationBreathingView(
+          secondsRemaining: _secondsRemaining,
+          phaseSeconds: _phaseSeconds,
+          breathingPhase: _breathingPhase,
+          isConfiguring: _isConfiguring,
+          circleScaleAnimation: _circleScaleAnimation,
+          onClose: () => _endSession(completed: false),
+        );
+      }
+      if (_isSelectingAudio) {
+        return MeditationAudioSelectionView(
+          selectedMinutes: _selectedMinutes,
+          onAudioSelected: _startAudioPlayback,
+          onClose: () => _endSession(completed: false),
+        );
+      }
+      if (_isPlaying) {
+        return MeditationPlayerView(
+          selectedAudioIndex: _selectedAudioIndex,
+          selectedMinutes: _selectedMinutes,
+          currentAudioPosition: _currentAudioPosition,
+          totalAudioDuration: _totalAudioDuration,
+          isAudioPaused: _isAudioPaused,
+          showFeedback: _showFeedback,
+          isSavingFeedback: _isSavingFeedback,
+          onTogglePause: _togglePause,
+          onSeekRelative: _seekRelative,
+          onClose: () => _endSession(completed: false),
+          onSubmitFeedback: _submitFeedback,
+        );
+      }
+      return MeditationBreathingView(
+        secondsRemaining: _secondsRemaining,
+        phaseSeconds: _phaseSeconds,
+        breathingPhase: _breathingPhase,
+        isConfiguring: _isConfiguring,
+        circleScaleAnimation: _circleScaleAnimation,
+        onClose: () => _endSession(completed: false),
+      );
+    }
+    if (_isSessionFinished) {
+      return MeditationFinishedView(
+        selectedMinutes: _selectedMinutes,
+        onExit: () {
+          setState(() {
+            _isSessionFinished = false;
+          });
+          BackgroundMusicManager().unsuspendMusic();
+        },
+      );
+    }
+    return MeditationSelectionView(
+      onStartSession: _startBreathingSession,
+    );
+  }
+
+  // Should header be visible
+  bool get _showHeader => !_isSessionActive && !_isSessionFinished && !_showRecommendations;
+
   @override
   Widget build(BuildContext context) {
     final bool isNotificationActive = _isDayNotificationEnabled || _isNightNotificationEnabled;
@@ -1037,1782 +1060,4 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
       ),
     );
   }
-
-  // ═══════════════════════════════════════════════════════════════════
-  // --- 1. Selection View ---
-  // ═══════════════════════════════════════════════════════════════════
-  Widget _buildSelectionView() {
-    return Center(
-      key: const ValueKey('selection_view'),
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 20.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const SizedBox(height: 110),
-              Container(
-                width: double.infinity,
-                constraints: const BoxConstraints(maxWidth: 420),
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(32),
-                  border: Border.all(
-                    color: const Color(0xFF88D49E),
-                    width: 3.5,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 25,
-                      offset: const Offset(0, 12),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CustomFadeIn(
-                      duration: const Duration(milliseconds: 600),
-                      slideUp: false,
-                      child: Column(
-                        children: [
-                          Text(
-                            '¡Tomemos una',
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.outfit(
-                              fontSize: 34,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFF3B60B3),
-                              height: 1.15,
-                            ),
-                          ),
-                          Text(
-                            'pequeña pausa!',
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.outfit(
-                              fontSize: 34,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFF28AF52),
-                              height: 1.15,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    Text(
-                      'Cada sesión se adapta a tu tiempo disponible.',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF4C7CC2),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    _buildTimeButton(
-                      imagePath: 'assets/images/modulo_respiracion/B1minuto.webp',
-                      minutes: 1,
-                    ),
-                    const SizedBox(height: 10),
-                    _buildTimeButton(
-                      imagePath: 'assets/images/modulo_respiracion/B3minutos.webp',
-                      minutes: 3,
-                    ),
-                    const SizedBox(height: 10),
-                    _buildTimeButton(
-                      imagePath: 'assets/images/modulo_respiracion/B5minutos.webp',
-                      minutes: 5,
-                    ),
-
-                    if (_selectedTimeOption != null) ...[
-                      const SizedBox(height: 24),
-                      CustomFadeIn(
-                        duration: const Duration(milliseconds: 350),
-                        slideUp: true,
-                        child: Column(
-                          children: [
-                            Text(
-                              'Hoy elijo dedicarme unos minutos',
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.outfit(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF4C7CC2),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            _buildCommitmentCheckbox(),
-                            if (_isCommitted) ...[
-                              const SizedBox(height: 20),
-                              CustomFadeIn(
-                                duration: const Duration(milliseconds: 250),
-                                slideUp: true,
-                                child: SizedBox(
-                                  width: double.infinity,
-                                  height: 52,
-                                  child: ElevatedButton(
-                                    onPressed: () => _startBreathingSession(_selectedTimeOption!),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF28AF52),
-                                      foregroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      elevation: 1.5,
-                                    ),
-                                    child: Text(
-                                      'Comenzar Meditación',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _onTimeButtonTap(int minutes) {
-    setState(() {
-      _selectedTimeOption = minutes;
-    });
-    if (_isCommitted) {
-      _startBreathingSession(minutes);
-    }
-  }
-
-  Widget _buildTimeButton({required String imagePath, required int minutes}) {
-    final bool isSelected = _selectedTimeOption == minutes;
-    final bool isAnySelected = _selectedTimeOption != null;
-    final double opacity = !isAnySelected || isSelected ? 1.0 : 0.55;
-
-    return BounceableScale(
-      onTap: () => _onTimeButtonTap(minutes),
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 250),
-        opacity: opacity,
-        child: SizedBox(
-          width: double.infinity,
-          height: MediaQuery.of(context).size.height * 0.088,
-          child: Image.asset(
-            imagePath,
-            fit: BoxFit.cover,
-            alignment: Alignment.center,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCommitmentCheckbox() {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      transform: _wiggleCheckbox
-          ? Matrix4.translationValues(5.0 * (DateTime.now().millisecond % 2 == 0 ? 1 : -1), 0.0, 0.0)
-          : Matrix4.identity(),
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      decoration: BoxDecoration(
-        color: _wiggleCheckbox
-            ? const Color(0xFFFFF2ED)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                _isCommitted = !_isCommitted;
-              });
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              margin: const EdgeInsets.only(top: 2, right: 12),
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                color: _isCommitted ? const Color(0xFF28AF52) : Colors.transparent,
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                  color: _isCommitted
-                      ? const Color(0xFF28AF52)
-                      : _wiggleCheckbox
-                          ? AppColors.primary
-                          : const Color(0xFF28AF52),
-                  width: 2.2,
-                ),
-              ),
-              child: _isCommitted
-                  ? const Icon(Icons.check, size: 16, color: Colors.white)
-                  : null,
-            ),
-          ),
-          Expanded(
-            child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  _isCommitted = !_isCommitted;
-                });
-              },
-              child: Text(
-                'Me comprometo a participar activamente en mis sesiones de meditación guiada para apoyar mi bienestar emocional y universitario.',
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  height: 1.45,
-                  fontWeight: FontWeight.w500,
-                  color: const Color(0xFF1E293B),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════════════
-  // --- 2. Breathing / Configuring View ---
-  // ═══════════════════════════════════════════════════════════════════
-  Widget _buildBreathingSessionView() {
-    final double size = MediaQuery.of(context).size.width * 0.42;
-
-    return Center(
-      key: const ValueKey('session_view'),
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Timer countdown + close button
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10),
-                    ],
-                  ),
-                  child: Text(
-                    _formatTime(_secondsRemaining),
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimaryLight,
-                    ),
-                  ),
-                ),
-                IconButton.filledTonal(
-                  onPressed: () => _endSession(completed: false),
-                  icon: const Icon(Icons.close_rounded, size: 22),
-                  style: IconButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.redAccent,
-                  ),
-                ),
-              ],
-            ),
-            const Spacer(),
-
-            // Guided Breathing visual circle
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                AnimatedBuilder(
-                  animation: _circleScaleAnimation,
-                  builder: (context, child) {
-                    return Container(
-                      width: size * _circleScaleAnimation.value,
-                      height: size * _circleScaleAnimation.value,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _getPhaseColor().withValues(alpha: 0.12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: _getPhaseColor().withValues(alpha: 0.25),
-                            blurRadius: 35,
-                            spreadRadius: 5,
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-                AnimatedBuilder(
-                  animation: _circleScaleAnimation,
-                  builder: (context, child) {
-                    return Container(
-                      width: size * (_circleScaleAnimation.value * 0.8),
-                      height: size * (_circleScaleAnimation.value * 0.8),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: [
-                            _getPhaseColor(),
-                            _getPhaseColor().withValues(alpha: 0.7),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          '$_phaseSeconds',
-                          style: GoogleFonts.spaceGrotesk(
-                            fontSize: 32,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-            const Spacer(),
-
-            CustomFadeIn(
-              key: ValueKey(_breathingPhase),
-              duration: const Duration(milliseconds: 300),
-              slideUp: true,
-              child: Text(
-                _getPhaseText(),
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF2C5CA8),
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-
-            Text(
-              _isConfiguring 
-                  ? 'Espera un momento mientras se configura...\nMantén los hombros relajados.'
-                  : 'Mantén los hombros relajados e inhala por la nariz.',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                color: Colors.grey.shade600,
-                fontWeight: FontWeight.w500,
-                height: 1.5,
-              ),
-            ),
-            const Spacer(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════════════
-  // --- 2b. Audio Selection View (NEW) ---
-  // ═══════════════════════════════════════════════════════════════════
-  Widget _buildAudioSelectionView() {
-    return Center(
-      key: const ValueKey('audio_selection_view'),
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
-          child: Column(
-            children: [
-              const SizedBox(height: 60),
-              CustomFadeIn(
-                duration: const Duration(milliseconds: 500),
-                slideUp: false,
-                child: Column(
-                  children: [
-                    const Text('🎧', style: TextStyle(fontSize: 48)),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Elige tu meditación',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.outfit(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF3B60B3),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Sesión de $_selectedMinutes ${_selectedMinutes == 1 ? 'minuto' : 'minutos'}',
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF28AF52),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 28),
-
-              // Audio option cards
-              ...List.generate(4, (i) {
-                final idx = i + 1;
-                final colors = [
-                  [const Color(0xFF88D49E), const Color(0xFF28AF52)],
-                  [const Color(0xFF9BB8ED), const Color(0xFF3B60B3)],
-                  [const Color(0xFFE8A0C8), const Color(0xFFE56BB5)],
-                  [const Color(0xFFFFCC80), const Color(0xFFFF9800)],
-                ];
-                final bgColors = [
-                  const Color(0xFFEBF7EE), // Solid Light Green
-                  const Color(0xFFEEF2FC), // Solid Light Blue
-                  const Color(0xFFFDF0F8), // Solid Light Pink
-                  const Color(0xFFFFF7EB), // Solid Light Orange/Cream
-                ];
-                final icons = ['🌸', '🌿', '🌙', '✨'];
-
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 14),
-                  child: CustomFadeIn(
-                    duration: const Duration(milliseconds: 400),
-                    delay: i * 0.12,
-                    slideUp: true,
-                    child: BounceableScale(
-                      onTap: () => _startAudioPlayback(idx),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
-                        decoration: BoxDecoration(
-                          color: bgColors[i],
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: colors[i][1],
-                            width: 2.5,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: colors[i][0].withValues(alpha: 0.15),
-                              blurRadius: 15,
-                              offset: const Offset(0, 6),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: colors[i][1].withValues(alpha: 0.15),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Center(
-                                child: Text(icons[i], style: const TextStyle(fontSize: 24)),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Audio $idx',
-                                    style: GoogleFonts.outfit(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: colors[i][1],
-                                      letterSpacing: 1.2,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 3),
-                                  Text(
-                                    _audioTitles[i],
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: const Color(0xFF2D3142),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Icon(
-                              Icons.play_circle_fill_rounded,
-                              color: colors[i][1],
-                              size: 36,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }),
-
-              const SizedBox(height: 16),
-              // Back button
-              TextButton.icon(
-                onPressed: () => _endSession(completed: false),
-                icon: const Icon(Icons.arrow_back_rounded, size: 18),
-                label: Text(
-                  'Volver al menú',
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.grey.shade600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════════════
-  // --- 2c. Audio Player View (Circular Timer + Particles) ---
-  // ═══════════════════════════════════════════════════════════════════
-  Widget _buildPlayerView() {
-    final screenW = MediaQuery.of(context).size.width;
-    final circleSize = screenW * 0.6;
-    final progress = _totalAudioDuration > 0
-        ? _currentAudioPosition / _totalAudioDuration
-        : 0.0;
-
-    return Stack(
-      key: const ValueKey('player_view'),
-      fit: StackFit.expand,
-      children: [
-        // ── Dark relaxing background ──
-        Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-          ),
-        ),
-
-        // ── Particle background ──
-        RepaintBoundary(
-          child: AnimatedBuilder(
-            animation: _particleController,
-            builder: (context, _) {
-              return CustomPaint(
-                painter: ParticlePainter(
-                  particles: _particles,
-                  animValue: _particleController.value,
-                  isPaused: _isAudioPaused,
-                ),
-                size: Size.infinite,
-              );
-            },
-          ),
-        ),
-
-        // ── Player UI or Feedback Card ──
-        if (_showFeedback)
-          _buildFeedbackOverlay()
-        else
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Column(
-                children: [
-                  const SizedBox(height: 70),
-
-                  // Title
-                  CustomFadeIn(
-                    duration: const Duration(milliseconds: 500),
-                    slideUp: false,
-                    child: Column(
-                      children: [
-                        Text(
-                          _audioTitles[(_selectedAudioIndex ?? 1) - 1],
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.outfit(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white, // Changed to white for dark bg
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Sesión de $_selectedMinutes ${_selectedMinutes == 1 ? 'minuto' : 'minutos'}',
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF88D49E), // Lighter green for dark bg
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const Spacer(),
-
-                  // ── Circular progress timer ──
-                  RepaintBoundary(
-                    child: SizedBox(
-                      width: circleSize,
-                      height: circleSize,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          // Background arc
-                          SizedBox(
-                            width: circleSize,
-                            height: circleSize,
-                            child: CustomPaint(
-                              painter: CircularProgressPainter(
-                                progress: progress,
-                                trackColor: Colors.white.withValues(alpha: 0.1),
-                                progressColor: const Color(0xFF88D49E),
-                                strokeWidth: 8,
-                              ),
-                            ),
-                          ),
-
-                          // Progress indicator dot
-                          SizedBox(
-                            width: circleSize,
-                            height: circleSize,
-                            child: CustomPaint(
-                              painter: ProgressDotPainter(
-                                progress: progress,
-                                dotColor: Colors.white,
-                                dotSize: 14,
-                              ),
-                            ),
-                          ),
-
-
-                          // Play/Pause button in center
-                          GestureDetector(
-                            onTap: _togglePause,
-                            child: Container(
-                              width: 72,
-                              height: 72,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.white.withValues(alpha: 0.85),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.08),
-                                    blurRadius: 20,
-                                    offset: const Offset(0, 6),
-                                  ),
-                                ],
-                              ),
-                              child: Icon(
-                                _isAudioPaused
-                                    ? Icons.play_arrow_rounded
-                                    : Icons.pause_rounded,
-                                size: 36,
-                                color: const Color(0xFF2D3142),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // ── Time display + controls ──
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Rewind
-                      GestureDetector(
-                        onTap: () => _seekRelative(-10),
-                        child: Container(
-                          width: 40,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withValues(alpha: 0.15),
-                          ),
-                          child: const Icon(Icons.replay_10_rounded, size: 22, color: Colors.white),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-
-                      // Time pill
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-                        ),
-                        child: Text(
-                          '${_formatTimeShort(_currentAudioPosition)} - ${_formatTimeShort(_totalAudioDuration)}',
-                          style: GoogleFonts.spaceGrotesk(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-
-                      // Forward
-                      GestureDetector(
-                        onTap: () => _seekRelative(10),
-                        child: Container(
-                          width: 40,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withValues(alpha: 0.15),
-                          ),
-                          child: const Icon(Icons.forward_10_rounded, size: 22, color: Colors.white),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const Spacer(),
-
-                  // Stop button
-                  TextButton.icon(
-                    onPressed: () => _endSession(completed: false),
-                    icon: const Icon(Icons.stop_circle_outlined, size: 20),
-                    label: Text(
-                      'Terminar sesión',
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.redAccent.shade200,
-                    ),
-                  ),
-                  const SizedBox(height: 100),
-                ],
-              ),
-            ),
-          ),
-
-      ],
-    );
-  }
-
-  Widget _buildFeedbackOverlay() {
-    return SafeArea(
-      child: Column(
-        children: [
-          const Spacer(),
-          FadeInUp(
-            duration: const Duration(milliseconds: 500),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-              decoration: const BoxDecoration(
-                color: Color(0xFF1E1F2C),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-              ),
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                child: _feedbackStep == 1
-                    ? _buildFeedbackStep1()
-                    : _buildFeedbackStep2(),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFeedbackStep1() {
-    return Column(
-      key: const ValueKey('step1'),
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Center(
-          child: Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-        ),
-        const SizedBox(height: 20),
-        Text(
-          '¿Cómo fue tu experiencia con esta meditación?',
-          style: GoogleFonts.outfit(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Queremos conocer tu opinión',
-          style: GoogleFonts.poppins(
-            fontSize: 13,
-            color: Colors.white.withValues(alpha: 0.6),
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 24),
-        _buildExperienceOption('Positiva'),
-        const SizedBox(height: 12),
-        _buildExperienceOption('Neutral'),
-        const SizedBox(height: 12),
-        _buildExperienceOption('Negativa'),
-        const SizedBox(height: 28),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              '1/2',
-              style: GoogleFonts.poppins(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: Colors.white.withValues(alpha: 0.4),
-              ),
-            ),
-            SizedBox(
-              height: 48,
-              child: ElevatedButton(
-                onPressed: _selectedExperience == null
-                    ? null
-                    : () {
-                        HapticFeedback.mediumImpact();
-                        setState(() {
-                          _feedbackStep = 2;
-                        });
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1B8A74),
-                  disabledBackgroundColor: const Color(0xFF1B8A74).withValues(alpha: 0.3),
-                  foregroundColor: Colors.white,
-                  disabledForegroundColor: Colors.white.withValues(alpha: 0.3),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
-                  elevation: 0,
-                ),
-                child: Text(
-                  'Continuar',
-                  style: GoogleFonts.outfit(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildExperienceOption(String option) {
-    final bool isSelected = _selectedExperience == option;
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        setState(() {
-          _selectedExperience = option;
-        });
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
-        decoration: BoxDecoration(
-          color: const Color(0xFF2B2D3C),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? const Color(0xFF1B8A74) : Colors.transparent,
-            width: 2.2,
-          ),
-        ),
-        child: Row(
-          children: [
-            Text(
-              option,
-              style: GoogleFonts.poppins(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.8),
-              ),
-            ),
-            const Spacer(),
-            if (isSelected)
-              const Icon(
-                Icons.check_circle_rounded,
-                color: Color(0xFF1B8A74),
-                size: 20,
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFeedbackStep2() {
-    return Column(
-      key: const ValueKey('step2'),
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Center(
-          child: Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-        ),
-        const SizedBox(height: 20),
-        Text(
-          '¿Cómo te sientes ahora?',
-          style: GoogleFonts.outfit(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Selecciona la sensación que mejor te describa',
-          style: GoogleFonts.poppins(
-            fontSize: 13,
-            color: Colors.white.withValues(alpha: 0.6),
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 20),
-        _buildFeelingOption('Relajado 🧘‍♂️'),
-        const SizedBox(height: 8),
-        _buildFeelingOption('Con energía ⚡'),
-        const SizedBox(height: 8),
-        _buildFeelingOption('Más tranquilo 🍃'),
-        const SizedBox(height: 8),
-        _buildFeelingOption('Distraído 🌀'),
-        const SizedBox(height: 8),
-        _buildFeelingOption('Con sueño 💤'),
-        const SizedBox(height: 24),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    setState(() {
-                      _feedbackStep = 1;
-                    });
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.08),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.arrow_back_rounded,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  '2/2',
-                  style: GoogleFonts.poppins(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white.withValues(alpha: 0.4),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(
-              height: 48,
-              child: ElevatedButton(
-                onPressed: _selectedFeeling == null || _isSavingFeedback
-                    ? null
-                    : _saveFeedbackToSupabase,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1B8A74),
-                  disabledBackgroundColor: const Color(0xFF1B8A74).withValues(alpha: 0.3),
-                  foregroundColor: Colors.white,
-                  disabledForegroundColor: Colors.white.withValues(alpha: 0.3),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
-                  elevation: 0,
-                ),
-                child: _isSavingFeedback
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : Text(
-                        'Finalizar',
-                        style: GoogleFonts.outfit(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFeelingOption(String option) {
-    final bool isSelected = _selectedFeeling == option;
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        setState(() {
-          _selectedFeeling = option;
-        });
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-        decoration: BoxDecoration(
-          color: const Color(0xFF2B2D3C),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? const Color(0xFF1B8A74) : Colors.transparent,
-            width: 2.2,
-          ),
-        ),
-        child: Row(
-          children: [
-            Text(
-              option,
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.8),
-              ),
-            ),
-            const Spacer(),
-            if (isSelected)
-              const Icon(
-                Icons.check_circle_rounded,
-                color: Color(0xFF1B8A74),
-                size: 18,
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _saveFeedbackToSupabase() async {
-    if (_selectedExperience == null || _selectedFeeling == null) return;
-    
-    setState(() {
-      _isSavingFeedback = true;
-    });
-    
-    try {
-      final client = Supabase.instance.client;
-      final userId = client.auth.currentUser?.id;
-      if (userId != null) {
-        await client.from('meditation_feedback').insert({
-          'user_id': userId,
-          'duration_minutes': _selectedMinutes,
-          'experience': _selectedExperience,
-          'feeling': _selectedFeeling,
-        });
-      }
-    } catch (e) {
-      debugPrint('Error saving meditation feedback to Supabase: $e');
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSavingFeedback = false;
-          _showFeedback = false;
-          _feedbackStep = 1;
-          _selectedExperience = null;
-          _selectedFeeling = null;
-          _isPlaying = false;
-        });
-        _loadRecommendedVideos();
-      }
-    }
-  }
-
-  Future<void> _loadRecommendedVideos() async {
-    setState(() {
-      _isLoadingVideos = true;
-      _showRecommendations = true;
-      _isPlaying = false;
-    });
-    
-    try {
-      final client = Supabase.instance.client;
-      final response = await client
-          .from('recommended_videos')
-          .select()
-          .order('order_index', ascending: true);
-      
-      if (mounted) {
-        setState(() {
-          _recommendedVideos = List<Map<String, dynamic>>.from(response);
-        });
-      }
-    } catch (e) {
-      debugPrint('Error loading recommended videos: $e');
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoadingVideos = false;
-        });
-      }
-    }
-  }
-
-
-  Widget _buildRecommendationsView() {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0F121D),
-      body: Stack(
-        children: [
-          // Main scrollable content
-          SafeArea(
-            child: Center(
-              child: Container(
-                constraints: const BoxConstraints(maxWidth: 600),
-                padding: const EdgeInsets.symmetric(horizontal: 18.0),
-                child: _isLoadingVideos && _recommendedVideos.isEmpty
-                    ? const Center(
-                        child: CircularProgressIndicator(
-                          color: Color(0xFF28AF52),
-                        ),
-                      )
-                    : Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 80),
-                          // Header row (Titi recommends)
-                          _buildRecommendationsHeader(),
-                          const SizedBox(height: 16),
-                          
-                          // Scrollable videos list
-                          Expanded(
-                            child: _recommendedVideos.isEmpty
-                                ? _buildEmptyRecommendations()
-                                : ListView.builder(
-                                    physics: const BouncingScrollPhysics(),
-                                    itemCount: _recommendedVideos.length + 1, // +1 for the exit button
-                                    itemBuilder: (context, index) {
-                                      if (index == _recommendedVideos.length) {
-                                        return _buildRecommendationsExitButton();
-                                      }
-                                      
-                                      final video = _recommendedVideos[index];
-                                      if (index == 0) {
-                                        return _buildFeaturedVideoCard(video);
-                                      }
-                                      return _buildStandardVideoRow(video);
-                                    },
-                                  ),
-                          ),
-                        ],
-                      ),
-              ),
-            ),
-          ),
-
-          // Video Player Overlay
-          if (_playingVideoUrl != null)
-            _buildVideoPlayerOverlay(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRecommendationsHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'TITI RECOMIENDA:',
-                style: GoogleFonts.outfit(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF88D49E),
-                  letterSpacing: 1.5,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '"MEDITACIÓN Y RELAJACIÓN"',
-                style: GoogleFonts.outfit(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 12),
-        // Decorative Avatar
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFF88D49E), width: 1.5),
-            image: const DecorationImage(
-              image: AssetImage('assets/images/mascot.webp'),
-              fit: BoxFit.cover,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-
-  Widget _buildEmptyRecommendations() {
-    return Center(
-      child: Text(
-        'No se encontraron recomendaciones disponibles.',
-        style: GoogleFonts.poppins(color: Colors.white70),
-      ),
-    );
-  }
-
-  Widget _buildFeaturedVideoCard(Map<String, dynamic> video) {
-    return FadeInUp(
-      duration: const Duration(milliseconds: 600),
-      child: GestureDetector(
-        onTap: () => _playVideo(video['video_url']),
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 20),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1E2030),
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Large Image Preview with overlay buttons
-              AspectRatio(
-                aspectRatio: 16 / 9,
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      Image.network(
-                        video['thumbnail_url'],
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          color: const Color(0xFF2B2D3C),
-                          child: const Icon(Icons.image_not_supported, color: Colors.white24, size: 40),
-                        ),
-                      ),
-                      // Dark gradient cover
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Colors.transparent, Colors.black.withValues(alpha: 0.5)],
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                          ),
-                        ),
-                      ),
-                      // Duration overlay
-                      Positioned(
-                        left: 12,
-                        bottom: 12,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.65),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 14),
-                              const SizedBox(width: 3),
-                              Text(
-                                video['duration'],
-                                style: GoogleFonts.spaceGrotesk(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      // Play icon at bottom-right
-                      Positioned(
-                        right: 12,
-                        bottom: 12,
-                        child: Container(
-                          width: 42,
-                          height: 42,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF28AF52),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFF28AF52).withValues(alpha: 0.4),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 26),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              // Video Title and Description below
-              Padding(
-                padding: const EdgeInsets.all(18.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      video['title'],
-                      style: GoogleFonts.outfit(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      video['description'],
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: Colors.white.withValues(alpha: 0.7),
-                        height: 1.45,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStandardVideoRow(Map<String, dynamic> video) {
-    return FadeInUp(
-      duration: const Duration(milliseconds: 500),
-      child: GestureDetector(
-        onTap: () => _playVideo(video['video_url']),
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1E2030),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            children: [
-              // Image Thumbnail (Left)
-              SizedBox(
-                width: 110,
-                height: 70,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      Image.network(
-                        video['thumbnail_url'],
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          color: const Color(0xFF2B2D3C),
-                          child: const Icon(Icons.image_not_supported, color: Colors.white24, size: 24),
-                        ),
-                      ),
-                      Container(
-                        color: Colors.black.withValues(alpha: 0.15),
-                      ),
-                      // Duration label
-                      Positioned(
-                        left: 6,
-                        bottom: 6,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.7),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            video['duration'],
-                            style: GoogleFonts.spaceGrotesk(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 14),
-              // Text Details (Right)
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      video['title'],
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.outfit(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      video['description'],
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.poppins(
-                        fontSize: 11.5,
-                        color: Colors.white.withValues(alpha: 0.6),
-                        height: 1.35,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              // Tiny Play Button
-              Container(
-                width: 32,
-                height: 32,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF28AF52),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 18),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRecommendationsExitButton() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 24.0),
-      child: SizedBox(
-        width: double.infinity,
-        height: 52,
-        child: ElevatedButton(
-          onPressed: () {
-            HapticFeedback.mediumImpact();
-            setState(() {
-              _showRecommendations = false;
-              _selectedTimeOption = null;
-              _isCommitted = false;
-            });
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF28AF52),
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            elevation: 0,
-          ),
-          child: Text(
-            'Volver al Menú',
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildVideoPlayerOverlay() {
-    return Container(
-      color: Colors.black.withValues(alpha: 0.9),
-      width: double.infinity,
-      height: double.infinity,
-      alignment: Alignment.center,
-      child: SafeArea(
-        child: Column(
-          children: [
-            // Top action bar
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  IconButton(
-                    onPressed: _closeVideoPlayer,
-                    icon: const Icon(Icons.close_rounded, color: Colors.white, size: 28),
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.white.withValues(alpha: 0.1),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Spacer(),
-            
-            // Video aspect area
-            _isPlayerInitialized && _activeVideoController != null
-                ? Container(
-                    constraints: const BoxConstraints(maxWidth: 800),
-                    child: AspectRatio(
-                      aspectRatio: _activeVideoController!.value.aspectRatio,
-                      child: Stack(
-                        alignment: Alignment.bottomCenter,
-                        children: [
-                          GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                if (_activeVideoController!.value.isPlaying) {
-                                  _activeVideoController!.pause();
-                                } else {
-                                  _activeVideoController!.play();
-                                }
-                              });
-                            },
-                            child: VideoPlayer(_activeVideoController!),
-                          ),
-                          // Subtle play/pause indicator in middle
-                          if (!_activeVideoController!.value.isPlaying)
-                            GestureDetector(
-                              onTap: () => setState(() => _activeVideoController!.play()),
-                              child: Container(
-                                width: 64,
-                                height: 64,
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.6),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 36),
-                              ),
-                            ),
-                          // Video progress bar at bottom
-                          VideoProgressIndicator(
-                            _activeVideoController!,
-                            allowScrubbing: true,
-                            colors: const VideoProgressColors(
-                              playedColor: Color(0xFF28AF52),
-                              bufferedColor: Colors.white24,
-                              backgroundColor: Colors.white12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                : const Center(
-                    child: CircularProgressIndicator(
-                      color: Color(0xFF28AF52),
-                    ),
-                  ),
-            
-            const Spacer(),
-            const SizedBox(height: 50),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _playVideo(String url) async {
-    HapticFeedback.mediumImpact();
-    await _activeVideoController?.dispose();
-    
-    setState(() {
-      _playingVideoUrl = url;
-      _isPlayerInitialized = false;
-      _activeVideoController = VideoPlayerController.networkUrl(Uri.parse(url));
-    });
-
-    try {
-      await _activeVideoController!.initialize();
-      if (mounted && _playingVideoUrl == url) {
-        setState(() {
-          _isPlayerInitialized = true;
-        });
-        _activeVideoController!.play();
-      }
-    } catch (e) {
-      debugPrint('Error initializing video player: $e');
-    }
-  }
-
-  void _closeVideoPlayer() {
-    _activeVideoController?.pause();
-    setState(() {
-      _playingVideoUrl = null;
-      _isPlayerInitialized = false;
-    });
-  }
-
-  // ═══════════════════════════════════════════════════════════════════
-  // --- 3. Finished / Celebration View ---
-  // ═══════════════════════════════════════════════════════════════════
-  Widget _buildFinishedView() {
-
-
-    return Center(
-      key: const ValueKey('finished_view'),
-      child: CustomFadeIn(
-        duration: const Duration(milliseconds: 600),
-        slideUp: true,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 400),
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(32),
-              border: Border.all(color: const Color(0xFF88D49E), width: 3.5),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  '🌸',
-                  style: TextStyle(fontSize: 64),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  '¡Excelente trabajo!',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.outfit(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF3B60B3),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Has completado tu sesión de meditación consciente de $_selectedMinutes ${_selectedMinutes == 1 ? 'minuto' : 'minutos'}.',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14.5,
-                    color: Colors.grey.shade700,
-                    height: 1.5,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 28),
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _isSessionFinished = false;
-                        _selectedTimeOption = null;
-                        _isCommitted = false;
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF28AF52),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: Text(
-                      'Regresar al Menú',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
-

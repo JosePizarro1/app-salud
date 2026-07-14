@@ -79,10 +79,22 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
       }
     } on AuthException catch (e) {
       if (mounted) {
+        String friendlyMessage = e.message;
+        
+        if (e.message.contains('already registered') || e.message.contains('already exists') || e.message.toLowerCase().contains('exists')) {
+          friendlyMessage = "Este correo ya está registrado. Por favor, intenta iniciar sesión o usa otro correo.";
+        } else if (e.message.contains('Password should be at least 6 characters')) {
+          friendlyMessage = "La contraseña debe tener al menos 6 caracteres.";
+        } else if (e.message.contains('invalid format') || e.message.contains('invalid email')) {
+          friendlyMessage = "El formato del correo electrónico no es válido.";
+        } else if (e.message.contains('Signup is disabled')) {
+          friendlyMessage = "El registro de nuevos usuarios está deshabilitado temporalmente.";
+        }
+
         VitaliDialog.show(
           context,
-          title: "Aviso de Registro",
-          message: "No pudimos completar el registro: ${e.message}",
+          title: "Error de Registro",
+          message: friendlyMessage,
         );
       }
     } catch (e) {
@@ -490,7 +502,7 @@ class _DomainTextEditingController extends TextEditingController {
         TextSpan(text: userText),
         TextSpan(
           text: domain,
-          style: style?.copyWith(color: style.color?.withValues(alpha: 0.3) ?? Colors.grey),
+          style: style?.copyWith(color: style.color ?? Colors.black),
         ),
       ],
     );
