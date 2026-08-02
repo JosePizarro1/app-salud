@@ -129,7 +129,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
             children: [
               _termItem(
                 "Naturaleza del Proyecto",
-                "Vitali es una aplicación desarrollada por el Semillero de Investigación de la Universidad Nacional Jorge Basadre Grohmann (UNJBG), con fines exclusivamente educativos y de investigación académica. No tiene fines comerciales ni monetarios.",
+                "Vitaliti es una aplicación desarrollada por el Semillero de Investigación de la Universidad Nacional Jorge Basadre Grohmann (UNJBG), con fines exclusivamente educativos y de investigación académica. No tiene fines comerciales ni monetarios.",
               ),
               _termItem(
                 "Datos Recopilados",
@@ -149,7 +149,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
               ),
               _termItem(
                 "Carácter Informativo",
-                "Vitali es una herramienta de apoyo al bienestar universitario. No sustituye diagnósticos, tratamientos ni el consejo de profesionales de la salud.",
+                "Vitaliti es una herramienta de apoyo al bienestar universitario. No sustituye diagnósticos, tratamientos ni el consejo de profesionales de la salud.",
               ),
               _termItem(
                 "Consentimiento",

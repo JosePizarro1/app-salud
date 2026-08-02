@@ -285,7 +285,7 @@ class _OrganizerPageState extends State<OrganizerPage> with SingleTickerProvider
                         const Text('⭐', style: TextStyle(fontSize: 22)),
                         const SizedBox(width: 8),
                         Text(
-                          '+5 Puntos Vitali',
+                          '+5 Puntos Vitaliti',
                           style: GoogleFonts.outfit(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,

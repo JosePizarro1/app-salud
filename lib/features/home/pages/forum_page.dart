@@ -144,14 +144,14 @@ class _ForumPageState extends State<ForumPage> {
             {
               'id': 102,
               'author_name': 'Diego R.',
-              'content': 'Los recursos y consejos en VitaliApp han sido muy útiles para reducir el estrés y dormir mejor. ¡Muy recomendable!',
+              'content': 'Los recursos y consejos en VitalitiApp han sido muy útiles para reducir el estrés y dormir mejor. ¡Muy recomendable!',
               'likes_count': 19,
               'created_at': DateTime.now().subtract(const Duration(hours: 3)).toIso8601String(),
             },
             {
               'id': 103,
               'author_name': 'Esther L.',
-              'content': 'Gracias a VitaliApp he logrado establecer rutinas saludables de ejercicio y meditación. ¡Me siento increíblemente bien!',
+              'content': 'Gracias a VitalitiApp he logrado establecer rutinas saludables de ejercicio y meditación. ¡Me siento increíblemente bien!',
               'likes_count': 28,
               'created_at': DateTime.now().subtract(const Duration(days: 1)).toIso8601String(),
             }
@@ -577,22 +577,53 @@ class _ForumPageState extends State<ForumPage> {
                         ),
                       ),
 
-                      // Posts List
                       Expanded(
                         child: _isLoading
                             ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-                            : ListView.builder(
-                                padding: EdgeInsets.only(left: 20, right: 20, bottom: 40 + bottomInset),
-                                itemCount: _posts.length,
-                                itemBuilder: (context, index) {
-                                  final post = _posts[index];
-                                  final postId = post['id'] as int;
-                                  final isLiked = _likedPostIds.contains(postId);
-                                  final postReplies = _replies[postId] ?? [];
+                            : _posts.isEmpty
+                                ? Center(
+                                    child: SingleChildScrollView(
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.forum_outlined,
+                                            size: 64,
+                                            color: isDark ? Colors.white30 : Colors.grey.shade300,
+                                          ),
+                                          const SizedBox(height: 16),
+                                          Text(
+                                            'Aún no hay publicaciones',
+                                            style: GoogleFonts.outfit(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            '¡Sé el primero en compartir algo hoy!',
+                                            style: GoogleFonts.outfit(
+                                              fontSize: 14,
+                                              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  )
+                                : ListView.builder(
+                                    padding: EdgeInsets.only(left: 20, right: 20, bottom: 40 + bottomInset),
+                                    itemCount: _posts.length,
+                                    itemBuilder: (context, index) {
+                                      final post = _posts[index];
+                                      final postId = post['id'] as int;
+                                      final isLiked = _likedPostIds.contains(postId);
+                                      final postReplies = _replies[postId] ?? [];
 
-                                  return _buildPostCard(post, postId, isLiked, postReplies);
-                                },
-                              ),
+                                      return _buildPostCard(post, postId, isLiked, postReplies);
+                                    },
+                                  ),
                       ),
                     ],
                   ),

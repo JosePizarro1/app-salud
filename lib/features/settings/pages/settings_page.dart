@@ -33,7 +33,7 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final fullName = user?.userMetadata?['full_name'] ?? 'Usuario Vitali';
+    final fullName = user?.userMetadata?['full_name'] ?? 'Usuario Vitaliti';
     final email = user?.email ?? 'sin correo';
 
     return Scaffold(

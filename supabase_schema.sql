@@ -385,3 +385,27 @@ BEGIN
   RETURN json_build_object('success', true);
 END;
 $$;
+
+
+-- Deletes a forum post and cascades to delete all its replies.
+-- Bypasses normal RLS because it executes as SECURITY DEFINER,
+-- authenticating via admin_pass.
+CREATE OR REPLACE FUNCTION public.delete_forum_post_as_admin(
+  admin_pass text,
+  target_post_id bigint
+)
+RETURNS json
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  IF admin_pass <> 'admin123' THEN
+    RETURN json_build_object('success', false, 'error', 'Invalid admin password');
+  END IF;
+
+  DELETE FROM public.forum_posts
+  WHERE id = target_post_id;
+
+  RETURN json_build_object('success', true);
+END;
+$$;

@@ -247,7 +247,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> with SingleTick
                                   ),
                                 ),
                                 Text(
-                                  'Administración General de Vitali',
+                                  'Administración General de Vitaliti',
                                   style: GoogleFonts.outfit(
                                     fontSize: 14,
                                     color: Colors.white.withValues(alpha: 0.8),
@@ -1282,7 +1282,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> with SingleTick
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            post['author_name'],
+                            post['author_name'].toString().length > 15
+                                ? '${post['author_name'].toString().substring(0, 15)}...'
+                                : post['author_name'].toString(),
                             style: GoogleFonts.outfit(
                               fontWeight: FontWeight.bold,
                               fontSize: 15,
@@ -1311,6 +1313,16 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> with SingleTick
                           fontWeight: FontWeight.bold,
                           color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
                         ),
+                      ),
+                      const SizedBox(width: 12),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 20),
+                        onPressed: () {
+                          HapticFeedback.mediumImpact();
+                          _confirmDeletePost(postId);
+                        },
+                        constraints: const BoxConstraints(),
+                        padding: EdgeInsets.zero,
                       ),
                     ],
                   ),
@@ -1517,6 +1529,80 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> with SingleTick
       }
     }
     // Reload metrics/posts
+    await _loadMetrics();
+  }
+
+  void _confirmDeletePost(int postId) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? AppColors.surfaceDark : const Color(0xFFFAF6F0),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          '¿Eliminar publicación?',
+          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          'Se eliminará esta publicación de forma permanente y todas las respuestas asociadas (incluyendo las de Titi Maestro).',
+          style: GoogleFonts.outfit(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancelar',
+              style: GoogleFonts.outfit(color: isDark ? Colors.white60 : const Color(0xFF8C7355)),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _deletePost(postId);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: Text('Eliminar', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deletePost(int postId) async {
+    setState(() => _isLoading = true);
+    try {
+      final client = Supabase.instance.client;
+      final response = await client.rpc('delete_forum_post_as_admin', params: {
+        'admin_pass': 'admin123',
+        'target_post_id': postId,
+      });
+
+      if (response != null && response is Map && response['success'] == true) {
+        HapticFeedback.mediumImpact();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Publicación eliminada correctamente.'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
+      } else {
+        throw Exception(response?['error'] ?? 'Error desconocido');
+      }
+    } catch (e) {
+      debugPrint("Error deleting forum post: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al eliminar publicación: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    }
     await _loadMetrics();
   }
 
