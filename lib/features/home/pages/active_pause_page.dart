@@ -14,66 +14,19 @@ class ActivePausePage extends StatefulWidget {
   State<ActivePausePage> createState() => _ActivePausePageState();
 }
 
-class _ActivePausePageState extends State<ActivePausePage> with WidgetsBindingObserver {
-  final AudioPlayer _activePauseAudioPlayer = AudioPlayer()
-    ..setAudioContext(AudioContext(
-      android: AudioContextAndroid(
-        audioFocus: AndroidAudioFocus.none,
-      ),
-    ));
-
-  bool _hasPlayed = false;
-
+class _ActivePausePageState extends State<ActivePausePage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    // 1. Temporarily suspend general background music without changing user preference
-    BackgroundMusicManager().suspendMusic();
-
-    // 2. Configure player
-    _activePauseAudioPlayer.setReleaseMode(ReleaseMode.loop);
-
-    // 3. Start audio if enabled in preferences
-    _handleSoundToggle();
-
-    // 4. Listen to sound updates
-    BackgroundMusicManager().isPlayingNotifier.addListener(_handleSoundToggle);
+    // Reproduce la música alegre propia de Pausa Activa mediante el controlador único
+    BackgroundMusicManager().playCustomTrack('audio/pausa_activa.mp3');
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    BackgroundMusicManager().isPlayingNotifier.removeListener(_handleSoundToggle);
-    _activePauseAudioPlayer.dispose();
-    // Restore background music when leaving the page
-    BackgroundMusicManager().unsuspendMusic();
+    // Restaura la música de fondo principal al salir del módulo
+    BackgroundMusicManager().restoreDefaultTrack();
     super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused) {
-      try {
-        _activePauseAudioPlayer.pause();
-      } catch (_) {}
-    } else if (state == AppLifecycleState.resumed) {
-      _handleSoundToggle();
-    }
-  }
-
-  void _handleSoundToggle() {
-    final isPlaying = BackgroundMusicManager().isPlaying;
-    if (isPlaying) {
-      if (!_hasPlayed) {
-        _activePauseAudioPlayer.play(AssetSource('audio/pausa_activa.mp3'));
-        _hasPlayed = true;
-      } else {
-        _activePauseAudioPlayer.resume();
-      }
-    } else {
-      _activePauseAudioPlayer.pause();
-    }
   }
 
   @override
@@ -348,7 +301,7 @@ class _ActivePausePageState extends State<ActivePausePage> with WidgetsBindingOb
         ],
       ),
       child: GestureDetector(
-        onTap: () {
+        onTap: () async {
           SfxManager().playClick();
           final exercise = ActivePauseExercise(
             number: number,
@@ -358,7 +311,10 @@ class _ActivePausePageState extends State<ActivePausePage> with WidgetsBindingOb
             color: color,
             imagePath: imagePath,
           );
-          context.push('/active_pause_timer', extra: exercise);
+          await context.push('/active_pause_timer', extra: exercise);
+          if (mounted) {
+            BackgroundMusicManager().playCustomTrack('audio/pausa_activa.mp3');
+          }
         },
         child: Padding(
           padding: const EdgeInsets.all(16.0),

@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../widgets/module_header.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/home_tutorial_overlay.dart';
+import '../../../app/theme/app_colors.dart';
 import '../../../app/services/background_music_manager.dart';
 import '../../../app/services/sfx_manager.dart';
 import '../../../app/services/motivational_service.dart';
@@ -24,6 +25,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with WidgetsBindingObserver, TickerProviderStateMixin {
   // Estado de escalado para cada módulo (0: Mesa/Modulo1, 1: Mod2, 2: Mod3, etc.)
   final List<bool> _moduleScales = List.generate(6, (_) => false);
+  final bool _debugHitAreas = false; // Cambiar a false cuando no se desee ver las áreas de debug
   bool _showTutorial = false;
   bool _isPlayingTiti = false;
   Timer? _titiTimer;
@@ -46,6 +48,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
   int? _activeDragIndex;
   Offset _dragStartOffset = Offset.zero;
   Offset _dragBaseOffset = Offset.zero;
+
+  // Tití draggable state
+  Offset? _titiOffset;
+  bool _isDraggingTiti = false;
+  Offset _titiDragStartOffset = Offset.zero;
+  Offset _titiBaseOffset = Offset.zero;
 
   @override
   void initState() {
@@ -99,6 +107,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
         Offset(0.65 * size.width, 0.23 * size.height), // Mod 5
         Offset(0.55 * size.width, 0.039 * size.height), // Mod 6
       ];
+    }
+
+    if (_titiOffset == null) {
+      final size = MediaQuery.of(context).size;
+      _titiOffset = Offset(0.28 * size.width, 0.42 * size.height);
     }
     
     // Only run precache once to save CPU cycles on page rebuilds
@@ -306,6 +319,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
     Widget wrapWithDrag(Widget child) {
       return GestureDetector(
         behavior: HitTestBehavior.opaque,
+        onTap: isDraggingThis ? null : () async {
+          SfxManager().playClick();
+          await _triggerScale(scaleIndex);
+          StatsSyncService().logModuleAccess(route);
+          if (context.mounted) context.push(route);
+        },
         onLongPressStart: (details) {
           setState(() {
             _activeDragIndex = index;
@@ -373,8 +392,22 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
                           Container(
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(1000),
-                              color: Colors.transparent,
+                              color: _debugHitAreas ? Colors.red.withValues(alpha: 0.4) : Colors.transparent,
+                              border: _debugHitAreas ? Border.all(color: Colors.red, width: 2) : null,
                             ),
+                            child: _debugHitAreas
+                                ? const Center(
+                                    child: FittedBox(
+                                      child: Padding(
+                                        padding: EdgeInsets.all(2.0),
+                                        child: Text(
+                                          "ARRAS",
+                                          style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                : null,
                           ),
                         ),
                       ),
@@ -415,12 +448,54 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
                     StatsSyncService().logModuleAccess(route);
                     if (context.mounted) context.push(route);
                   },
-                  child: SizedBox(
-                    width: btnHeight,
-                    height: btnHeight,
-                    child: Image.asset(
-                      btnAsset,
-                      fit: BoxFit.contain,
+                  child: _FloatingModuleButton(
+                    index: index,
+                    child: SizedBox(
+                      width: btnHeight,
+                      height: btnHeight,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // ── Resplandor Neumórfico & Soft Shadow (Efecto Glow) ──
+                          Container(
+                            width: btnHeight * 0.98,
+                            height: btnHeight * 0.98,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.white.withValues(alpha: 0.95),
+                                  blurRadius: 22,
+                                  spreadRadius: 8,
+                                ),
+                                BoxShadow(
+                                  color: const Color(0xFFFFB74D).withValues(alpha: 0.6),
+                                  blurRadius: 16,
+                                  spreadRadius: 4,
+                                ),
+                              ],
+                            ),
+                          ),
+                          Image.asset(
+                            btnAsset,
+                            fit: BoxFit.contain,
+                          ),
+                          if (_debugHitAreas)
+                            Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.blue.withValues(alpha: 0.35),
+                                border: Border.all(color: Colors.blue, width: 2),
+                              ),
+                              child: const Center(
+                                child: Text(
+                                  "TAP",
+                                  style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -448,34 +523,105 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
             fit: BoxFit.cover,
           ),
 
-          // ── GIF Character (Responsive %) ──
+          // ── GIF Character (Draggable & Small Circular Hit Area) ──
           Positioned(
-            left: screenWidth * 0.28, // 1% más a la izquierda
-            top: screenHeight * 0.42, // 4% más arriba
-            child: FadeIn(
-              child: GestureDetector(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  _playTitiAnimation();
-                },
-                child: SizedBox(
-                  width: screenWidth * 0.45875, // 37.5% * 1.25
-                  height: screenHeight * 0.45875, // 37.5% * 1.25
-                  child: IndexedStack(
-                    index: _isPlayingTiti ? 0 : 1,
-                    alignment: Alignment.center,
-                    children: [
-                      Image.asset(
-                        'assets/images/Video.webp',
-                        fit: BoxFit.contain,
-                        gaplessPlayback: true,
-                      ),
-                      Image.asset(
-                        'assets/images/Video_static.webp',
-                        fit: BoxFit.contain,
-                        gaplessPlayback: true,
-                      ),
-                    ],
+            left: _titiOffset?.dx ?? (screenWidth * 0.28),
+            top: _titiOffset?.dy ?? (screenHeight * 0.42),
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 150),
+              opacity: _isDraggingTiti ? 0.75 : 1.0,
+              child: AnimatedScale(
+                duration: const Duration(milliseconds: 150),
+                scale: _isDraggingTiti ? 1.08 : 1.0,
+                child: FadeIn(
+                  child: SizedBox(
+                    width: screenWidth * 0.45875,
+                    height: screenHeight * 0.45875,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Visual de Tití
+                        IndexedStack(
+                          index: _isPlayingTiti ? 0 : 1,
+                          alignment: Alignment.center,
+                          children: [
+                            Image.asset(
+                              'assets/images/Video.webp',
+                              fit: BoxFit.contain,
+                              gaplessPlayback: true,
+                            ),
+                            Image.asset(
+                              'assets/images/Video_static.webp',
+                              fit: BoxFit.contain,
+                              gaplessPlayback: true,
+                            ),
+                          ],
+                        ),
+
+                        // Área táctil/arrastre pequeña y circular sobre el cuerpo de Tití
+                        Positioned(
+                          width: screenWidth * 0.26,
+                          height: screenWidth * 0.26,
+                          child: ClipOval(
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                _playTitiAnimation();
+                              },
+                              onLongPressStart: (details) {
+                                setState(() {
+                                  _isDraggingTiti = true;
+                                  _titiDragStartOffset = details.globalPosition;
+                                  _titiBaseOffset = _titiOffset ?? Offset(screenWidth * 0.28, screenHeight * 0.42);
+                                });
+                                HapticFeedback.heavyImpact();
+                              },
+                              onLongPressMoveUpdate: (details) {
+                                if (_isDraggingTiti) {
+                                  final diff = details.globalPosition - _titiDragStartOffset;
+                                  setState(() {
+                                    _titiOffset = Offset(
+                                      _titiBaseOffset.dx + diff.dx,
+                                      _titiBaseOffset.dy + diff.dy,
+                                    );
+                                  });
+                                }
+                              },
+                              onLongPressEnd: (details) {
+                                setState(() {
+                                  _isDraggingTiti = false;
+                                });
+                                HapticFeedback.mediumImpact();
+                                _playDragEndSound();
+                                _playTitiAnimation();
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: _debugHitAreas ? Colors.green.withValues(alpha: 0.35) : Colors.transparent,
+                                  border: _debugHitAreas ? Border.all(color: Colors.green, width: 2.5) : null,
+                                ),
+                                child: _debugHitAreas
+                                    ? const Center(
+                                        child: FittedBox(
+                                          child: Padding(
+                                            padding: EdgeInsets.all(4.0),
+                                            child: Text(
+                                              "TITÍ\nARRAS",
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                    : null,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -563,6 +709,66 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver, Ticker
             ),
         ],
       ),
+    );
+  }
+}
+
+class _FloatingModuleButton extends StatefulWidget {
+  final int index;
+  final Widget child;
+
+  const _FloatingModuleButton({
+    required this.index,
+    required this.child,
+  });
+
+  @override
+  State<_FloatingModuleButton> createState() => _FloatingModuleButtonState();
+}
+
+class _FloatingModuleButtonState extends State<_FloatingModuleButton> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _offsetAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 3800 + (widget.index % 3) * 600),
+    );
+
+    _offsetAnimation = Tween<double>(begin: 0.0, end: -2.5).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    Future.delayed(Duration(milliseconds: widget.index * 200), () {
+      if (mounted) {
+        _controller.repeat(reverse: true);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _offsetAnimation,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, _offsetAnimation.value),
+          child: child,
+        );
+      },
+      child: widget.child,
     );
   }
 }

@@ -6,6 +6,7 @@ import 'package:dotlottie_flutter/dotlottie_flutter.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:animate_do/animate_do.dart';
 import 'dart:async';
+import '../../../app/services/background_music_manager.dart';
 
 class ActivePauseExercise {
   final int number;
@@ -50,6 +51,7 @@ class _ActivePauseTimerPageState extends State<ActivePauseTimerPage>
   @override
   void initState() {
     super.initState();
+    BackgroundMusicManager().suspendMusic();
     _remainingSeconds = widget.exercise.durationSeconds;
     _prepareAudio();
   }

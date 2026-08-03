@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'dart:ui';
 import '../widgets/module_header.dart';
 import '../../../app/services/sfx_manager.dart';
+import '../../../app/services/background_music_manager.dart';
 
 class EmergencyPage extends StatefulWidget {
   const EmergencyPage({super.key});
@@ -16,6 +17,20 @@ class _EmergencyPageState extends State<EmergencyPage> {
   bool _isBetterPressed = false;
   bool _isChatPressed = false;
   bool _isHomePressed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Detener música de fondo durante la pantalla de emergencia
+    BackgroundMusicManager().suspendMusic();
+  }
+
+  @override
+  void dispose() {
+    // Restaurar música de fondo al salir de la pantalla de emergencia
+    BackgroundMusicManager().unsuspendMusic();
+    super.dispose();
+  }
 
   void _triggerHome() async {
     setState(() => _isHomePressed = true);

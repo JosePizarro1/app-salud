@@ -18,66 +18,19 @@ class RelaxPage extends StatefulWidget {
   State<RelaxPage> createState() => _RelaxPageState();
 }
 
-class _RelaxPageState extends State<RelaxPage> with WidgetsBindingObserver {
-  final AudioPlayer _relaxAudioPlayer = AudioPlayer()
-    ..setAudioContext(AudioContext(
-      android: AudioContextAndroid(
-        audioFocus: AndroidAudioFocus.none,
-      ),
-    ));
-
-  bool _hasPlayed = false;
-
+class _RelaxPageState extends State<RelaxPage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    // 1. Temporarily suspend general background music without changing user preference
-    BackgroundMusicManager().suspendMusic();
-
-    // 2. Configure player
-    _relaxAudioPlayer.setReleaseMode(ReleaseMode.loop);
-
-    // 3. Start audio if enabled in preferences
-    _handleSoundToggle();
-
-    // 4. Listen to sound updates
-    BackgroundMusicManager().isPlayingNotifier.addListener(_handleSoundToggle);
+    // Reproduce la música de relajación mediante el gestor único de música de fondo
+    BackgroundMusicManager().playCustomTrack('audio/relaja_tu_cuerpo.mp3');
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    BackgroundMusicManager().isPlayingNotifier.removeListener(_handleSoundToggle);
-    _relaxAudioPlayer.dispose();
-    // Restore background music when leaving the page
-    BackgroundMusicManager().unsuspendMusic();
+    // Restaura la música de fondo principal al salir
+    BackgroundMusicManager().restoreDefaultTrack();
     super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused) {
-      try {
-        _relaxAudioPlayer.pause();
-      } catch (_) {}
-    } else if (state == AppLifecycleState.resumed) {
-      _handleSoundToggle();
-    }
-  }
-
-  void _handleSoundToggle() {
-    final isPlaying = BackgroundMusicManager().isPlaying;
-    if (isPlaying) {
-      if (!_hasPlayed) {
-        _relaxAudioPlayer.play(AssetSource('audio/audio_yoga.mp3'));
-        _hasPlayed = true;
-      } else {
-        _relaxAudioPlayer.resume();
-      }
-    } else {
-      _relaxAudioPlayer.pause();
-    }
   }
 
   @override

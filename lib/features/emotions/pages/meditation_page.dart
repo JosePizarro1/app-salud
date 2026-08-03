@@ -174,8 +174,8 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
 
   // Starts the 10s configuring breathing phase
   void _startBreathingSession(int minutes) {
-    // Suspend background music when starting active session
-    BackgroundMusicManager().suspendMusic();
+    // Atenuar el volumen de la música de fondo al 15% durante la preparación (sin apagarla por completo)
+    BackgroundMusicManager().lowerVolumeForMeditation(level: 0.15);
 
     // Prevent timer multiplication
     _sessionTimer?.cancel();
@@ -250,6 +250,8 @@ class _MeditationPageState extends State<MeditationPage> with TickerProviderStat
   // ── Start audio playback ──
   Future<void> _startAudioPlayback(int audioIndex) async {
     HapticFeedback.mediumImpact();
+    // Apagar la música de fondo recién al iniciar la reproducción de la meditación guiada
+    BackgroundMusicManager().suspendMusic();
     setState(() {
       _selectedAudioIndex = audioIndex;
       _isSelectingAudio = false;

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../widgets/module_header.dart';
 
+import '../../../app/theme/app_colors.dart';
+
 class Module6Page extends StatefulWidget {
   const Module6Page({super.key});
 
@@ -132,27 +134,115 @@ class _Module6PageState extends State<Module6Page> {
       curve: Curves.easeInOut,
       child: GestureDetector(
         onTap: onTap,
-        child: SizedBox(
-          width: size,
-          child: Image.asset(
-            imagePath,
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) => Container(
-              width: size,
-              height: size,
-              decoration: BoxDecoration(
-                color: Colors.white24,
-                borderRadius: BorderRadius.circular(15),
-              ),
+        child: _FloatingModuleButton(
+          index: index,
+          child: SizedBox(
+            width: size,
+            child: Stack(
               alignment: Alignment.center,
-              child: Text(
-                'B${index + 1}',
-                style: const TextStyle(color: Colors.white, fontSize: 10),
-              ),
+              children: [
+                // ── Resplandor Neumórfico & Soft Shadow (Efecto Glow) ──
+                Container(
+                  width: size * 1.05,
+                  height: size * 1.05,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.white.withValues(alpha: 0.95),
+                        blurRadius: 22,
+                        spreadRadius: 8,
+                      ),
+                      BoxShadow(
+                        color: const Color(0xFFFFB74D).withValues(alpha: 0.6), // Dorado cálido para contraste brillante
+                        blurRadius: 16,
+                        spreadRadius: 4,
+                      ),
+                    ],
+                  ),
+                ),
+                Image.asset(
+                  imagePath,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    width: size,
+                    height: size,
+                    decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      'B${index + 1}',
+                      style: const TextStyle(color: Colors.white, fontSize: 10),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _FloatingModuleButton extends StatefulWidget {
+  final int index;
+  final Widget child;
+
+  const _FloatingModuleButton({
+    required this.index,
+    required this.child,
+  });
+
+  @override
+  State<_FloatingModuleButton> createState() => _FloatingModuleButtonState();
+}
+
+class _FloatingModuleButtonState extends State<_FloatingModuleButton> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _offsetAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 3800 + (widget.index % 3) * 600),
+    );
+
+    _offsetAnimation = Tween<double>(begin: 0.0, end: -2.5).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    Future.delayed(Duration(milliseconds: widget.index * 250), () {
+      if (mounted) {
+        _controller.repeat(reverse: true);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _offsetAnimation,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, _offsetAnimation.value),
+          child: child,
+        );
+      },
+      child: widget.child,
     );
   }
 }

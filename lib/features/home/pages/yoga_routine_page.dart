@@ -19,21 +19,14 @@ class YogaRoutinePage extends StatefulWidget {
 }
 
 class _YogaRoutinePageState extends State<YogaRoutinePage> {
-  final AudioPlayer _yogaAudioPlayer = AudioPlayer()
-    ..setAudioContext(AudioContext(
-      android: AudioContextAndroid(
-        audioFocus: AndroidAudioFocus.none,
-      ),
-    ));
-
-  bool _hasPlayed = false;
-
   late final StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
 
   static const List<Map<String, dynamic>> _postures = [
     {
       'title': 'Postura del Niño',
       'image': 'assets/images/ModuloYoga/postura_1_yoga.webp',
+      'duration': 45,
+      'audioAsset': 'audio/Postura de niño .mp3',
       'description': 'Arrodíllate en el suelo, siéntate sobre tus talones y dobla el torso hacia adelante, extendiendo los brazos al frente. Apoya la frente en el suelo y respira profundamente para liberar tensión en la espalda.',
       'benefits': [
         'Alivia la ansiedad y la depresión.',
@@ -44,6 +37,8 @@ class _YogaRoutinePageState extends State<YogaRoutinePage> {
     {
       'title': 'Postura de Zancada Alta',
       'image': 'assets/images/ModuloYoga/postura_2_yoga.webp',
+      'duration': 30,
+      'audioAsset': 'audio/Postura de zancada alta.mp3',
       'description': 'Da un gran paso hacia atrás con un pie, mantén la pierna trasera estirada y la rodilla delantera doblada a 90 grados. Eleva los brazos hacia el cielo, abre el pecho y siente la fuerza en tus piernas.',
       'benefits': [
         'Fortalece las piernas y rodillas.',
@@ -54,6 +49,8 @@ class _YogaRoutinePageState extends State<YogaRoutinePage> {
     {
       'title': 'Postura de la Mariposa',
       'image': 'assets/images/ModuloYoga/postura_3_yoga.webp',
+      'duration': 45,
+      'audioAsset': 'audio/Postura de la mariposa .mp3',
       'description': 'Siéntate con la espalda recta, junta las plantas de tus pies y deja que las rodillas caigan suavemente hacia los lados. Sujeta tus pies con las manos y realiza movimientos suaves para estirar las caderas.',
       'benefits': [
         'Abre y relaja las caderas.',
@@ -64,6 +61,8 @@ class _YogaRoutinePageState extends State<YogaRoutinePage> {
     {
       'title': 'Postura de la Montaña',
       'image': 'assets/images/ModuloYoga/postura_4_yoga.webp',
+      'duration': 30,
+      'audioAsset': 'audio/Copia de SONIDO DE FONDO -  4 POSTURA - MONTAÑA.mp3',
       'description': 'Párate derecho con los pies juntos, los brazos a los lados del cuerpo y el peso distribuido uniformemente. Activa tu abdomen, alinea tu columna y respira con calma, sintiendo estabilidad y firmeza.',
       'benefits': [
         'Mejora tu postura corporal.',
@@ -74,6 +73,8 @@ class _YogaRoutinePageState extends State<YogaRoutinePage> {
     {
       'title': 'Postura de Piernas a la Pared',
       'image': 'assets/images/ModuloYoga/postura_5_yoga.webp',
+      'duration': 60,
+      'audioAsset': 'audio/Copia de SONIDO DE FONDO -  5 POSTURA - PIERNAS A LA PARED.mp3',
       'description': 'Acuéstate sobre tu espalda y eleva las piernas apoyándolas verticalmente contra la pared. Mantén tus brazos relajados a los lados y disfruta de esta postura restaurativa que mejora la circulación.',
       'benefits': [
         'Aumenta el flujo sanguíneo al cerebro.',
@@ -84,6 +85,8 @@ class _YogaRoutinePageState extends State<YogaRoutinePage> {
     {
       'title': 'Postura Parada de Hombros',
       'image': 'assets/images/ModuloYoga/postura_6_yoga.webp',
+      'duration': 30,
+      'audioAsset': 'audio/Copia de SONIDO DE FONDO -  6 POSTURA - PARADA DE HOMBROS.mp3',
       'description': 'Acuéstate boca arriba, eleva las piernas y la cadera apoyándolas con las manos en la espalda baja para soporte. Mantén el peso en los hombros (no en el cuello) y respira con cuidado para calmar la mente.',
       'benefits': [
         'Mejora la claridad mental.',
@@ -136,19 +139,10 @@ class _YogaRoutinePageState extends State<YogaRoutinePage> {
   @override
   void initState() {
     super.initState();
-    // 1. Temporarily suspend general background music without changing user preference
-    BackgroundMusicManager().suspendMusic();
+    // 1. Reproducir la pista ambiental de relaja_tu_cuerpo en el gestor único de música de fondo
+    BackgroundMusicManager().playCustomTrack('audio/relaja_tu_cuerpo.mp3');
 
-    // 2. Configure player
-    _yogaAudioPlayer.setReleaseMode(ReleaseMode.loop);
-
-    // 3. Start audio if enabled in preferences
-    _handleSoundToggle();
-
-    // 4. Listen to sound updates
-    BackgroundMusicManager().isPlayingNotifier.addListener(_handleSoundToggle);
-
-    // 5. Listen to internet connection updates to sync dynamically
+    // 2. Listen to internet connection updates to sync dynamically
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> results) {
       final hasConnection = results.any((result) => result != ConnectivityResult.none);
       if (hasConnection) {
@@ -156,38 +150,26 @@ class _YogaRoutinePageState extends State<YogaRoutinePage> {
       }
     });
 
-    // 6. Trigger initial background sync
+    // 3. Trigger initial background sync
     YogaStorageService.syncPendingData();
   }
 
   @override
   void dispose() {
-    BackgroundMusicManager().isPlayingNotifier.removeListener(_handleSoundToggle);
     _connectivitySubscription.cancel();
-    _yogaAudioPlayer.dispose();
-    // Restore background music when leaving the page
-    BackgroundMusicManager().unsuspendMusic();
+    // Restore default background music when leaving the page
+    BackgroundMusicManager().restoreDefaultTrack();
     super.dispose();
-  }
-
-  void _handleSoundToggle() {
-    final isPlaying = BackgroundMusicManager().isPlaying;
-    if (isPlaying) {
-      if (!_hasPlayed) {
-        _yogaAudioPlayer.play(AssetSource('audio/audio_yoga.mp3'));
-        _hasPlayed = true;
-      } else {
-        _yogaAudioPlayer.resume();
-      }
-    } else {
-      _yogaAudioPlayer.pause();
-    }
   }
 
   void _showPostureDetail(BuildContext context, Map<String, dynamic> posture) async {
     // Record yoga practice on click (offline-first)
     await YogaStorageService.recordPractice();
+    if (!mounted) return;
     
+    // Suspend background music on click to turn OFF header sound icon instantly
+    await BackgroundMusicManager().suspendMusic();
+
     final index = _postures.indexOf(posture);
     final steps = _postureSteps[index] ?? [];
     
@@ -201,6 +183,9 @@ class _YogaRoutinePageState extends State<YogaRoutinePage> {
         );
       },
     );
+
+    // Unsuspend background music and restore header sound icon ON when dialog closes
+    await BackgroundMusicManager().unsuspendMusic();
 
     if (completed == true && context.mounted) {
       _showBenefitsOverlay(context, posture);
@@ -405,25 +390,31 @@ class _PostureDetailDialog extends StatefulWidget {
   State<_PostureDetailDialog> createState() => _PostureDetailDialogState();
 }
 
-class _PostureDetailDialogState extends State<_PostureDetailDialog> with SingleTickerProviderStateMixin {
+class _PostureDetailDialogState extends State<_PostureDetailDialog> {
   late final PageController _pageController;
-  late final AnimationController _animationController;
+  final AudioPlayer _postureAudioPlayer = AudioPlayer();
   int _currentStep = 0;
-  bool _isPlaying = true;
+  bool _isAudioPlaying = false;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 6),
-    )..addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          _handleAutoNext();
-        }
-      });
-    _animationController.forward();
+    _postureAudioPlayer.onPlayerComplete.listen((_) {
+      if (mounted) {
+        setState(() {
+          _isAudioPlaying = false;
+        });
+        BackgroundMusicManager().unsuspendMusic();
+      }
+    });
+
+    // Auto-start posture audio guide when opening dialog if posture has audioAsset
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && widget.posture['audioAsset'] != null) {
+        _playPostureAudio();
+      }
+    });
   }
 
   @override
@@ -438,39 +429,44 @@ class _PostureDetailDialogState extends State<_PostureDetailDialog> with SingleT
     }
   }
 
-  void _handleAutoNext() {
-    if (_currentStep < widget.steps.length - 1) {
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOut,
-      );
-    } else {
-      // Loop back to the first step
-      _pageController.animateToPage(
-        0,
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeInOut,
-      );
+  Future<void> _playPostureAudio() async {
+    final String? audioAsset = widget.posture['audioAsset'] as String?;
+    if (audioAsset == null) return;
+
+    await BackgroundMusicManager().suspendMusic();
+    if (mounted) {
+      setState(() {
+        _isAudioPlaying = true;
+      });
     }
+    await _postureAudioPlayer.stop();
+    await _postureAudioPlayer.setVolume(0.5);
+    await _postureAudioPlayer.play(AssetSource(audioAsset));
   }
 
-  void _togglePlayPause() {
-    setState(() {
-      if (_isPlaying) {
-        _animationController.stop();
-      } else {
-        if (_animationController.isCompleted) {
-          _animationController.reset();
-        }
-        _animationController.forward();
-      }
-      _isPlaying = !_isPlaying;
-    });
+  Future<void> _stopPostureAudio() async {
+    await _postureAudioPlayer.stop();
+    if (mounted) {
+      setState(() {
+        _isAudioPlaying = false;
+      });
+    }
+    await BackgroundMusicManager().unsuspendMusic();
+  }
+
+  Future<void> _togglePostureAudio() async {
+    if (_isAudioPlaying) {
+      await _stopPostureAudio();
+    } else {
+      await _playPostureAudio();
+    }
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _postureAudioPlayer.stop();
+    _postureAudioPlayer.dispose();
+    BackgroundMusicManager().unsuspendMusic();
     _pageController.dispose();
     super.dispose();
   }
@@ -504,12 +500,24 @@ class _PostureDetailDialogState extends State<_PostureDetailDialog> with SingleT
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const SizedBox(width: 32), // Spacer to center the title
+                if (widget.posture['audioAsset'] != null)
+                  IconButton(
+                    icon: Icon(
+                      _isAudioPlaying ? Icons.volume_up_rounded : Icons.volume_mute_rounded,
+                      color: _isAudioPlaying ? AppColors.success : AppColors.secondary,
+                      size: 26,
+                    ),
+                    tooltip: _isAudioPlaying ? 'Pausar audio de postura' : 'Escuchar guía de postura',
+                    onPressed: _togglePostureAudio,
+                  )
+                else
+                  const SizedBox(width: 48),
+
                 Expanded(
                   child: Text(
                     widget.posture['title']!,
                     style: GoogleFonts.outfit(
-                      fontSize: 22,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: AppColors.secondary,
                     ),
@@ -524,48 +532,40 @@ class _PostureDetailDialogState extends State<_PostureDetailDialog> with SingleT
             ),
             const SizedBox(height: 12),
 
-            // Image Container (PageView)
-            GestureDetector(
-              onTap: _togglePlayPause,
-              child: SizedBox(
-                height: 280, // Increased height significantly
-                child: PageView.builder(
-                  controller: _pageController,
-                  physics: const BouncingScrollPhysics(),
-                  onPageChanged: (int page) {
-                    setState(() {
-                      _currentStep = page;
-                      if (_isPlaying) {
-                        _animationController.forward(from: 0.0);
-                      } else {
-                        _animationController.value = 0.0;
-                      }
-                    });
-                  },
-                  itemCount: widget.steps.length,
-                  itemBuilder: (context, index) {
-                    final step = widget.steps[index];
-                    return Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        color: const Color(0xFFF9FAFC),
+            // Image Container (PageView - Manual Swipe)
+            SizedBox(
+              height: 280,
+              child: PageView.builder(
+                controller: _pageController,
+                physics: const BouncingScrollPhysics(),
+                onPageChanged: (int page) {
+                  setState(() {
+                    _currentStep = page;
+                  });
+                },
+                itemCount: widget.steps.length,
+                itemBuilder: (context, index) {
+                  final step = widget.steps[index];
+                  return Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      color: const Color(0xFFF9FAFC),
+                    ),
+                    padding: const EdgeInsets.all(4),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.asset(
+                        step['image']!,
+                        fit: BoxFit.contain,
                       ),
-                      padding: const EdgeInsets.all(4),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: Image.asset(
-                          step['image']!,
-                          fit: BoxFit.contain, // Fits perfectly with no cropping
-                        ),
-                      ),
-                    );
-                  },
-                ),
+                    ),
+                  );
+                },
               ),
             ),
             const SizedBox(height: 16),
 
-            // Step Indicator & Auto-Play Controls
+            // Step Indicator
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -583,13 +583,13 @@ class _PostureDetailDialogState extends State<_PostureDetailDialog> with SingleT
 
             // Step Text Description
             SizedBox(
-              height: 70, // Fixed height to prevent resizing dialog on different texts
+              height: 70,
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
                 child: Text(
                   widget.steps[_currentStep]['text']!,
                   style: GoogleFonts.outfit(
-                    fontSize: 16, // Slightly larger text
+                    fontSize: 16,
                     fontWeight: widget.steps[_currentStep]['text']!.length > 100
                         ? FontWeight.w500
                         : FontWeight.w600,
@@ -602,7 +602,7 @@ class _PostureDetailDialogState extends State<_PostureDetailDialog> with SingleT
             ),
             const SizedBox(height: 12),
 
-            // Actions Row: Anterior, Play/Pause Indicator, Siguiente
+            // Actions Row: Anterior, Tiempo Estimado / Completar, Siguiente
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -620,50 +620,77 @@ class _PostureDetailDialogState extends State<_PostureDetailDialog> with SingleT
                       : null,
                 ),
 
-                // Play / Pause / Finish Circular Progress
+                // Center Element: Estimated Duration or Finish Button
                 Builder(
                   builder: (context) {
                     final bool isLastStep = _currentStep == widget.steps.length - 1;
-                    return GestureDetector(
-                      onTap: isLastStep ? () => Navigator.of(context).pop(true) : _togglePlayPause,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          // Always show circular progress — on last step it fills then loops
-                          SizedBox(
-                            width: 50,
-                            height: 50,
-                            child: AnimatedBuilder(
-                              animation: _animationController,
-                              builder: (context, child) {
-                                return CircularProgressIndicator(
-                                  value: _animationController.value,
-                                  strokeWidth: 4,
-                                  color: AppColors.success,
-                                  backgroundColor: Colors.grey.withValues(alpha: 0.2),
-                                );
-                              },
-                            ),
+                    final int duration = (widget.posture['duration'] as int?) ?? 30;
+
+                    if (isLastStep) {
+                      return GestureDetector(
+                        onTap: () {
+                          HapticFeedback.mediumImpact();
+                          Navigator.of(context).pop(true);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: AppColors.success,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.success.withValues(alpha: 0.3),
+                                blurRadius: 6,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
                           ),
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppColors.success.withValues(alpha: 0.1),
-                            ),
-                            child: Icon(
-                              isLastStep
-                                  ? Icons.check_rounded
-                                  : (_isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded),
-                              color: AppColors.success,
-                              size: 24,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.check_rounded, color: Colors.white, size: 20),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Completar',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: AppColors.success.withValues(alpha: 0.3),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.timer_outlined, color: AppColors.success, size: 18),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Est: $duration seg',
+                            style: GoogleFonts.outfit(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.secondary,
                             ),
                           ),
                         ],
                       ),
                     );
-                  }
+                  },
                 ),
 
                 // Siguiente Button

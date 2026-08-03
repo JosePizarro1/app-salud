@@ -71,11 +71,14 @@ class YogaStorageService {
         final entry = Map<String, dynamic>.from(localMap[dateStr]);
         if (entry['synced'] == false) {
           try {
-            await Supabase.instance.client.from('yoga_practice_history').upsert({
-              'user_id': user.id,
-              'practice_date': dateStr,
-              'times_practiced': entry['times_practiced'],
-            });
+            await Supabase.instance.client.from('yoga_practice_history').upsert(
+              {
+                'user_id': user.id,
+                'practice_date': dateStr,
+                'times_practiced': entry['times_practiced'],
+              },
+              onConflict: 'user_id, practice_date',
+            );
 
             entry['synced'] = true;
             localMap[dateStr] = entry;

@@ -506,6 +506,7 @@ class _EmergencyButtonState extends State<_EmergencyButton> with SingleTickerPro
   void _triggerEmergency() async {
     setState(() => _isPressed = true);
     HapticFeedback.lightImpact();
+    BackgroundMusicManager().suspendMusic();
     
     // Save click locally and sync to Supabase (Lima, Peru/local timezone safe)
     EmergencyStorageService.recordClick();

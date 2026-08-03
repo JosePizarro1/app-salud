@@ -71,11 +71,14 @@ class EmergencyStorageService {
         final entry = Map<String, dynamic>.from(localMap[dateStr]);
         if (entry['synced'] == false) {
           try {
-            await Supabase.instance.client.from('emergency_clicks').upsert({
-              'user_id': user.id,
-              'click_date': dateStr,
-              'times_clicked': entry['times_clicked'],
-            });
+            await Supabase.instance.client.from('emergency_clicks').upsert(
+              {
+                'user_id': user.id,
+                'click_date': dateStr,
+                'times_clicked': entry['times_clicked'],
+              },
+              onConflict: 'user_id, click_date',
+            );
 
             entry['synced'] = true;
             localMap[dateStr] = entry;
