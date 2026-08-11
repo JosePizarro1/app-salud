@@ -16,6 +16,7 @@ class _Module2PageState extends State<Module2Page> {
   // Estado de escala para los 2 botones
   bool _isPrecached = false;
   final List<bool> _buttonScales = [false, false];
+  int _videoAnimKey = 0;
 
   Future<void> _triggerScale(int index) async {
     setState(() => _buttonScales[index] = true);
@@ -62,12 +63,25 @@ class _Module2PageState extends State<Module2Page> {
             left: MediaQuery.of(context).size.width * 0.203,
             top: MediaQuery.of(context).size.height * 0.32,
             child: FadeIn(
-              child: SizedBox(
-                width: MediaQuery.of(context).size.width * 0.673,
-                height: MediaQuery.of(context).size.height * 0.673,
-                child: Image.asset(
-                  'assets/images/Video.webp',
-                  fit: BoxFit.contain,
+              child: GestureDetector(
+                onTap: () {
+                  SfxManager().playClick();
+                  setState(() {
+                    _videoAnimKey++;
+                  });
+                },
+                child: SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.673,
+                  height: MediaQuery.of(context).size.height * 0.673,
+                  child: Bounce(
+                    key: ValueKey(_videoAnimKey),
+                    duration: const Duration(milliseconds: 500),
+                    child: Image.asset(
+                      'assets/images/Video.webp',
+                      key: ValueKey('img_$_videoAnimKey'),
+                      fit: BoxFit.contain,
+                    ),
+                  ),
                 ),
               ),
             ),
