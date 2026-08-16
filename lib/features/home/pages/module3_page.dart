@@ -17,6 +17,8 @@ class _Module3PageState extends State<Module3Page> {
   // Estado de escala para los 2 botones
   final List<bool> _buttonScales = [false, false];
   bool _isPrecached = false;
+  bool _isCatScaled = false;
+  int _videoAnimKey = 0;
 
   @override
   void didChangeDependencies() {
@@ -55,12 +57,35 @@ class _Module3PageState extends State<Module3Page> {
             left: MediaQuery.of(context).size.width * 0.203,
             top: MediaQuery.of(context).size.height * 0.27,
             child: FadeIn(
-              child: SizedBox(
-                width: MediaQuery.of(context).size.width * 0.673,
-                height: MediaQuery.of(context).size.height * 0.673,
-                child: Image.asset(
-                  'assets/images/Video.webp',
-                  fit: BoxFit.contain,
+              child: GestureDetector(
+                onTap: () async {
+                  SfxManager().playClick();
+                  setState(() {
+                    _isCatScaled = true;
+                    _videoAnimKey++;
+                  });
+                  await Future.delayed(const Duration(milliseconds: 200));
+                  if (mounted) {
+                    setState(() => _isCatScaled = false);
+                  }
+                },
+                child: AnimatedScale(
+                  scale: _isCatScaled ? 0.92 : 1.0,
+                  duration: const Duration(milliseconds: 150),
+                  curve: Curves.easeInOut,
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.673,
+                    height: MediaQuery.of(context).size.height * 0.673,
+                    child: Bounce(
+                      key: ValueKey(_videoAnimKey),
+                      duration: const Duration(milliseconds: 500),
+                      child: Image.asset(
+                        'assets/images/Video.webp',
+                        key: ValueKey('img_cat_$_videoAnimKey'),
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),

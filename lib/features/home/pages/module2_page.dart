@@ -15,6 +15,7 @@ class Module2Page extends StatefulWidget {
 class _Module2PageState extends State<Module2Page> {
   // Estado de escala para los 2 botones
   bool _isPrecached = false;
+  bool _isCatScaled = false;
   final List<bool> _buttonScales = [false, false];
   int _videoAnimKey = 0;
 
@@ -64,22 +65,32 @@ class _Module2PageState extends State<Module2Page> {
             top: MediaQuery.of(context).size.height * 0.32,
             child: FadeIn(
               child: GestureDetector(
-                onTap: () {
+                onTap: () async {
                   SfxManager().playClick();
                   setState(() {
+                    _isCatScaled = true;
                     _videoAnimKey++;
                   });
+                  await Future.delayed(const Duration(milliseconds: 200));
+                  if (mounted) {
+                    setState(() => _isCatScaled = false);
+                  }
                 },
-                child: SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.673,
-                  height: MediaQuery.of(context).size.height * 0.673,
-                  child: Bounce(
-                    key: ValueKey(_videoAnimKey),
-                    duration: const Duration(milliseconds: 500),
-                    child: Image.asset(
-                      'assets/images/Video.webp',
-                      key: ValueKey('img_$_videoAnimKey'),
-                      fit: BoxFit.contain,
+                child: AnimatedScale(
+                  scale: _isCatScaled ? 0.92 : 1.0,
+                  duration: const Duration(milliseconds: 150),
+                  curve: Curves.easeInOut,
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.673,
+                    height: MediaQuery.of(context).size.height * 0.673,
+                    child: Bounce(
+                      key: ValueKey(_videoAnimKey),
+                      duration: const Duration(milliseconds: 500),
+                      child: Image.asset(
+                        'assets/images/Video.webp',
+                        key: ValueKey('img_$_videoAnimKey'),
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ),
                 ),

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:audioplayers/audioplayers.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/services/background_music_manager.dart';
+import '../../../app/services/sfx_manager.dart';
 import '../widgets/module_header.dart';
 
 class Module4Page extends StatefulWidget {
@@ -15,6 +16,8 @@ class Module4Page extends StatefulWidget {
 
 class _Module4PageState extends State<Module4Page> {
   final AudioPlayer _sfxPlayer = AudioPlayer();
+  bool _isLampOff = false;
+  bool _isRedButtonPressed = false;
 
   Future<void> _playTapSound() async {
     if (!BackgroundMusicManager().isPlaying) return;
@@ -25,6 +28,19 @@ class _Module4PageState extends State<Module4Page> {
         volume: 0.8,
       );
     } catch (_) {}
+  }
+
+  void _toggleLamp() async {
+    SfxManager().playClick();
+    HapticFeedback.mediumImpact();
+    setState(() {
+      _isRedButtonPressed = true;
+      _isLampOff = !_isLampOff;
+    });
+    await Future.delayed(const Duration(milliseconds: 200));
+    if (mounted) {
+      setState(() => _isRedButtonPressed = false);
+    }
   }
 
   @override
@@ -40,9 +56,11 @@ class _Module4PageState extends State<Module4Page> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Background
+          // Background (Conmutado al presionar el botón rojo)
           Image.asset(
-            'assets/images/fondo_modulo4_sueno_titi.webp',
+            _isLampOff
+                ? 'assets/images/fondo_descanso_lampara_apagada.webp'
+                : 'assets/images/fondo_modulo4_sueno_titi.webp',
             fit: BoxFit.cover,
             gaplessPlayback: true,
           ),
@@ -108,6 +126,56 @@ class _Module4PageState extends State<Module4Page> {
                     ],
                   ),
                 ],
+              ),
+            ),
+          ),
+
+          // ── Botón Rojo Central (Interruptor de la Lámpara) ──
+          Align(
+            alignment: const Alignment(0, 0.75),
+            child: AnimatedScale(
+              scale: _isRedButtonPressed ? 0.85 : 1.0,
+              duration: const Duration(milliseconds: 150),
+              curve: Curves.easeInOut,
+              child: GestureDetector(
+                onTap: _toggleLamp,
+                child: Container(
+                  width: MediaQuery.of(context).size.width * 0.16,
+                  height: MediaQuery.of(context).size.width * 0.16,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: const RadialGradient(
+                      colors: [
+                        Color(0xFFFF5252),
+                        Color(0xFFD32F2F),
+                        Color(0xFF8B0000),
+                      ],
+                      center: Alignment(-0.2, -0.2),
+                      radius: 0.8,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFF5252).withValues(alpha: 0.6),
+                        blurRadius: 18,
+                        spreadRadius: 3,
+                      ),
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.4),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.8),
+                      width: 2.5,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.power_settings_new_rounded,
+                    color: Colors.white,
+                    size: 32,
+                  ),
+                ),
               ),
             ),
           ),

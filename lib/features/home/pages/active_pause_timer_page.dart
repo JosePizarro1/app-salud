@@ -72,6 +72,7 @@ class _ActivePauseTimerPageState extends State<ActivePauseTimerPage>
     _timer?.cancel();
     _audioPlayer.stop();
     _audioPlayer.dispose();
+    BackgroundMusicManager().unsuspendMusic();
     super.dispose();
   }
 
