@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:audioplayers/audioplayers.dart';
-import '../../../app/theme/app_colors.dart';
 import '../../../app/services/background_music_manager.dart';
 import '../../../app/services/sfx_manager.dart';
 import '../widgets/module_header.dart';

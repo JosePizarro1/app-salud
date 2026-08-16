@@ -20,12 +20,65 @@ class _SudokuPageState extends State<SudokuPage> {
   int? _selectedRow;
   int? _selectedCol;
   bool _isFinished = false;
+  bool _hasUsedHint = false;
+  bool _isShowingHintFeedback = false;
 
   @override
   void initState() {
     super.initState();
     _engine = SudokuEngine();
     _checkFirstTimeTutorial();
+  }
+
+  void _resetGame() {
+    _engine.generateNewGame();
+    _isFinished = false;
+    _selectedRow = null;
+    _selectedCol = null;
+    _hasUsedHint = false;
+    _isShowingHintFeedback = false;
+  }
+
+  bool _hasPlacedAnyNumber() {
+    for (int r = 0; r < 4; r++) {
+      for (int c = 0; c < 4; c++) {
+        if (!_engine.isInitial[r][c] && _engine.puzzle[r][c] != 0) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  void _onHintTap() {
+    if (_hasUsedHint || !_hasPlacedAnyNumber() || _isFinished) return;
+    SfxManager().playClick();
+    HapticFeedback.mediumImpact();
+    setState(() {
+      _hasUsedHint = true;
+      _isShowingHintFeedback = true;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.lightbulb_rounded, color: Color(0xFFFFB300)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Pista activada: verde (acierto) y rojo (error).',
+                style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: const Color(0xFF1E293B),
+        duration: const Duration(seconds: 4),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+    );
   }
 
   Future<void> _checkFirstTimeTutorial() async {
@@ -55,6 +108,7 @@ class _SudokuPageState extends State<SudokuPage> {
     SfxManager().playClick();
     setState(() {
       _engine.puzzle[_selectedRow!][_selectedCol!] = num;
+      _isShowingHintFeedback = false;
       if (_engine.isComplete()) {
         _isFinished = true;
         _showWinDialog();
@@ -94,10 +148,7 @@ class _SudokuPageState extends State<SudokuPage> {
               onPressed: () {
                 Navigator.pop(context);
                 setState(() {
-                  _engine.generateNewGame();
-                  _isFinished = false;
-                  _selectedRow = null;
-                  _selectedCol = null;
+                  _resetGame();
                 });
               },
               style: ElevatedButton.styleFrom(
@@ -723,11 +774,11 @@ class _SudokuPageState extends State<SudokuPage> {
 
                   // Teclado Numérico Responsive
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        ...List.generate(4, (i) => _buildNumberButton(i + 1, size: screenWidth < 380 ? 44.0 : 48.0)),
+                        ...List.generate(4, (i) => _buildNumberButton(i + 1, size: screenWidth < 380 ? 40.0 : 44.0)),
                         _buildActionButton(
                           Icons.backspace_rounded, 
                           () {
@@ -736,21 +787,31 @@ class _SudokuPageState extends State<SudokuPage> {
                           },
                           color: AppColors.error.withValues(alpha: 0.1),
                           iconColor: AppColors.error,
-                          size: screenWidth < 380 ? 44.0 : 48.0,
+                          size: screenWidth < 380 ? 40.0 : 44.0,
+                        ),
+                        // Botón de Pista (Foquito) - 1 uso por partida
+                        _buildActionButton(
+                          _hasUsedHint ? Icons.lightbulb_outline_rounded : Icons.lightbulb_rounded,
+                          _onHintTap,
+                          color: (_hasPlacedAnyNumber() && !_hasUsedHint && !_isFinished)
+                              ? const Color(0xFFFFB300).withValues(alpha: 0.18)
+                              : Colors.grey.withValues(alpha: 0.08),
+                          iconColor: (_hasPlacedAnyNumber() && !_hasUsedHint && !_isFinished)
+                              ? const Color(0xFFFFB300)
+                              : Colors.grey[400]!,
+                          size: screenWidth < 380 ? 40.0 : 44.0,
                         ),
                         _buildActionButton(
                           Icons.refresh_rounded, 
                           () {
                             SfxManager().playClick();
                             setState(() {
-                              _engine.generateNewGame();
-                              _selectedRow = null;
-                              _selectedCol = null;
+                              _resetGame();
                             });
                           },
                           color: AppColors.secondary.withValues(alpha: 0.1),
                           iconColor: AppColors.secondary,
-                          size: screenWidth < 380 ? 44.0 : 48.0,
+                          size: screenWidth < 380 ? 40.0 : 44.0,
                         ),
                       ],
                     ),
@@ -770,7 +831,31 @@ class _SudokuPageState extends State<SudokuPage> {
     bool isSelected = _selectedRow == r && _selectedCol == c;
     bool isInitial = _engine.isInitial[r][c];
     int value = _engine.puzzle[r][c];
-    bool isError = value != 0 && !isInitial && value != _engine.solution[r][c];
+    bool isPlayerPlaced = !isInitial && value != 0;
+    bool isCorrect = isPlayerPlaced && value == _engine.solution[r][c];
+
+    // Fondo de celda
+    Color cellBgColor = Colors.transparent;
+    if (isSelected) {
+      cellBgColor = AppColors.primary.withValues(alpha: 0.15);
+    } else if (_isShowingHintFeedback && isPlayerPlaced) {
+      cellBgColor = isCorrect
+          ? const Color(0xFFE8F5E9) // Verde suave para aciertos
+          : const Color(0xFFFFEBEE); // Rojo suave para errores
+    } else if (isInitial) {
+      cellBgColor = Colors.grey.withValues(alpha: 0.05);
+    }
+
+    // Color del texto
+    Color textColor = AppColors.secondary;
+    if (isInitial) {
+      textColor = AppColors.textPrimaryLight;
+    } else if (_isShowingHintFeedback && isPlayerPlaced) {
+      textColor = isCorrect ? const Color(0xFF2E7D32) : AppColors.error;
+    } else {
+      // Color uniforme para números colocados por el usuario (sin rojo instantáneo)
+      textColor = AppColors.secondary;
+    }
 
     // Bordes para diferenciar los bloques 2x2
     BorderSide thickBorder = BorderSide(color: AppColors.primary.withValues(alpha: 0.2), width: 2.5);
@@ -781,9 +866,7 @@ class _SudokuPageState extends State<SudokuPage> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
-          color: isSelected 
-              ? AppColors.primary.withValues(alpha: 0.15) 
-              : (isInitial ? Colors.grey.withValues(alpha: 0.05) : Colors.transparent),
+          color: cellBgColor,
           border: Border(
             top: r == 0 ? BorderSide.none : (r % 2 == 0 ? thickBorder : thinBorder),
             left: c == 0 ? BorderSide.none : (c % 2 == 0 ? thickBorder : thinBorder),
@@ -799,9 +882,7 @@ class _SudokuPageState extends State<SudokuPage> {
               style: GoogleFonts.poppins(
                 fontSize: 26,
                 fontWeight: isInitial ? FontWeight.w800 : FontWeight.w600,
-                color: isInitial 
-                    ? AppColors.textPrimaryLight 
-                    : (isError ? AppColors.error : AppColors.secondary),
+                color: textColor,
               ),
             ),
       ),

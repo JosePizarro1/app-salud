@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../widgets/module_header.dart';
 
-import '../../../app/theme/app_colors.dart';
-
 class Module6Page extends StatefulWidget {
   const Module6Page({super.key});
 

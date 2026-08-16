@@ -92,13 +92,10 @@ class _TitiChatPageState extends State<TitiChatPage> {
 
   // Helper to handle email launch
   Future<void> _sendEmail(String email, String subject, String body) async {
-    final Uri emailLaunchUri = Uri(
-      scheme: 'mailto',
-      path: email,
-      queryParameters: {
-        'subject': subject,
-        'body': body,
-      },
+    final String encodedSubject = Uri.encodeComponent(subject);
+    final String encodedBody = Uri.encodeComponent(body);
+    final Uri emailLaunchUri = Uri.parse(
+      'mailto:$email?subject=$encodedSubject&body=$encodedBody',
     );
     try {
       if (await launchUrl(emailLaunchUri)) {

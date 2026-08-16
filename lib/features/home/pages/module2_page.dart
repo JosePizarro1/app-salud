@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:animate_do/animate_do.dart';
 import '../widgets/module_header.dart';
-import '../../../app/theme/app_colors.dart';
 import '../../../app/services/sfx_manager.dart';
 
 class Module2Page extends StatefulWidget {
