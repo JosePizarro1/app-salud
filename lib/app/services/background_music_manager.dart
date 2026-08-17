@@ -24,6 +24,13 @@ class BackgroundMusicManager with WidgetsBindingObserver {
   // Key for local preference persistence
   static const String _prefKey = 'bg_music_enabled';
 
+  Source _getWebSafeSource(String relativeAssetPath) {
+    if (kIsWeb) {
+      return UrlSource('assets/$relativeAssetPath');
+    }
+    return AssetSource(relativeAssetPath);
+  }
+
   Future<void> init() async {
     WidgetsBinding.instance.removeObserver(this);
     WidgetsBinding.instance.addObserver(this);
@@ -89,7 +96,11 @@ class BackgroundMusicManager with WidgetsBindingObserver {
       
       // Only play the actual background track if NOT suspended by a sub-module
       if (!_isMusicSuspended) {
-        await _audioPlayer.play(AssetSource(_currentTrackAsset));
+        if (_audioPlayer.state == PlayerState.paused) {
+          await _audioPlayer.resume();
+        } else {
+          await _audioPlayer.play(_getWebSafeSource(_currentTrackAsset));
+        }
       }
     } catch (e) {
       debugPrint('Error starting background music: $e');
@@ -107,7 +118,7 @@ class BackgroundMusicManager with WidgetsBindingObserver {
       if (isEnabled) {
         _safeSetIsPlaying(true);
         if (!wasSameTrack || _audioPlayer.state != PlayerState.playing) {
-          await _audioPlayer.play(AssetSource(_currentTrackAsset));
+          await _audioPlayer.play(_getWebSafeSource(_currentTrackAsset));
         }
       } else {
         _safeSetIsPlaying(false);
@@ -130,7 +141,7 @@ class BackgroundMusicManager with WidgetsBindingObserver {
       if (isEnabled) {
         _safeSetIsPlaying(true);
         if (!wasSameTrack || _audioPlayer.state != PlayerState.playing) {
-          await _audioPlayer.play(AssetSource(_currentTrackAsset));
+          await _audioPlayer.play(_getWebSafeSource(_currentTrackAsset));
         }
       } else {
         _safeSetIsPlaying(false);
@@ -177,20 +188,18 @@ class BackgroundMusicManager with WidgetsBindingObserver {
     }
   }
 
-  // Call this when entering a custom audio page to pause the background music track
-  // without changing the user's global sound toggle preference.
   Future<void> suspendMusic() async {
     _isMusicSuspended = true;
     try {
-      await _audioPlayer.stop();
+      if (_audioPlayer.state == PlayerState.playing) {
+        await _audioPlayer.pause();
+      }
       _safeSetIsPlaying(false);
     } catch (e) {
       debugPrint('Error suspending background music: $e');
     }
   }
 
-  // Call this when leaving the custom audio page to restore background music playback
-  // if global sound is still enabled.
   Future<void> unsuspendMusic() async {
     _isMusicSuspended = false;
     restoreVolumeFromMeditation();

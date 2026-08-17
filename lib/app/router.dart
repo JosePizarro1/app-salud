@@ -41,6 +41,7 @@ import '../features/home/pages/night_routine_page.dart';
 import '../features/home/pages/sleep_care_page.dart';
 import '../features/home/pages/sleep_care_reader_page.dart';
 import '../features/home/pages/forum_page.dart';
+import '../features/home/pages/relaxing_music_page.dart';
 
 CustomTransitionPage<T> _buildFadePage<T>({
   required GoRouterState state,
@@ -226,6 +227,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/breathing',
       pageBuilder: (context, state) => _buildFadePage(state: state, child: const BreathingPage()),
+    ),
+    GoRoute(
+      path: '/relaxing_music',
+      pageBuilder: (context, state) => _buildFadePage(state: state, child: const RelaxingMusicPage()),
     ),
     GoRoute(
       path: '/box_breathing',

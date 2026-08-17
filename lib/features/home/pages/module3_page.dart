@@ -13,8 +13,8 @@ class Module3Page extends StatefulWidget {
 }
 
 class _Module3PageState extends State<Module3Page> {
-  // Estado de escala para los 2 botones
-  final List<bool> _buttonScales = [false, false];
+  // Estado de escala para los botones (utiliza Set para evitar errores en Hot Reload)
+  final Set<int> _scaledIndices = {};
   bool _isPrecached = false;
   bool _isCatScaled = false;
   int _videoAnimKey = 0;
@@ -26,14 +26,15 @@ class _Module3PageState extends State<Module3Page> {
       _isPrecached = true;
       precacheImage(const AssetImage('assets/images/Bmeditacion.webp'), context);
       precacheImage(const AssetImage('assets/images/Brespiracion.webp'), context);
+      precacheImage(const AssetImage('assets/images/b_musicas_relajantes.webp'), context);
     }
   }
 
   Future<void> _triggerScale(int index) async {
-    setState(() => _buttonScales[index] = true);
+    setState(() => _scaledIndices.add(index));
     await Future.delayed(const Duration(milliseconds: 200));
     if (mounted) {
-      setState(() => _buttonScales[index] = false);
+      setState(() => _scaledIndices.remove(index));
     }
   }
 
@@ -116,6 +117,7 @@ class _Module3PageState extends State<Module3Page> {
                 _buildMenuButton(
                   index: 0,
                   imagePath: 'assets/images/Bmeditacion.webp',
+                  customScale: 0.55,
                   onTap: () async {
                     await _triggerScale(0);
                     // Track meditation sub-module access
@@ -124,17 +126,33 @@ class _Module3PageState extends State<Module3Page> {
                   },
                 ),
                 
-                const SizedBox(width: 15),
+                const SizedBox(width: 8),
                 
                 // Botón Respiración
                 _buildMenuButton(
                   index: 1,
                   imagePath: 'assets/images/Brespiracion.webp',
+                  customScale: 0.55,
                   onTap: () async {
                     await _triggerScale(1);
                     // Track breathing sub-module access
                     StatsSyncService().logModuleAccess('/breathing');
                     if (context.mounted) context.push('/breathing');
+                  },
+                ),
+
+                const SizedBox(width: 8),
+
+                // Botón Músicas Relajantes
+                _buildMenuButton(
+                  index: 2,
+                  imagePath: 'assets/images/b_musicas_relajantes.webp',
+                  customScale: 0.6,
+                  onTap: () async {
+                    await _triggerScale(2);
+                    // Track relaxing music sub-module access
+                    StatsSyncService().logModuleAccess('/relaxing_music');
+                    if (context.mounted) context.push('/relaxing_music');
                   },
                 ),
               ],
@@ -152,12 +170,14 @@ class _Module3PageState extends State<Module3Page> {
     required int index,
     required String imagePath,
     required VoidCallback onTap,
+    double customScale = 1.0,
   }) {
-    final double btnWidth = MediaQuery.of(context).size.width * 0.3;
-    final double btnHeight = MediaQuery.of(context).size.height * 0.15;
+    final double btnWidth = MediaQuery.of(context).size.width * 0.26;
+    final double btnHeight = MediaQuery.of(context).size.height * 0.14;
+    final double baseScale = _scaledIndices.contains(index) ? 1.4 : 1.15;
 
     return AnimatedScale(
-      scale: _buttonScales[index] ? 1.4 : 1.15,
+      scale: baseScale * customScale,
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeInOut,
       child: GestureDetector(
