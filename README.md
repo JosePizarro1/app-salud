@@ -1,55 +1,78 @@
+# 🩺 Vitali (App Salud)
 
-
-# 🩺 App Salud
-
-Aplicación móvil desarrollada para el **Semillero de Investigación en Enfermería**, con el objetivo de orientar, acompañar y motivar a los **estudiantes cachimbos** durante su proceso de formación universitaria en la carrera de Enfermería.
+Aplicación móvil de bienestar integral desarrollada para el **Semillero de Investigación en Enfermería**, diseñada para orientar, acompañar y motivar a los **estudiantes universitarios** durante su formación académica y personal.
 
 ---
 
-## 🚀 Objetivo del Proyecto
+## 🌟 Visión del Proyecto
 
-Brindar una herramienta interactiva, didáctica y accesible que permita a los estudiantes de primeros ciclos:
-
-* Conocer recursos esenciales de su carrera.
-* Acceder a contenido educativo confiable.
-* Organizar su experiencia universitaria.
-* Mantenerse informados sobre actividades del semillero.
-* Recibir orientación de manera amigable y moderna.
+**Vitali** busca ofrecer una experiencia de usuario calmada, accesible y fluida con una estética enfocada en el bienestar (*Wellness*), combinando tonos pastel, microinteracciones y contenidos didácticos basados en evidencia para apoyar la salud física y mental de los estudiantes.
 
 ---
 
-## 🧩 Funcionalidades Previstas
+## 🛠️ Stack Tecnológico
 
-* **Autenticación con Firebase** (email/contraseña).
-* **Gestión de perfil del estudiante**.
-* **Módulos educativos** (videos, guías, infografías, consejos).
-* **Sistema de notificaciones push** con Firebase Messaging.
-* **Calendario de eventos académicos**.
-* **Chat interno o buzón de dudas**.
-* **Gamificación ligera** (puntos, insignias, progreso).
-* **Animaciones interactivas con Rive** para mejorar la experiencia visual.
-* **UI amigable, minimalista y orientada a estudiantes universitarios.**
-
----
-
-## 🛠️ Tecnologías Utilizadas
-
-* **Flutter** (framework principal).
-* **Dart** (lenguaje).
-* **Firebase Suite**:
-
-  * Authentication
-  * Firestore Database
-  * Cloud Messaging
-  * Cloud Storage
-* **Rive** (animaciones dinámicas y modernas).
-* **Riverpod / Provider** (manejo de estado).
-* **Git y GitHub** (control de versiones).
-* **VS Code** (IDE recomendado).
+* **Framework:** [Flutter](https://flutter.dev/) (Dart SDK ^3.9.2)
+* **Backend & Autenticación:** [Supabase](https://supabase.com/) (Auth, PostgreSQL Database, Storage)
+* **Navegación & Enrutamiento:** `go_router`
+* **Manejo de Variables de Entorno:** `flutter_dotenv`
+* **Diseño & UI:**
+  * Tipografía: `Google Fonts (Outfit)`
+  * Microanimaciones: `animate_do`
+  * Animaciones vectoriales interactivas: `dotlottie_flutter` (.lottie)
+  * Sistema de colores centralizado: `AppColors`
+* **Multimedia & Sensores:**
+  * Reproducción de audio: `audioplayers`
+  * Reproducción de video: `video_player`
+  * Gráficos interactivos: `fl_chart`
+  * Notificaciones locales: `flutter_local_notifications`
 
 ---
 
-## ⚙️ Instalación y Configuración Inicial
+## 🧩 Módulos y Funcionalidades
+
+* 🔐 **Autenticación & Perfil:** Registro e inicio de sesión seguros mediante Supabase Auth con soporte de persistencia de sesión.
+* 🥗 **Alimentación Saludable:** Guías y lecciones interactivas sobre nutrición para estudiantes universitarios.
+* 😴 **Cuidado del Sueño (Sleep Care):** Módulos de lectura y consejos prácticos para optimizar el descanso y el rendimiento cognitivo.
+* 🧘 **Meditación, Yoga y Respiración:** Sesiones guiadas de respiración consciente, pausas activas y ejercicios posturales con temporizadores y audio.
+* 🎵 **Música Relajante:** Reproductor de pistas sonoras ambientales y efectos de sonido para concentración y reducción del estrés.
+* 💭 **Gestión Emocional:** Registro, monitoreo y visualización del estado de ánimo con gráficas analíticas.
+* 📅 **Organizador Académico:** Herramientas para la gestión del tiempo y hábitos de estudio.
+* 🎮 **Gamificación & Minijuegos:** Dinámicas lúdicas para reforzar el aprendizaje y la adherencia a hábitos saludables.
+* ⚙️ **Panel de Administración:** Control de contenidos y seguimiento de métricas del semillero.
+
+---
+
+## 📁 Arquitectura del Proyecto
+
+El código está estructurado siguiendo un enfoque **Feature-First / Modular**, separando responsabilidades de forma clara y escalable:
+
+```text
+lib/
+ ├─ main.dart                        # Punto de entrada de la aplicación
+ │
+ ├─ app/                             # Configuración global y núcleo
+ │   ├─ router.dart                  # Configuración de rutas (GoRouter)
+ │   ├─ theme.dart                   # Definición de temas claro/oscuro
+ │   ├─ theme/                       # Paleta de colores centralizada (AppColors)
+ │   ├─ services/                    # Gestores de audio, SFX y métricas
+ │   └─ widgets/                     # Componentes visuales transversales
+ │
+ ├─ features/                        # Módulos independientes por dominio
+ │   ├─ admin/                       # Vistas y paneles administrativos
+ │   ├─ auth/                        # Autenticación (Login, Registro)
+ │   ├─ emotions/                    # Monitoreo emocional y analítica
+ │   ├─ games/                       # Lógica y vistas de gamificación
+ │   ├─ home/                        # Dashboard y módulos de bienestar (nutrición, sueño, yoga)
+ │   ├─ organizer/                   # Planificación y hábitos
+ │   └─ settings/                    # Ajustes de la aplicación
+ │
+ └─ services/                        # Servicios de notificaciones y sesión
+```
+
+---
+
+## ⚙️ Instalación y Configuración
 
 ### 1️⃣ Clonar el repositorio
 
@@ -64,145 +87,51 @@ cd app-salud
 flutter pub get
 ```
 
-### 3️⃣ Configurar Firebase
+### 3️⃣ Configurar variables de entorno
 
-1. Entra a Firebase Console
-2. Crear un proyecto → agregar app Android/iOS
-3. Descargar el archivo `google-services.json` (Android)
-4. Descargar el archivo `GoogleService-Info.plist` (iOS)
-5. Colocarlos en su carpeta correspondiente
-6. Activar:
+Copia el archivo `.env.example` como `.env` en la raíz del proyecto y completa las credenciales de tu proyecto de Supabase:
 
-   * Authentication (Email/Password)
-   * Firestore
-   * Cloud Messaging
+```bash
+cp .env.example .env
+```
+
+Contenido requerido en `.env`:
+
+```env
+SUPABASE_URL=https://tu-proyecto.supabase.co
+SUPABASE_ANON_KEY=tu-anon-key
+```
 
 ### 4️⃣ Ejecutar la aplicación
+
+Asegúrate de tener un emulador activo o un dispositivo físico conectado:
 
 ```bash
 flutter run
 ```
 
-> 💡 Recomendación: usar Flutter 3.16+ para mayor compatibilidad.
+---
+
+## 📦 Exportación Limpia del Código Fuente
+
+Si necesitas compartir el código fuente como archivo `.zip` sin incluir artefactos compilados ni dependencias:
+
+* **Opción recomendada (vía Git):**
+  ```bash
+  git archive --format=zip --output=vitali_source_code.zip HEAD
+  ```
+* **Opción manual:**
+  Ejecutar primero `flutter clean` para remover `build/` y temporales antes de comprimir la carpeta.
 
 ---
 
-# 📁 Estructura del Proyecto (Arquitectura Simple & Modular)
-
-La app utiliza una arquitectura modular ligera, fácil de escalar y pensada para apps pequeñas–medianas con enfoque visual.
-
-```
-lib/
- ├─ main.dart
- │
- ├─ app/
- │   ├─ router.dart            # Rutas principales (GoRouter o Navigator)
- │   ├─ theme.dart             # Temas globales
- │   └─ widgets/               # Widgets globales reutilizables
- │        └─ ...
- │
- ├─ services/
- │   ├─ firebase_auth_service.dart
- │   └─ firebase_db_service.dart
- │
- └─ features/
-      ├─ auth/
-      │    ├─ pages/
-      │    │     ├─ login_page.dart
-      │    │     └─ register_page.dart
-      │    ├─ controller/
-      │    │     └─ auth_controller.dart
-      │    └─ widgets/
-      │          └─ login_form.dart
-      │
-      ├─ home/
-      │    ├─ pages/
-      │    │     └─ home_page.dart
-      │    ├─ controller/
-      │    │     └─ home_controller.dart
-      │    └─ widgets/
-      │          └─ home_header.dart
-      │
-      ├─ modulo1/
-      │    ├─ pages/
-      │    │     ├─ modulo1_menu_page.dart
-      │    │     ├─ modulo1_detail_page.dart
-      │    │     └─ modulo1_result_page.dart
-      │    ├─ controller/
-      │    │     └─ modulo1_controller.dart
-      │    └─ widgets/
-      │          ├─ modulo1_card.dart
-      │          └─ modulo1_list_item.dart
-      │
-      └─ modulo2/
-           ├─ pages/
-           ├─ controller/
-           └─ widgets/
-```
-
----
-
-# 🎨 Carpetas de recursos
-
-```
-assets/
- ├─ rive/        # Animaciones .riv
- ├─ images/
- └─ icons/
-```
-
-> ✔ Rive se usará para: animaciones de loading, login, mascota de la app, transiciones y microinteracciones.
-
----
-
-# 🔥 Características Técnicas Importantes
-
-### ✔ Uso de Firebase
-
-La app utiliza Firebase como backend principal para:
-
-* Autenticación de estudiantes.
-* Base de datos para recursos, módulos y progreso.
-* Notificaciones push para avisos del semillero.
-* Almacenamiento de imágenes y materiales educativos.
-
-### ✔ Uso de Rive
-
-Rive proporciona:
-
-* Animaciones suaves y nativas en tiempo real.
-* Mejor UX en pantallas como login, carga y tutoriales.
-* Mascota animada que interactúa con el usuario.
-
----
-
-# 🧠 Equipo de Desarrollo
+## 🧠 Equipo de Desarrollo
 
 * **Desarrollo:** [José Pizarro Rabanal](https://github.com/JosePizarro1)
-* **Institución:** Semillero de Investigación de Enfermería
-* **Apoyo:** Estudiantes y docentes del semillero
+* **Institución:** Semillero de Investigación en Enfermería
 
 ---
 
-# 📜 Licencia
+## 📜 Licencia
 
-Este proyecto es de uso académico y pertenece al **Semillero de Investigación en Enfermería**.
-Puedes reutilizarlo con fines educativos indicando la autoría.
-
----
-
-# 🌱 Estado Actual del Proyecto
-
-🧩 En desarrollo (versión inicial)
-📆 Inicio: Noviembre 2025
-🎨 Próxima meta: Diseño UI + mascota animada con Rive
-
----
-
-# 💬 Contacto
-
-📧 [josepizarro.dev@gmail.com](mailto:josepizarro.dev@gmail.com)
-🔗 GitHub: [@JosePizarro1](https://github.com/JosePizarro1)
-
----
-
+Proyecto de uso académico y de investigación perteneciente al **Semillero de Investigación en Enfermería**.
